@@ -18,6 +18,8 @@ module.exports = function compileRecurseReverse (input, output) {
       return `${outputSet} >;nwr._${inputSet}->${revSet};\n`
     case '>':
       return `${outputSet} <;nwr._${inputSet}->${revSet};\n`
+    case 'or':
+      return `node${inputSet}->${revSet};\n`
     default:
       throw new Error('unsupported type: ' + input.type)
   }

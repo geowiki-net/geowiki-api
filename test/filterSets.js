@@ -3455,8 +3455,6 @@ describe("Filter sets with relations, apply base filter", function () {
           }]
         }, done)
       })
-
-/*    TODO: cache descriptors creates bug
       it('or1', function (done) {
         test({
           mode,
@@ -3468,15 +3466,19 @@ describe("Filter sets with relations, apply base filter", function () {
             maxlon: 16.33841
           },
           expected: [ 'w4583442', 'n378459', 'n378462', 'n270328331', 'n2208875391', 'n2213568001', 'n3037431653', 'n3037431688' ],
-          expectedSubRequestCount: 0,
+          expectedSubRequestCount: 1,
           expectedCacheDescriptors: [{
             id: 'way["highway"="secondary"](properties:9)',
             bounds: {"type":"Polygon","coordinates":[[[16.33835,48.19821],[16.33841,48.19821],[16.33841,48.19827],[16.33835,48.19827],[16.33835,48.19821]]]}
           }, {
-            "id": '-["highway"="secondary"](properties:1)', // TODO: WRONG!
+            "id": 'way["highway"="secondary"](properties:13)->._2;node(w._2)(properties:0)',
+            "recurse": [{
+              id: 'way["highway"="secondary"](properties:13)->._2;node(w._2)(properties:0)->._2;way["highway"="secondary"](bn._2)(properties:13)',
+              bounds: {"type":"Polygon","coordinates":[[[16.33835,48.19821],[16.33841,48.19821],[16.33841,48.19827],[16.33835,48.19827],[16.33835,48.19821]]]}
+            }]
           }]
         }, done)
-      }) */
+      })
     })
   })
 })

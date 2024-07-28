@@ -109,7 +109,7 @@ class OverpassObject {
 
       if (bounds) {
         if (typeof this.boundsMatches === 'undefined') {
-          this.boundsMatches = [ bounds ]
+          this.boundsMatches = [bounds]
         } else {
           this.boundsMatches.push(bounds)
         }

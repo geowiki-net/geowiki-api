@@ -9,9 +9,11 @@ const removeNullEntries = require('./removeNullEntries')
 
 const BBoxQueryCache = require('./BBoxQueryCache')
 const OverpassObject = require('./OverpassObject')
-const OverpassNode = require('./OverpassNode')
-const OverpassWay = require('./OverpassWay')
-const OverpassRelation = require('./OverpassRelation')
+const OverpassTypes = {
+  node: require('./OverpassNode'),
+  way: require('./OverpassWay'),
+  relation: require('./OverpassRelation')
+}
 const RequestGet = require('./RequestGet')
 const RequestBBox = require('./RequestBBox')
 const RequestMulti = require('./RequestMulti')
@@ -767,12 +769,8 @@ class OverpassFrontend {
       if (~ob.properties & options.properties === 0) {
         return ob
       }
-    } else if (el.type === 'relation') {
-      ob = new OverpassRelation(id)
-    } else if (el.type === 'way') {
-      ob = new OverpassWay(id)
-    } else if (el.type === 'node') {
-      ob = new OverpassNode(id)
+    } else if (OverpassTypes[el.type]) {
+      ob = new OverpassTypes[el.type](id)
     } else {
       ob = new OverpassObject(id)
     }

@@ -9,19 +9,22 @@ const removeNullEntries = require('./removeNullEntries')
 
 const BBoxQueryCache = require('./BBoxQueryCache')
 const OverpassObject = require('./OverpassObject')
-const OverpassNode = require('./OverpassNode')
-const OverpassWay = require('./OverpassWay')
-const OverpassRelation = require('./OverpassRelation')
+const OverpassTypes = {
+  node: require('./OverpassNode'),
+  way: require('./OverpassWay'),
+  relation: require('./OverpassRelation')
+}
 const RequestGet = require('./RequestGet')
 const RequestBBox = require('./RequestBBox')
 const RequestMulti = require('./RequestMulti')
 const defines = require('./defines')
-const loadOsmFile = require('./loadOsmFile')
+const loadFile = require('./loadFile')
 const copyOsm3sMetaFrom = require('./copyOsm3sMeta')
 const timestamp = require('./timestamp')
 const Filter = require('./Filter')
 const isGeoJSON = require('./isGeoJSON')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
+const isFileURL = require('./isFileURL')
 
 /**
  * An error occured
@@ -75,6 +78,10 @@ const boundsIsFullWorld = require('./boundsIsFullWorld')
  * A connection to an Overpass API Server or an OpenStreetMap file
  * @param {string} url The URL of the API, e.g. 'https://overpass-api.de/api/'. If you omit the protocol, it will use the protocol which is in use for the current page (or https: on nodejs): '//overpass-api.de/api/'. If the url ends in .json, .osm or .osm.bz2 it will load this OpenStreetMap file and use the data from there.
  * @param {object} options Options
+ * @param {boolean} [options.isFile] true, if the URL is a file; false if the URL points to an Overpass API server. if unset, will be autodetected.
+ * @param {string} [options.filename] override file name; if undefined, the last part of the URL.
+ * @param {string} [options.fileFormat] force file format; if undefined, auto-detect.
+ * @param {object} [options.fileFormatOptions] options for the file format parser.
  * @param {number} [options.count=0] Only return a maximum of count items. If count=0, no limit is used (default).
  * @param {number} [options.effortPerRequest=1000] To avoid huge requests to the Overpass API, the request will be split into smaller chunks. This value defines, how many objects will be requested per API call (for get() calls see effortNode, effortWay, effortRelation, e.g. up to 1000 nodes or 250 ways or (500 nodes and 125 ways) at default values; for BBoxQuery() calls the setting will be divided by 4).
  * @param {number} [options.effortNode=1] The effort for request a node. Default: 1.
@@ -107,6 +114,7 @@ class OverpassFrontend {
 
     const db = new LokiJS()
     this.db = db.addCollection('osm', { unique: ['id'] })
+    this.bboxQueryCache = new BBoxQueryCache(this)
 
     this.clearCache()
 
@@ -117,12 +125,12 @@ class OverpassFrontend {
     this.pendingNotifyMemberUpdate = {}
     this.pendingUpdateEmit = {}
 
-    if (this.url.match(/\.(json|osm\.bz2|osm)$/)) {
-      this.localOnly = true
+    if (this.options.isFile ?? isFileURL(this.url)) {
+      this.options.isFile = true
       this.ready = false
-      this._loadFile()
+      global.setTimeout(() => this._loadFile(), 0)
     } else {
-      this.remote = true
+      this.options.isFile = false
       this.ready = true
     }
   }
@@ -131,7 +139,7 @@ class OverpassFrontend {
    * clear all caches
    */
   clearCache () {
-    if (this.localOnly) {
+    if (this.options.isFile) {
       return
     }
 
@@ -139,72 +147,88 @@ class OverpassFrontend {
     this.cacheElementsMemberOf = {}
     this.cacheTimestamp = timestamp()
     this.db.clear()
-    BBoxQueryCache.clear()
+    this.bboxQueryCache.clear()
 
     // Set default properties
     this.hasStretchLon180 = false
   }
 
   _loadFile () {
-    let osm3sMeta
+    loadFile(this.url, this.options, (err, content, filename) => {
+      if (err) {
+        console.log('Error loading file', err)
+        return this.emit('error', err)
+      }
 
-    loadOsmFile(this.url,
-      (err, result) => {
+      let handler
+      if (this.options.fileFormat) {
+        handler = OverpassFrontend.fileFormats.filter(format => format.id === this.options.fileFormat)
+      } else {
+        handler = OverpassFrontend.fileFormats.filter(format => format.willLoad(filename, content, this.options.fileFormatOptions ?? {}))
+      }
+
+      if (!handler.length) {
+        console.log('No file format handler found')
+        return this.emit('error', new Error('No file format handler found'))
+      }
+
+      handler = handler[0]
+
+      handler.load(content, this.options.fileFormatOptions ?? {}, (err, result) => {
         if (err) {
-          console.log('Error loading file', err)
+          console.log('Error loading file with handler ' + handler.id, err)
+          return this.emit('error', new Error('Error loading file with handler ' + handler.id + ': ' + err.message))
+        }
+
+        this._loadFileContent(result)
+      })
+    })
+  }
+
+  _loadFileContent (result) {
+    const osm3sMeta = copyOsm3sMetaFrom(result)
+
+    const chunks = []
+    for (let i = 0; i < result.elements.length; i += this.options.loadChunkSize) {
+      chunks.push(result.elements.slice(i, i + this.options.loadChunkSize))
+    }
+
+    // collect all objects, so they can be completed later-on
+    const obs = []
+    async.eachLimit(
+      chunks,
+      1,
+      (chunk, done) => {
+        chunk.forEach(
+          (element) => {
+            const ob = this.createOrUpdateOSMObject(element, {
+              osm3sMeta,
+              properties: OverpassFrontend.TAGS | OverpassFrontend.META | OverpassFrontend.MEMBERS
+            })
+
+            obs.push(ob)
+          }
+        )
+
+        global.setTimeout(done, 0)
+      },
+      (err) => {
+        this.pendingNotifies()
+
+        // Set objects to fully known, as no more data can be loaded from the file
+        obs.forEach(ob => {
+          ob.properties |= OverpassFrontend.ALL
+        })
+
+        if (err) {
           return this.emit('error', err)
         }
 
-        osm3sMeta = copyOsm3sMetaFrom(result)
+        this.meta = osm3sMeta
+        this.emit('load', osm3sMeta)
 
-        const chunks = []
-        for (let i = 0; i < result.elements.length; i += this.options.loadChunkSize) {
-          chunks.push(result.elements.slice(i, i + this.options.loadChunkSize))
-        }
-
-        // collect all objects, so they can be completed later-on
-        const obs = []
-        async.eachLimit(
-          chunks,
-          1,
-          (chunk, done) => {
-            chunk.forEach(
-              (element) => {
-                const ob = this.createOrUpdateOSMObject(element, {
-                  osm3sMeta,
-                  properties: OverpassFrontend.TAGS | OverpassFrontend.META | OverpassFrontend.MEMBERS
-                })
-
-                obs.push(ob)
-              }
-            )
-
-            global.setTimeout(done, 0)
-          },
-          (err) => {
-            this.pendingNotifies()
-
-            // Set objects to fully known, as no more data can be loaded from the file
-            obs.forEach(ob => {
-              ob.properties |= OverpassFrontend.ALL
-              if (osm3sMeta.bounds) {
-                osm3sMeta.bounds.extend(ob.bounds)
-              } else {
-                osm3sMeta.bounds = new BoundingBox(ob.bounds)
-              }
-            })
-
-            if (err) {
-              console.log('Error loading file', err)
-              return this.emit('error', err)
-            }
-
-            this.emit('load', osm3sMeta)
-
-            this.ready = true
-            this._overpassProcess()
-          }
-        )
+        this.ready = true
+        this._overpassProcess()
       }
     )
   }
@@ -300,7 +324,7 @@ class OverpassFrontend {
 
         if (request.finished) {
           this.requests[i] = null
-        } else if (request.mayFinish() || this.localOnly) {
+        } else if (request.mayFinish() || this.options.isFile) {
           request.finish()
         }
       }
@@ -467,6 +491,7 @@ class OverpassFrontend {
     this.errorCount = 0
 
     const osm3sMeta = copyOsm3sMetaFrom(results)
+    this.meta = osm3sMeta
     this.emit('load', osm3sMeta, context)
 
     let subRequestsIndex = 0
@@ -637,8 +662,8 @@ class OverpassFrontend {
   clearBBoxQuery (query) {
     const cacheDescriptors = new Filter(query).cacheDescriptors()
 
-    cacheDescriptors.forEach(id => {
-      BBoxQueryCache.get({ id }).clear()
+    cacheDescriptors.forEach(descriptor => {
+      this.bboxQueryCache.get(descriptor.id).clear()
     })
   }
 
@@ -744,12 +769,8 @@ class OverpassFrontend {
       if (~ob.properties & options.properties === 0) {
         return ob
       }
-    } else if (el.type === 'relation') {
-      ob = new OverpassRelation(id)
-    } else if (el.type === 'way') {
-      ob = new OverpassWay(id)
-    } else if (el.type === 'node') {
-      ob = new OverpassNode(id)
+    } else if (OverpassTypes[el.type]) {
+      ob = new OverpassTypes[el.type](id)
     } else {
       ob = new OverpassObject(id)
     }
@@ -792,6 +813,72 @@ class OverpassFrontend {
       .replace('^', '\\^')
       .replace('$', '\\$')
   }
+
+  /**
+   * get meta data of last request or - if no request was submitted - the first.
+   * @params [function] callback - a callback which will receive (err, meta)
+   */
+  getMeta (callback) {
+    if (this.meta) {
+      return callback(null, this.meta)
+    }
+
+    this.once('load', () => {
+      callback(null, this.meta)
+    })
+  }
+
+  /**
+   * @return object Full dump of the cache, loadable by cacheRestore()
+   */
+  cacheDump () {
+    return {
+      cacheVersion: 0,
+      cacheTimestamp: this.cacheTimestamp,
+      cacheElements: Object.values(this.cacheElements).map(el => el.cacheDump()),
+      // cacheElementsMemberOf: this.cacheElementsMemberOf,
+      bboxQueryCache: this.bboxQueryCache.cacheDump(),
+      hasStretchLon180: this.hasStretchLon180
+    }
+  }
+
+  /**
+   * @param object data Restore cache from data created by cacheDump()
+   */
+  cacheRestore (data) {
+    this.clearCache()
+
+    this.cacheTimestamp = data.cacheTimestamp
+    Object.values(data.cacheElements).forEach(d => {
+      const el = new OverpassTypes[d.type]()
+      el.overpass = this
+      el.cacheRestore(d)
+      this.cacheElements[el.id] = el
+    })
+
+    this.hasStretchLon180 = data.hasStretchLon180
+    this.bboxQueryCache.cacheRestore(data.bboxQueryCache)
+
+    Object.values(this.cacheElements).forEach(el => {
+      if (!el.memberOf.length) {
+        return
+      }
+
+      this.cacheElementsMemberOf[el.id] = el.memberOf.map(mOf => this.cacheElements[mOf.id])
+    })
+
+    Object.values(this.cacheElements).forEach(el => this.db.insert(el.dbInsert()))
+  }
+}
+
+OverpassFrontend.fileFormats = [
+  require('./fileFormatOSMXML'),
+  require('./fileFormatOSMJSON'),
+  require('./fileFormatGeoJSON')
+]
+
+OverpassFrontend.registerFileFormat = (format) => {
+  OverpassFrontend.fileFormats.push(format)
 }
 
 for (const k in defines) {

@@ -284,6 +284,40 @@ class OverpassWay extends OverpassObject {
 
     return 1
   }
+
+  cacheDump () {
+    const result = super.cacheDump()
+
+    result.center = this.center
+    result.bounds = this.bounds
+
+    if (this.members) {
+      result.members = this.members
+    }
+
+    if (this.geometry) {
+      result.geometry = this.geometry
+    }
+
+    return result
+  }
+
+  cacheRestore (data) {
+    super.cacheRestore(data)
+
+    if (data.geometry) {
+      this.geometry = data.geometry
+    }
+    if (data.bounds) {
+      this.bounds = new BoundingBox(data.bounds)
+    }
+    if (data.center) {
+      this.center = data.center
+    }
+    if (data.members) {
+      this.members = data.members
+    }
+  }
 }
 
 module.exports = OverpassWay

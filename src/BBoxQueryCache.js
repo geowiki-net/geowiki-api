@@ -22,6 +22,24 @@ class BBoxQueryCache {
       delete this.list[k]
     }
   }
+
+  cacheDump () {
+    return Object.values(this.list).map(entry => {
+      return {
+        id: entry.id,
+        area: entry.area
+      }
+    })
+  }
+
+  cacheRestore (data) {
+    data.forEach(entry => {
+      const id = entry.id
+
+      this.list[id] = new BBoxQueryCacheItem(this, id)
+      this.list[id].area = entry.area
+    })
+  }
 }
 
 class BBoxQueryCacheItem {

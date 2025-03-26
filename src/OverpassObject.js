@@ -388,6 +388,35 @@ class OverpassObject {
 
     this.overpass.db.update(this.dbData)
   }
+
+  cacheDump () {
+    const result = {
+      id: this.id,
+      osm_id: this.osm_id,
+      type: this.type,
+      properties: this.properties,
+      tags: this.tags,
+      meta: this.meta,
+      osm3sMeta: this.osm3sMeta
+    }
+
+    if (this.memberOf.length) {
+      result.memberOf = this.memberOf
+    }
+
+    return result
+  }
+
+  cacheRestore (data) {
+    this.id = data.id
+    this.osm_id = data.osm_id
+    this.type = data.type
+    this.properties = data.properties
+    this.tags = data.tags
+    this.meta = data.meta
+    this.osm3sMeta = data.osm3sMeta
+    this.memberOf = data.memberOf || []
+  }
 }
 
 ee(OverpassObject.prototype)

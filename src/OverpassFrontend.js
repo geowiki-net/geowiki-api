@@ -827,6 +827,48 @@ class OverpassFrontend {
       callback(null, this.meta)
     })
   }
+
+  /**
+   * @return object Full dump of the cache, loadable by cacheRestore()
+   */
+  cacheDump () {
+    return {
+      cacheVersion: 0,
+      cacheTimestamp: this.cacheTimestamp,
+      cacheElements: Object.values(this.cacheElements).map(el => el.cacheDump()),
+      // cacheElementsMemberOf: this.cacheElementsMemberOf,
+      bboxQueryCache: this.bboxQueryCache.cacheDump(),
+      hasStretchLon180: this.hasStretchLon180
+    }
+  }
+
+  /**
+   * @param object data Restore cache from data created by cacheDump()
+   */
+  cacheRestore (data) {
+    this.clearCache()
+
+    this.cacheTimestamp = data.cacheTimestamp
+    Object.values(data.cacheElements).forEach(d => {
+      const el = new OverpassTypes[d.type]()
+      el.overpass = this
+      el.cacheRestore(d)
+      this.cacheElements[el.id] = el
+    })
+
+    this.hasStretchLon180 = data.hasStretchLon180
+    this.bboxQueryCache.cacheRestore(data.bboxQueryCache)
+
+    Object.values(this.cacheElements).forEach(el => {
+      if (!el.memberOf.length) {
+        return
+      }
+
+      this.cacheElementsMemberOf[el.id] = el.memberOf.map(mOf => this.cacheElements[mOf.id])
+    })
+
+    Object.values(this.cacheElements).forEach(el => this.db.insert(el.dbInsert()))
+  }
 }
 
 OverpassFrontend.fileFormats = [

@@ -138,6 +138,24 @@ class OverpassNode extends OverpassObject {
 
     return bbox.intersects(this.bounds) ? 2 : 0
   }
+
+  cacheDump () {
+    const result = super.cacheDump()
+
+    result.geometry = this.geometry
+
+    return result
+  }
+
+  cacheRestore (data) {
+    super.cacheRestore(data)
+
+    if (data.geometry) {
+      this.geometry = data.geometry
+      this.bounds = new BoundingBox(this.geometry)
+      this.center = this.bounds.getCenter()
+    }
+  }
 }
 
 module.exports = OverpassNode

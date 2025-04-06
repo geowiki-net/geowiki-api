@@ -505,6 +505,7 @@ class OverpassRelation extends OverpassObject {
     }
     if (data.members) {
       this.members = data.members
+      this.memberFeatures = this.members.map(member => this.overpass.cacheElements[member.id])
     }
   }
 }

@@ -33,12 +33,10 @@ class RequestBBox extends Request {
 
     if (!('noCacheQuery' in this.options) || !this.options.noCacheQuery) {
       try {
+        this.filterQuery = new Filter(this.query)
         if (this.options.filter) {
-          this.filterQuery = new Filter(this.query)
           this.filterQuery.setBaseFilter(this.options.filter)
           this.query = this.filterQuery.toQl()
-        } else {
-          this.filterQuery = new Filter(this.query)
         }
       } catch (err) {
         return this.finish(err)

@@ -1434,6 +1434,40 @@ describe('BBoxQuery with recurse', function () {
       expectedSubRequestCount: 1
     }, done)
   })
+
+  it('Query relation nodes with result bounding box', function (done) {
+    test({
+      query: "relation[route=tram][ref=9];node(r);",
+      bounds: {
+	"maxlat": 48.300,
+	"maxlon": 16.350,
+	"minlat": 48.190,
+	"minlon": 16.330
+      },
+      options: {
+        boundsRecurseSelector: 'result',
+      },
+      expected: ['n287235515', 'n1630416816', 'n2216507460', 'n1394529428', 'n2293993848', 'n2293993867', 'n2293993929', 'n2407351716', 'n2407351717', 'n2407325778', 'n269541925', 'n2407260774', 'n2407325779'],
+      expectedSubRequestCount: 1
+    }, done)
+  })
+
+  it('Query relation nodes with smaller result bounding box', function (done) {
+    test({
+      query: "relation[route=tram][ref=9];node(r);",
+      bounds: {
+	"maxlat": 48.200,
+	"maxlon": 16.350,
+	"minlat": 48.190,
+	"minlon": 16.330
+      },
+      options: {
+        boundsRecurseSelector: 'result',
+      },
+      expected: ['n287235515', 'n2293993867', 'n2293993929'],
+      expectedSubRequestCount: 0
+    }, done)
+  })
 })
 
 function test (options, callback) {

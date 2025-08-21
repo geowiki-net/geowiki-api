@@ -45,15 +45,26 @@ class RequestBBox extends Request {
       this.lokiQuery = new Filter(this.filterQuery.toString() + 'nwr._(properties:' + this.options.properties + ');')
 
       if (!boundsIsFullWorld(this.bounds)) {
+        let boundsFilter
         if (this.bounds instanceof BoundingBox) {
-          this.lokiQuery.setBaseFilter('nwr(' + this.bbox.toLatLonString() + ')')
+          boundsFilter = '(' + this.bbox.toLatLonString() + ')'
         } else {
           // this does not support polygons with holes
           const coords = this.bounds.geometry.coordinates[0]
             .slice(0, -1)
             .map(c => c[1] + ' ' + c[0])
             .join(' ')
-          this.lokiQuery.setBaseFilter('nwr(poly:"' + coords + '")')
+          boundsFilter = '(poly:"' + coords + '")'
+        }
+
+        if (!this.options.boundsRecurseSelector || this.options.boundsRecurseSelector === 'input') {
+          this.lokiQuery.setBaseFilter('nwr' + boundsFilter)
+        } else if (this.options.boundsRecurseSelector === 'result') {
+          const filter = this.lokiQuery.toQl({ setsUseStatementIds: true })
+          const finalStatement = this.lokiQuery.getStatement()
+          this.lokiQuery = new Filter(filter + 'nwr._' + finalStatement.id + boundsFilter)
+        } else {
+          throw new Error("RequestBBox: options boundsRecurseSelector, invalid option '" + this.options.boundsRecurseSelector + "'")
         }
       }
 

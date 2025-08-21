@@ -591,6 +591,7 @@ class OverpassFrontend {
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
    * @param {boolean|string} [options.sort=false] - If false, it will be called as soon as the features are availabe (e.g. immediately when cached).
    * @param {bit_array} [options.properties] Which properties of the features should be downloaded: OVERPASS_ID_ONLY, OVERPASS_BBOX, OVERPASS_TAGS, OVERPASS_GEOM, OVERPASS_META. Combine by binary OR: ``OVERPASS_ID | OVERPASS_BBOX``. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX
+   * @param {string} [options.boundsRecurseSelector] should the 'bounds' parameter be applied to the "input" (default) set or the "result" set? This is important for recurse statements: if you have a query like "relation;node(r);", the relation would be the input set, the node part would be the result set.
    * @param {number} [options.split=0] If more than 'split' elements would be returned, split into several smaller requests, with 'split' elements each. Default: 0 (do not split)
    * @param {boolean} [options.members=false] Query relation members of. Default: false
    * @param {function} [options.memberCallback] For every member, call this callback function. (Requires options.members=true)

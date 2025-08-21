@@ -74,6 +74,7 @@ class RequestBBox extends Request {
           cacheDescriptor
         }
       })
+      console.log(this.cacheDescriptors)
 
       this.doneFeaturesSets = {}
       this.undecidedItems = null

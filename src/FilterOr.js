@@ -189,6 +189,9 @@ class FilterOr extends FilterStatement {
 
     return bounds
   }
+  
+  simplify (newFilter) {
+  }
 }
 
 filterPart.register('or', FilterOr)

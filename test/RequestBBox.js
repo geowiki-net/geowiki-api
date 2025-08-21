@@ -1492,6 +1492,7 @@ function test (options, callback) {
       }
     },
     function (err) {
+      console.log('[' + found.map(v => "'" + v + "'").join(', ') + ']')
       assert.equal(finalCalled++, 0, 'Final function called ' + finalCalled + ' times!')
       if (err) {
         return callback(err)
@@ -1502,7 +1503,6 @@ function test (options, callback) {
       }
 
       const expectedCount = 'expectedCount' in options ? options.expectedCount : options.expected.length
-      console.log(found.length)
       assert.equal(found.length, expectedCount, 'Wrong count of objects returned')
       assert.equal(request.count, expectedCount, 'request\'s count should equal ' + expectedCount)
 

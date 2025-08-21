@@ -420,6 +420,7 @@ class OverpassFrontend {
     }
 
     const query = context.queryOptions + ';\n' + context.query
+    console.log(query)
 
     setTimeout(function () {
       httpLoad(

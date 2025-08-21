@@ -39,6 +39,10 @@ describe("Filter sets, compile", function () {
     ])
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' }])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'nwr["amenity"];'
+      )
   })
   it ('node[amenity];way._;', function () {
     var f = new Filter('node[amenity];way._;')
@@ -107,6 +111,10 @@ describe("Filter sets, compile", function () {
     })
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [])
+    assert.deepEqual(
+      f.simplify().toString(),
+      null
+    )
   })
   it ('nwr[amenity]->.a;', function () {
     var f = new Filter('nwr[amenity]->.a;')
@@ -149,6 +157,10 @@ describe("Filter sets, compile", function () {
     assert.deepEqual(r, [ ])
     r = f.cacheDescriptors({ set: 'a' })
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' }])
+    assert.deepEqual(
+      f.simplify().toString(),
+      null
+    )
   })
   it ('(nwr[amenity];)->.a;', function () {
     var f = new Filter('(nwr[amenity];)->.a;')
@@ -186,6 +198,10 @@ describe("Filter sets, compile", function () {
     })
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'node(properties:4);'
+      )
   })
   it ('(nwr[amenity]->.a;);', function () {
     var f = new Filter('(nwr[amenity]->.a;);')
@@ -228,6 +244,10 @@ describe("Filter sets, compile", function () {
     })
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'node(properties:4);'
+      )
   })
   it ('(nwr[amenity](1,1,2,2)->.a;);', function () {
     var f = new Filter('(nwr[amenity](1,1,2,2)->.a;);')
@@ -285,6 +305,10 @@ describe("Filter sets, compile", function () {
     })
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:9)', bounds: { type: 'Polygon', coordinates: [[[1,1],[2,1],[2,2],[1,2],[1,1]]] } } ])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'node(properties:4);'
+      )
   })
   it ('(nwr[amenity](1,1,2,2)->.a;);node._[cuisine];', function () {
     var f = new Filter('(nwr[amenity](1,1,2,2)->.a;);node._[cuisine];')
@@ -360,6 +384,10 @@ describe("Filter sets, compile", function () {
     ]})
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'node["amenity"]["cuisine"](properties:9)', bounds: { type: 'Polygon', coordinates: [[[1,1],[2,1],[2,2],[1,2],[1,1]]] } } ])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'node(properties:4);'
+      )
   })
   it ('nwr[amenity]->.a;nwr.a[cuisine];', function () {
     var f = new Filter('nwr[amenity]->.a;nwr.a[cuisine];')
@@ -415,6 +443,10 @@ describe("Filter sets, compile", function () {
     assert.deepEqual(r, [ { id: 'nwr["amenity"]["cuisine"](properties:1)' }])
     var r = f.cacheDescriptors({set: 'a'})
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' }])
+      assert.deepEqual(
+        f.simplify().toString(),
+        'node(properties:4);'
+      )
   })
   it ('nwr[a]->.a;(nwr[b]->.b;nwr.a[b];);', function () {
     var f = new Filter('nwr[a]->.a;(nwr[b]->.b;nwr.a[b];);')
@@ -463,6 +495,10 @@ describe("Filter sets, compile", function () {
       { id: 'nwr["b"](properties:1)' },
       { id: 'nwr["a"]["b"](properties:1)' }
     ])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('(nwr[a]->.a;(nwr[b]->.b;nwr.a[b]););', function () {
     var f = new Filter('(nwr[a]->.a;(nwr[b]->.b;nwr.a[b];););')
@@ -530,6 +566,10 @@ describe("Filter sets, compile", function () {
       { id: 'nwr["b"](properties:1)' },
       { id: 'nwr["a"]["b"](properties:1)' }
     ])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('(nwr[a]->.a;(nwr[b]->.b;nwr.a[b]);)->.a;', function () {
     var f = new Filter('(nwr[a]->.a;(nwr[b]->.b;nwr.a[b];);)->.a;')
@@ -612,6 +652,10 @@ describe("Filter sets, compile", function () {
       { id: 'nwr["b"](properties:1)' },
       { id: 'nwr["a"]["b"](properties:1)' }
     ])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('nwr.a[amenity];', function () {
     var f = new Filter('nwr.a[amenity];')
@@ -647,6 +691,10 @@ describe("Filter sets, compile", function () {
     ])
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('nwr.a.b[amenity]', function () {
     var f = new Filter('nwr.a.b[amenity]')
@@ -682,6 +730,10 @@ describe("Filter sets, compile", function () {
     ])
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('nwr[amenity]->.a;nwr[xxx]->.b;nwr.a.b[cuisine];', function () {
     var f = new Filter('nwr[amenity]->.a;nwr[xxx]->.b;nwr.a.b[cuisine];')
@@ -735,6 +787,10 @@ describe("Filter sets, compile", function () {
     ])
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"]["xxx"]["cuisine"](properties:1)' }])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
 }) 
 
@@ -799,6 +855,10 @@ describe("Filter sets with relations, compile", function () {
         ]
       }
     ])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('nwr[amenity];>', function () {
     var f = new Filter('nwr[amenity];>')
@@ -876,6 +936,10 @@ describe("Filter sets with relations, compile", function () {
         }]
       }
     ])
+    assert.deepEqual(
+      f.simplify().toString(),
+      'node(properties:4);'
+    )
   })
   it ('way[amenity];>;', function () {
     var f = new Filter('way[amenity];>;')

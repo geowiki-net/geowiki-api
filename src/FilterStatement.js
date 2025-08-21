@@ -15,4 +15,8 @@ module.exports = class FilterStatement {
   possibleBounds (ob) {
     return null
   }
+
+  simplify () {
+    return this
+  }
 }

@@ -570,6 +570,14 @@ class Filter {
     return statement ? statement.derefSets() : []
   }
 
+  simplify (options = {}) {
+    const newFilter = new Filter()
+
+    const statement = this.getStatement(options)
+    const s = statement.simplify(newFilter)
+    return new Filter(s.fullString())
+  }
+
   /**
    * returns possible bounds for this object as GeoJSON
    * @param {OverpassObject} ob the object to test against

@@ -611,6 +611,10 @@ class OverpassFrontend {
       bounds = bbox
     }
 
+    if (!options) {
+      options = {}
+    }
+
     if (bbox.minlon > bbox.maxlon) {
       const bbox1 = new BoundingBox(bbox)
       bbox1.maxlon = 180

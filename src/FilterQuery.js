@@ -643,8 +643,9 @@ class FilterQuery extends FilterStatement {
       filters: []
     }]
 
-    if (this.inputSets) {
-      Object.values(this.inputSets).forEach(set => {
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.values(inputSets).forEach(set => {
         if (!set.set) {
           result = []
           return
@@ -759,6 +760,62 @@ class FilterQuery extends FilterStatement {
     })
 
     return bounds
+  }
+
+  simplify (newFilter) {
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    console.log('BASE', this.filter.baseFilter)
+    const toMerge = []
+    const notMerge = {}
+
+    if (inputSets) {
+      Object.entries(inputSets).forEach(([inputSetId, inputSet]) => {
+        if (inputSet.recurse) {
+          notMerge[inputSetId] = inputSet
+        } else {
+          toMerge.push(inputSet)
+        }
+      })
+    }
+
+    if (!toMerge.length) {
+      if (Object.keys(notMerge).length) {
+        const result = new FilterQuery([], newFilter)
+        result.type = this.type
+        result.inputSets = {}
+        result.outputSet = this.outputSet
+        result.filters = this.filters ?? []
+
+        Object.entries(notMerge).forEach(([ iId, i]) => {
+          result.inputSets[iId] = {
+            set: i.set.simplify(),
+            recurse: i.recurse
+          }
+        })
+
+        return result
+      }
+
+      return this
+    }
+
+    const result = new FilterQuery([], newFilter)
+    result.type = this.type
+    result.inputSets = notMerge
+    result.outputSet = this.outputSet
+    result.filters = this.filters ?? []
+
+    toMerge.forEach(inputSet => {
+      result.filters = result.filters.concat(inputSet.set.filters ?? [])
+      result.type = andTypes(result.type, inputSet.set.type)
+      if (inputSet.set.inputSets) {
+        Object.entries(inputSet.set.inputSets).forEach(([ iId, i]) => {
+          result.inputSets[iId] = i
+        })
+      }
+    })
+
+    return result.simplify()
   }
 }
 

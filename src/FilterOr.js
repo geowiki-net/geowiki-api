@@ -191,6 +191,22 @@ class FilterOr extends FilterStatement {
   }
   
   simplify (newFilter) {
+    const result = new FilterOr({ or: [] }, newFilter)
+    result.outputSet = this.outputSet
+    this.requiredInputSets().forEach(stmt => {
+      newFilter.sets[stmt.outputSet] = stmt
+    })
+    console.log(Object.keys(newFilter.sets))
+    result.parts = this.parts.map(part => part.simplify(newFilter))
+
+    console.log('REQ', this.requiredInputSets())
+
+    result.parts.forEach(part => {
+      newFilter.script.splice(newFilter.script.indexOf(part), 1)
+    })
+    newFilter.script.push(result)
+
+    return result
   }
 }
 

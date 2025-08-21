@@ -16,7 +16,7 @@ module.exports = class FilterStatement {
     return null
   }
 
-  simplify () {
+  simplify (newFilter) {
     return this
   }
 }

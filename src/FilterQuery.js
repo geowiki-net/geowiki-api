@@ -764,7 +764,6 @@ class FilterQuery extends FilterStatement {
 
   simplify (newFilter) {
     const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
-    console.log('BASE', this.filter.baseFilter)
     const toMerge = []
     const notMerge = {}
 
@@ -788,12 +787,24 @@ class FilterQuery extends FilterStatement {
 
         Object.entries(notMerge).forEach(([ iId, i]) => {
           result.inputSets[iId] = {
-            set: i.set.simplify(),
+            set: i.set.simplify(newFilter),
             recurse: i.recurse
+          }
+
+          if (!newFilter.script.includes(this)) {
+            newFilter.script.push(result.inputSets[iId].set)
           }
         })
 
+        if (!newFilter.script.includes(this)) {
+          newFilter.script.push(result)
+        }
+
         return result
+      }
+
+      if (!newFilter.script.includes(this)) {
+        newFilter.script.push(this)
       }
 
       return this
@@ -815,7 +826,9 @@ class FilterQuery extends FilterStatement {
       }
     })
 
-    return result.simplify()
+    let stmt = result.simplify(newFilter)
+    newFilter.script.push(stmt)
+    return stmt
   }
 }
 

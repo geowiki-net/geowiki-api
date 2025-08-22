@@ -762,73 +762,44 @@ class FilterQuery extends FilterStatement {
     return bounds
   }
 
-  simplify (newFilter) {
+  simplify () {
     const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
     const toMerge = []
     const notMerge = {}
 
     if (inputSets) {
       Object.entries(inputSets).forEach(([inputSetId, inputSet]) => {
-        if (inputSet.recurse) {
+        if (inputSet.recurse || !(inputSet.set instanceof FilterQuery)) {
           notMerge[inputSetId] = inputSet
         } else {
-          toMerge.push(inputSet)
+          toMerge[inputSetId] = inputSet
         }
       })
     }
 
-    if (!toMerge.length) {
-      if (Object.keys(notMerge).length) {
-        const result = new FilterQuery([], newFilter)
-        result.type = this.type
-        result.inputSets = {}
-        result.outputSet = this.outputSet
-        result.filters = this.filters ?? []
+    Object.values(notMerge).forEach(inputSet => inputSet.set.simplify())
 
-        Object.entries(notMerge).forEach(([ iId, i]) => {
-          result.inputSets[iId] = {
-            set: i.set.simplify(newFilter),
-            recurse: i.recurse
-          }
-
-          if (!newFilter.script.includes(this)) {
-            newFilter.script.push(result.inputSets[iId].set)
-          }
-        })
-
-        if (!newFilter.script.includes(this)) {
-          newFilter.script.push(result)
-        }
-
-        return result
-      }
-
-      if (!newFilter.script.includes(this)) {
-        newFilter.script.push(this)
-      }
-
-      return this
+    if (!Object.keys(toMerge).length) {
+      return
     }
 
-    const result = new FilterQuery([], newFilter)
-    result.type = this.type
-    result.inputSets = notMerge
-    result.outputSet = this.outputSet
-    result.filters = this.filters ?? []
-
-    toMerge.forEach(inputSet => {
-      result.filters = result.filters.concat(inputSet.set.filters ?? [])
-      result.type = andTypes(result.type, inputSet.set.type)
+    Object.entries(toMerge).forEach(([inputSetId, inputSet]) => {
+      this.filters = this.filters.concat(inputSet.set.filters ?? [])
+      this.type = andTypes(this.type, inputSet.set.type)
       if (inputSet.set.inputSets) {
         Object.entries(inputSet.set.inputSets).forEach(([ iId, i]) => {
-          result.inputSets[iId] = i
+          this.inputSets[iId] = i
         })
       }
+
+      delete(this.inputSets[inputSetId])
+      if (this.filter.script.includes(inputSet.set)) {
+        this.filter.script.splice(this.filter.script.indexOf(inputSet.set), 1)
+      }
+      console.log(this.filter.script.length)
     })
 
-    let stmt = result.simplify(newFilter)
-    newFilter.script.push(stmt)
-    return stmt
+    this.simplify()
   }
 }
 

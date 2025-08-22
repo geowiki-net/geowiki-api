@@ -572,14 +572,10 @@ class Filter {
 
   simplify (options = {}) {
     console.log('START', this)
-    const newFilter = new Filter({})
-    newFilter.script = []
 
     const statement = this.getStatement(options)
-    const s = statement.simplify(newFilter)
-    console.log('FINAL', newFilter.script)
-   // console.log(newFilter.sets)
-    return newFilter
+    const s = statement.simplify()
+    console.log('FINAL', this.script)
   }
 
   /**

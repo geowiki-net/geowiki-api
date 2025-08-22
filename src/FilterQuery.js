@@ -788,15 +788,12 @@ class FilterQuery extends FilterStatement {
     }
 
     Object.entries(toMerge).forEach(([inputSetId, inputSet]) => {
-      this.filters = this.filters.concat(inputSet.set.filters ?? [])
-      this.type = andTypes(this.type, inputSet.set.type)
-      if (inputSet.set.inputSets) {
-        Object.entries(inputSet.set.inputSets).forEach(([ iId, i]) => {
-          this.inputSets[iId] = i
-        })
+      this.merge(inputSet.set)
+
+      if (this.inputSets[inputSetId].set === inputSet.set) {
+        delete(this.inputSets[inputSetId])
       }
 
-      delete(this.inputSets[inputSetId])
       this.filter._removeStatement(inputSet.set)
     })
 
@@ -812,6 +809,16 @@ class FilterQuery extends FilterStatement {
     result.filters = [ ...this.filters ]
 
     return result
+  }
+
+  mergeable (statement) {
+    return statement instanceof FilterQuery
+  }
+
+  merge (statement) {
+    this.type = andTypes(this.type, statement.type)
+    this.filters = this.filters.concat(statement.filters)
+    this.inputSets = { ...this.inputSets ?? {}, ...statement.inputSets ?? {} }
   }
 }
 

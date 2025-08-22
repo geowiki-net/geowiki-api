@@ -206,9 +206,14 @@ class FilterOr extends FilterStatement {
     }
 
     const toReplace = usage[0]
+    const notMergeable = this.parts.filter(part => !part.mergeable(toReplace))
+    if (notMergeable.length) {
+      return
+    }
+
     this.parts.forEach(part => {
-      part.filters = part.filters.concat(toReplace.filters)
-      part.inputSets = { ...part.inputSets, ...toReplace.inputSets }
+      part.merge(toReplace)
+
       Object.entries(part.inputSets).forEach(([id, inputSet]) => {
         if (inputSet.set === this) {
           delete(part.inputSets[id])
@@ -216,9 +221,7 @@ class FilterOr extends FilterStatement {
       })
     })
 
-    this.filter._replaceStatement(toReplace, this)
     this.outputSet = toReplace.outputSet
-    delete this.filter.statements[toReplace.id]
     this.filter._removeStatement(toReplace)
 
     this.simplify()

@@ -19,4 +19,8 @@ module.exports = class FilterStatement {
   simplify (newFilter) {
     return this
   }
+
+  mergeable (statement) {
+    return false
+  }
 }

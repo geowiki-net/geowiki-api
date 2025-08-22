@@ -606,6 +606,15 @@ class Filter {
         })
       }
     })
+
+    if (this.script.includes(replace)) {
+      const pos = this.script.indexOf(replace)
+      if (this.script.includes(by)) {
+        this.script.splice(pos, 1)
+      } else {
+        this.script[pos] = by
+      }
+    }
   }
 
   _removeStatement (statement) {

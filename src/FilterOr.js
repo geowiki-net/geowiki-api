@@ -194,6 +194,12 @@ class FilterOr extends FilterStatement {
   simplify () {
     this.parts.forEach(part => part.simplify())
 
+    if (this.parts.length === 1) {
+      this.filter._replaceStatement(this, this.parts[0])
+      this.parts[0].simplify()
+      return
+    }
+
     const usage = this.filter._statementUsage(this)
     if (usage.length !== 1 || !usage[0].clone) {
       return

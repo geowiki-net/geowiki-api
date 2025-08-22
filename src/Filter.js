@@ -589,6 +589,53 @@ class Filter {
     const statement = this.getStatement(options)
     return statement.possibleBounds(ob, options)
   }
+
+  _replaceStatement (replace, by) {
+    Object.entries(this.sets).forEach(([id, stmt]) => {
+      if (stmt === replace) {
+        this.sets[id] = by
+      }
+    })
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === replace) {
+            inputSet.set = by
+          }
+        })
+      }
+    })
+  }
+
+  _removeStatement (statement) {
+    if (this.script.includes(statement)) {
+      this.script.splice(this.script.indexOf(statement), 1)
+    }
+
+    Object.entries(this.sets)
+      .forEach(([id, stmt]) => {
+        if (stmt === statement) {
+          delete this.sets[id]
+        }
+      })
+  }
+
+  _statementUsage (statement) {
+    const result = []
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === statement) {
+            result.push(stmt)
+          }
+        })
+      }
+    })
+
+    return result
+  }
 }
 
 function compileCacheDescriptors (result) {

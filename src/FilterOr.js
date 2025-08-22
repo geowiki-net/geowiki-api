@@ -7,6 +7,7 @@ class FilterOr extends FilterStatement {
     super(def, filter)
     this.outputSet = '_'
     this.parts = []
+    this.filter = filter
 
     let hasOutputSet = false
     def.or.forEach(part => {
@@ -192,6 +193,29 @@ class FilterOr extends FilterStatement {
 
   simplify () {
     this.parts.forEach(part => part.simplify())
+
+    const usage = this.filter._statementUsage(this)
+    if (usage.length !== 1 || !usage[0].clone) {
+      return
+    }
+
+    const toReplace = usage[0]
+    this.parts.forEach(part => {
+      part.filters = part.filters.concat(toReplace.filters)
+      part.inputSets = { ...part.inputSets, ...toReplace.inputSets }
+      Object.entries(part.inputSets).forEach(([id, inputSet]) => {
+        if (inputSet.set === this) {
+          delete(part.inputSets[id])
+        }
+      })
+    })
+
+    this.filter._replaceStatement(toReplace, this)
+    this.outputSet = toReplace.outputSet
+    delete this.filter.statements[toReplace.id]
+    this.filter._removeStatement(toReplace)
+
+    this.simplify()
   }
 }
 

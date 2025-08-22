@@ -22,14 +22,18 @@ class FilterQuery extends FilterStatement {
     super(def, filter)
     this.filter = filter
 
-    if (!Array.isArray(def)) {
-      def = [def]
-    }
-
     this.inputSets = {}
     this.outputSet = '_'
     this.type = 'nwr'
     this.filters = []
+
+    if (def === null) {
+      return
+    }
+
+    if (!Array.isArray(def)) {
+      def = [def]
+    }
 
     let hasType = false
     let hasOutputSet = false
@@ -793,13 +797,21 @@ class FilterQuery extends FilterStatement {
       }
 
       delete(this.inputSets[inputSetId])
-      if (this.filter.script.includes(inputSet.set)) {
-        this.filter.script.splice(this.filter.script.indexOf(inputSet.set), 1)
-      }
-      console.log(this.filter.script.length)
+      this.filter._removeStatement(inputSet.set)
     })
 
     this.simplify()
+  }
+
+  clone () {
+    const result = new FilterQuery(null, this.filter)
+
+    result.inputSets = { ...this.inputSets }
+    result.outputSet = this.outputSet
+    result.type = this.type
+    result.filters = [ ...this.filters ]
+
+    return result
   }
 }
 

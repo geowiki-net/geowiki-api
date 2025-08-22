@@ -618,6 +618,8 @@ class Filter {
   }
 
   _removeStatement (statement) {
+    delete this.statements[statement.id]
+
     if (this.script.includes(statement)) {
       this.script.splice(this.script.indexOf(statement), 1)
     }

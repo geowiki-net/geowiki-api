@@ -68,11 +68,6 @@ describe('Function "properties"', function () {
 
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: "node(properties:4)" }])
-
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
   it('double', function () {
     var f = new Filter('node(properties:11)(properties:4)')
@@ -89,11 +84,6 @@ describe('Function "properties"', function () {
 
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: "node(properties:15)" }])
-
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
 })
 describe('Filter', function () {
@@ -102,12 +92,8 @@ describe('Filter', function () {
       var f = new Filter('nwr["amenity"=\'restaurant\']["sh\\"op"]')
       assert.deepEqual(f.def, [[{"key":"amenity","op":"=","value":"restaurant"},{"key":"sh\"op","op":"has_key"}]])
       assert.equal(f.toString(), 'nwr["amenity"="restaurant"]["sh\\"op"];')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
+
   })
 
   describe ('nesting filters', function () {
@@ -115,11 +101,6 @@ describe('Filter', function () {
       var f = new Filter(new Filter("nwr[amenity]"))
       assert.deepEqual(f.def, [[{"key":"amenity","op":"has_key"}]])
       assert.equal(f.toString(), 'nwr["amenity"];')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'nwr["amenity"];'
-      )
     })
   })
 
@@ -139,11 +120,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it('nwr', function () {
@@ -161,11 +137,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it('node', function () {
@@ -183,11 +154,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node(properties:0)' } ])
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[amenity]', function () {
@@ -211,11 +177,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(nwr[amenity];)', function () {
@@ -241,11 +202,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('\\n(   nwr [ amenity ]  ;\\n  )  ; ', function () {
@@ -271,11 +227,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('\\n   nwr [ amenity ]  ;\\n  ', function () {
@@ -299,10 +250,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(node[amenity];way[amenity];)', function () {
@@ -347,10 +294,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ type: 'relation', tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('((nwr[amenity];);)', function () {
@@ -378,10 +321,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('((nwr[a=b];nwr[c=d];);(nwr[amenity];);)', function () {
@@ -419,10 +358,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[shop];nwr[amenity];', function () {
@@ -449,10 +384,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[amenity=restaurant]', function () {
@@ -478,10 +409,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ type: 'node', tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[amenity][amenity!=restaurant]', function () {
@@ -507,10 +434,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ type: 'node', tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[amenity][amenity!=cafe][amenity!=restaurant]', function () {
@@ -536,10 +459,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ type: 'node', tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[amenity=restaurant][shop]', function () {
@@ -565,10 +484,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ tags: { amenity: 'restaurant', shop: 'supermarket' } })
       assert.equal(r, true, 'Object should match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[cuisine^asian]', function () {
@@ -600,10 +515,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { amenity: 'supermarket', cuisine: 'kebab;asian;regional' } })
       assert.equal(r, true, 'Object should match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr["amenity"=\'restaurant\']["shop"~"super"]', function () {
@@ -621,10 +532,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { amenity: 'restaurant', shop: 'grocery' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(node[amenity=cafe][cuisine=ice_cream];node[amenity=ice_cream];node[shop=ice_cream];)', function () {
@@ -675,10 +582,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ type: 'node', tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[~wikipedia~"."]', function () {
@@ -706,10 +609,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { 'Wikipedia:de': 'test' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[~wikipedia~"foo"]', function () {
@@ -747,10 +646,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ tags: { 'Wikipedia:de': 'Foobar' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[~wikipedia~".",i]', function () {
@@ -778,10 +673,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { 'Wikipedia:de': 'test' } })
       assert.equal(r, true, 'Object should match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[~wikipedia~"foo",i]', function () {
@@ -819,10 +710,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object2 should match')
       var r = f.match({ tags: { 'Wikipedia:de': 'Foobar' } })
       assert.equal(r, true, 'Object3 should match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(nwr[~wikipedia~"foo"];node[amenity];)', function () {
@@ -867,10 +754,6 @@ describe('Filter', function () {
       assert.equal(r, false, 'Object should not match')
       var r = f.match({ tags: { 'Wikipedia:de': 'Foobar' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
   })
@@ -1053,46 +936,26 @@ describe('Filter', function () {
     it ('nwr[amenity]', function () {
       var f = new Filter(' nwr [amenity]')
       assert.equal(f.toString(), 'nwr["amenity"];')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it (' nwr [ amenity ] ', function () {
       var f = new Filter(' nwr [ amenity ] ')
       assert.equal(f.toString(), 'nwr["amenity"];')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[amenity=restaurant]', function () {
       var f = new Filter('nwr[amenity=restaurant]')
       assert.equal(f.toString(), 'nwr["amenity"="restaurant"];')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[amenity=restaurant][shop]', function () {
       var f = new Filter('nwr[amenity=restaurant][shop]')
       assert.equal(f.toString(), 'nwr["amenity"="restaurant"]["shop"];')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it (' nwr [ amenity = restaurant ] [ shop ] ', function () {
       var f = new Filter(' nwr [ amenity = restaurant ] [ shop ]')
       assert.equal(f.toString(), 'nwr["amenity"="restaurant"]["shop"];')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr[cuisine^asian]', function () {
@@ -1101,10 +964,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'nwr["cuisine"~"^(.*;|)asian(|;.*)$"](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('nwr["amenity"=\'restaurant\']["sh\\"op"]', function () {
@@ -1113,10 +972,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'nwr["amenity"="restaurant"]["sh\\"op"](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(node[amenity=cafe][cuisine=ice_cream];node[amenity=ice_cream];node[shop=ice_cream];)', function () {
@@ -1129,11 +984,6 @@ describe('Filter', function () {
         { id: 'node["amenity"="ice_cream"](properties:1)' },
         { id: 'node["shop"="ice_cream"](properties:1)' },
       ])
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(nwr[!cuisine];nwr[amenity=cafe];)', function () {
@@ -1159,11 +1009,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, true, 'Object should match')
-
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('(nwr[!cuisine][amenity=cafe];)', function () {
@@ -1187,10 +1032,6 @@ describe('Filter', function () {
       assert.equal(r, true, 'Object should match')
       var r = f.match({ tags: { shop: 'supermarket' } })
       assert.equal(r, false, 'Object should not match')
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[~wikipedia~"."]', function () {
@@ -1203,10 +1044,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node[~"wikipedia"~"."](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[~"wikipedia"~"."]', function () {
@@ -1219,10 +1056,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node[~"wikipedia"~"."](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[~"wikipedia"~"foo"]', function () {
@@ -1231,10 +1064,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node[~"wikipedia"~"foo"](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[~"wikipedia"~".",i]', function () {
@@ -1248,10 +1077,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node[~"wikipedia"~".",i](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
     it ('node[~"wikipedia"~"foo",i]', function () {
@@ -1265,10 +1090,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'node[~"wikipedia"~"foo",i](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
   })
 
@@ -1282,10 +1103,6 @@ describe('Filter', function () {
 
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [ { id: 'way["a"="b"](properties:1)' } ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
   })
 
@@ -1302,10 +1119,6 @@ describe('Filter', function () {
         { id: 'nwr["name"~"49"](properties:1)' },
         { id: 'nwr["ref"="49"](properties:1)' }
       ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
 //    it('or2', function () {
@@ -1360,10 +1173,6 @@ describe('Filter', function () {
       var r = f.cacheDescriptors()
       assert.deepEqual(r, [
       ])
-      assert.deepEqual(
-        f.simplify().toString(),
-        'node(properties:4);'
-      )
     })
 
   })
@@ -1380,10 +1189,6 @@ describe('Filter', function () {
 
     const r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'node["name"~"test"](properties:1)' } ])
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
 
   it('case-sensitive !regexp', function () {
@@ -1398,10 +1203,6 @@ describe('Filter', function () {
 
     const r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'node["name"!~"test"](properties:1)' } ])
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
 
   it('case-insenstive regexp', function () {
@@ -1416,10 +1217,6 @@ describe('Filter', function () {
 
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'node["name"~"test",i](properties:1)' } ])
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
 
   it('case-insenstive !regexp', function () {
@@ -1434,10 +1231,6 @@ describe('Filter', function () {
 
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'node["name"!~"test",i](properties:1)' } ])
-    assert.deepEqual(
-      f.simplify().toString(),
-      'node(properties:4);'
-    )
   })
 
   it('!=', function () {

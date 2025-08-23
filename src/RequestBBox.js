@@ -68,13 +68,15 @@ class RequestBBox extends Request {
         }
       }
 
+      this.lokiQuery = new Filter(this.lokiQuery)
+      this.lokiQuery.simplify()
+
       this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
         return {
           cache: this.overpass.bboxQueryCache.get(cacheDescriptor),
           cacheDescriptor
         }
       })
-      console.log(this.cacheDescriptors)
 
       this.doneFeaturesSets = {}
       this.undecidedItems = null

@@ -222,7 +222,7 @@ class FilterOr extends FilterStatement {
     })
 
     this.outputSet = toReplace.outputSet
-    this.filter._removeStatement(toReplace)
+    this.filter._replaceStatement(toReplace, this)
 
     this.simplify()
   }

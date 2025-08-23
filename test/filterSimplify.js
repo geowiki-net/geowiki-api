@@ -32,11 +32,11 @@ const list = {
   },
   '(way[c];way[d];)->._2;nwr._2[a];': {
     str: '(way["c"]["a"];way["d"]["a"];);',
-    loki: {"$not":true}, // TODO
+    loki: {"$or":[{"type":{"$eq":"way"},"tags.c":{"$exists":true},"tags.a":{"$exists":true}},{"type":{"$eq":"way"},"tags.d":{"$exists":true},"tags.a":{"$exists":true}}]},
   },
   '(way[c];way[d];)->._2;nwr._2[a];nwr._[b];': {
     str: '(way["c"]["b"]["a"];way["d"]["b"]["a"];);',
-    loki: {"$not":true}, // TODO
+    loki: {"$or":[{"type":{"$eq":"way"},"tags.c":{"$exists":true},"tags.b":{"$exists":true},"tags.a":{"$exists":true}},{"type":{"$eq":"way"},"tags.d":{"$exists":true},"tags.b":{"$exists":true},"tags.a":{"$exists":true}}]},
   },
   'relation->._a;(node(r._a)[a];way[b];);': {
     str: 'relation->._a;(node(r._a)["a"];way["b"];);',
@@ -44,7 +44,7 @@ const list = {
   },
   'nwr(48.195,16.335,48.2,16.345)->._base;nwr._base["cuisine"]->._base;(node._base["amenity"="restaurant"];way._base["amenity"="restaurant"];relation._base["amenity"="restaurant"];);nwr._(properties:13);': {
     str: '(node["amenity"="restaurant"]["cuisine"](48.195,16.335,48.2,16.345)(properties:13);way["amenity"="restaurant"]["cuisine"](48.195,16.335,48.2,16.345)(properties:13);relation["amenity"="restaurant"]["cuisine"](48.195,16.335,48.2,16.345)(properties:13););',
-    loki: {"$not":true}, // TODO
+    loki: {"$or":[{"type":{"$eq":"node"},"tags.amenity":{"$eq":"restaurant"},"tags.cuisine":{"$exists":true},"$and":[{"minlat":{"$lte":48.2},"minlon":{"$lte":16.345},"maxlat":{"$gte":48.195},"maxlon":{"$gte":16.335}}]},{"type":{"$eq":"way"},"tags.amenity":{"$eq":"restaurant"},"tags.cuisine":{"$exists":true},"$and":[{"minlat":{"$lte":48.2},"minlon":{"$lte":16.345},"maxlat":{"$gte":48.195},"maxlon":{"$gte":16.335}}]},{"type":{"$eq":"relation"},"tags.amenity":{"$eq":"restaurant"},"tags.cuisine":{"$exists":true},"$and":[{"minlat":{"$lte":48.2},"minlon":{"$lte":16.345},"maxlat":{"$gte":48.195},"maxlon":{"$gte":16.335}}]}],"needMatch":true},
   },
 }
 

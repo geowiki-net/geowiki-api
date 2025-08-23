@@ -615,6 +615,8 @@ class Filter {
         this.script[pos] = by
       }
     }
+
+    this._removeStatement(replace)
   }
 
   _removeStatement (statement) {

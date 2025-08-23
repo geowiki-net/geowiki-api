@@ -818,7 +818,19 @@ class FilterQuery extends FilterStatement {
   merge (statement) {
     this.type = andTypes(this.type, statement.type)
     this.filters = this.filters.concat(statement.filters)
-    this.inputSets = { ...this.inputSets ?? {}, ...statement.inputSets ?? {} }
+    if (!this.inputSets) {
+      this.inputSets = {}
+    }
+
+    Object.entries(statement.inputSets ?? {}).forEach(([iId, i]) => {
+      // to avoid overwritting inputSets, rename
+      if (this.inputSets[iId]) {
+        iId = '_' + i.set.id
+        i.set.outputSet = iId
+      }
+
+      this.inputSets[iId] = i
+    })
   }
 }
 

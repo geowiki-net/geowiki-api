@@ -643,8 +643,9 @@ class FilterQuery extends FilterStatement {
       filters: []
     }]
 
-    if (this.inputSets) {
-      Object.values(this.inputSets).forEach(set => {
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.values(inputSets).forEach(set => {
         if (!set.set) {
           result = []
           return

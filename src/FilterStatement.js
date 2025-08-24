@@ -31,4 +31,10 @@ module.exports = class FilterStatement {
    */
   merge (statement) {
   }
+
+  /**
+   * Conflate this statement with nearby statements if possible.
+   */
+  conflate () {
+  }
 }

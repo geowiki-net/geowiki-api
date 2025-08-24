@@ -789,6 +789,46 @@ class FilterQuery extends FilterStatement {
       this.inputSets[iId] = i
     })
   }
+
+  conflate () {
+    // list which statements from inputSets can be merged or not
+    const toMerge = []
+    const notMerge = {}
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.entries(inputSets).forEach(([inputSetId, inputSet]) => {
+        if (inputSet.recurse || !this.mergeable(inputSet.set)) {
+          notMerge[inputSetId] = inputSet
+        } else {
+          toMerge[inputSetId] = inputSet
+        }
+      })
+    }
+
+    // conflate all statements which can not be merged
+    Object.values(notMerge).forEach(inputSet => inputSet.set.conflate())
+
+    // no statements can be conflated -> return
+    if (!Object.keys(toMerge).length) {
+      return
+    }
+
+    // for each statement, merge and remove
+    Object.entries(toMerge).forEach(([inputSetId, inputSet]) => {
+      this.merge(inputSet.set)
+
+      if (this.inputSets[inputSetId].set === inputSet.set) {
+        delete(this.inputSets[inputSetId])
+      }
+
+      this.filter._removeStatement(inputSet.set)
+    })
+
+    // try to conflate again
+    this.conflate()
+  }
+
 }
 
 filterPart.register('default', FilterQuery)

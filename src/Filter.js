@@ -571,6 +571,16 @@ class Filter {
   }
 
   /**
+   * Conflate statements reduce length of script and make the query faster.
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should be queried.
+   */
+  conflate (options = {}) {
+    const statement = this.getStatement(options)
+    statement.conflate()
+  }
+
+  /**
    * returns possible bounds for this object as GeoJSON
    * @param {OverpassObject} ob the object to test against
    * @param {object} [options] Additional options

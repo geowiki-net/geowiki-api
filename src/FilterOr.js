@@ -7,6 +7,7 @@ class FilterOr extends FilterStatement {
     super(def, filter)
     this.outputSet = '_'
     this.parts = []
+    this.filter = filter
 
     let hasOutputSet = false
     def.or.forEach(part => {
@@ -188,6 +189,50 @@ class FilterOr extends FilterStatement {
     })
 
     return bounds
+  }
+
+  conflate () {
+    // first, conflate all parts
+    this.parts.forEach(part => part.conflate())
+
+    // if there's only one part, replace this statement by its only part
+    if (this.parts.length === 1) {
+      this.filter._replaceStatement(this, this.parts[0])
+      this.parts[0].conflate()
+      return
+    }
+
+    // if this statement is used by several statements, do not conflate
+    const usage = this.filter._statementUsage(this)
+    if (usage.length !== 1) {
+      return
+    }
+
+    // take the only dependant and check if it can be merged into
+    // each part.
+    const toReplace = usage[0]
+    const notMergeable = this.parts.filter(part => !part.mergeable(toReplace))
+    if (notMergeable.length) {
+      return
+    }
+
+    // merge the dependant into each part.
+    this.parts.forEach(part => {
+      part.merge(toReplace)
+
+      Object.entries(part.inputSets).forEach(([id, inputSet]) => {
+        if (inputSet.set === this) {
+          delete(part.inputSets[id])
+        }
+      })
+    })
+
+    // remove the dependant and adapt its dependants.
+    this.outputSet = toReplace.outputSet
+    this.filter._replaceStatement(toReplace, this)
+
+    // try to conflate again
+    this.conflate()
   }
 }
 

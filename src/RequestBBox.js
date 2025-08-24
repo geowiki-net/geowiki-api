@@ -68,6 +68,9 @@ class RequestBBox extends Request {
         }
       }
 
+      this.lokiQuery = new Filter(this.lokiQuery) // TODO: get rid of this statement
+      this.lokiQuery.conflate()
+
       this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
         return {
           cache: this.overpass.bboxQueryCache.get(cacheDescriptor),

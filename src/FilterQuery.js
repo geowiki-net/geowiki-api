@@ -643,8 +643,9 @@ class FilterQuery extends FilterStatement {
       filters: []
     }]
 
-    if (this.inputSets) {
-      Object.values(this.inputSets).forEach(set => {
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.values(inputSets).forEach(set => {
         if (!set.set) {
           result = []
           return
@@ -760,6 +761,74 @@ class FilterQuery extends FilterStatement {
 
     return bounds
   }
+
+  mergeable (statement) {
+    // only other FilterQuery can be merged
+    return statement instanceof FilterQuery
+  }
+
+  merge (statement) {
+    // merge type
+    this.type = andTypes(this.type, statement.type)
+
+    // merge filters
+    this.filters = this.filters.concat(statement.filters)
+
+    // merge inputSets
+    if (!this.inputSets) {
+      this.inputSets = {}
+    }
+
+    Object.entries(statement.inputSets ?? {}).forEach(([iId, i]) => {
+      // one nameclash, rename to avoid overwritting inputSets
+      if (this.inputSets[iId]) {
+        iId = '_' + i.set.id
+        i.set.outputSet = iId
+      }
+
+      this.inputSets[iId] = i
+    })
+  }
+
+  conflate () {
+    // list which statements from inputSets can be merged or not
+    const toMerge = []
+    const notMerge = {}
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.entries(inputSets).forEach(([inputSetId, inputSet]) => {
+        if (inputSet.recurse || !this.mergeable(inputSet.set)) {
+          notMerge[inputSetId] = inputSet
+        } else {
+          toMerge[inputSetId] = inputSet
+        }
+      })
+    }
+
+    // conflate all statements which can not be merged
+    Object.values(notMerge).forEach(inputSet => inputSet.set.conflate())
+
+    // no statements can be conflated -> return
+    if (!Object.keys(toMerge).length) {
+      return
+    }
+
+    // for each statement, merge and remove
+    Object.entries(toMerge).forEach(([inputSetId, inputSet]) => {
+      this.merge(inputSet.set)
+
+      if (this.inputSets[inputSetId].set === inputSet.set) {
+        delete(this.inputSets[inputSetId])
+      }
+
+      this.filter._removeStatement(inputSet.set)
+    })
+
+    // try to conflate again
+    this.conflate()
+  }
+
 }
 
 filterPart.register('default', FilterQuery)

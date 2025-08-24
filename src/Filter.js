@@ -571,6 +571,16 @@ class Filter {
   }
 
   /**
+   * Conflate statements reduce length of script and make the query faster.
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should be queried.
+   */
+  conflate (options = {}) {
+    const statement = this.getStatement(options)
+    statement.conflate()
+  }
+
+  /**
    * returns possible bounds for this object as GeoJSON
    * @param {OverpassObject} ob the object to test against
    * @param {object} [options] Additional options
@@ -580,6 +590,82 @@ class Filter {
   possibleBounds (ob, options = {}) {
     const statement = this.getStatement(options)
     return statement.possibleBounds(ob, options)
+  }
+
+  /**
+   * replace a statement 'replace' by another statement 'by'. The dependant
+   * statements will be modified to use the 'by' statement instead. The
+   * 'replace' statement will be removed.
+   * @param {FilterStatement} replace The statement to be replaced.
+   * @param {FilterStatement} by The statement which will replace.
+   */
+  _replaceStatement (replace, by) {
+    Object.entries(this.sets).forEach(([id, stmt]) => {
+      if (stmt === replace) {
+        this.sets[id] = by
+      }
+    })
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === replace) {
+            inputSet.set = by
+          }
+        })
+      }
+    })
+
+    if (this.script.includes(replace)) {
+      const pos = this.script.indexOf(replace)
+      if (this.script.includes(by)) {
+        this.script.splice(pos, 1)
+      } else {
+        this.script[pos] = by
+      }
+    }
+
+    this._removeStatement(replace)
+  }
+
+  /**
+   * The statement will be removed from this filter.
+   * @param {FilterStatement} statement The statement to be removed.
+   */
+  _removeStatement (statement) {
+    delete this.statements[statement.id]
+
+    if (this.script.includes(statement)) {
+      this.script.splice(this.script.indexOf(statement), 1)
+    }
+
+    Object.entries(this.sets)
+      .forEach(([id, stmt]) => {
+        if (stmt === statement) {
+          delete this.sets[id]
+        }
+      })
+  }
+
+  /**
+   * List all statements which depend on the given statement.
+   * @param {FilterStatement} statement The statement to be analyzed.
+   * @returns {FilterStatement[]} a list of all statements which depend on this statement.
+   */
+  _statementUsage (statement) {
+    const result = []
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === statement) {
+            result.push(stmt)
+          }
+        })
+      }
+    })
+
+    return result
   }
 }
 

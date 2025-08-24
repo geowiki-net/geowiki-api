@@ -222,7 +222,7 @@ class FilterOr extends FilterStatement {
 
       Object.entries(part.inputSets).forEach(([id, inputSet]) => {
         if (inputSet.set === this) {
-          delete(part.inputSets[id])
+          delete (part.inputSets[id])
         }
       })
     })

@@ -761,6 +761,34 @@ class FilterQuery extends FilterStatement {
 
     return bounds
   }
+
+  mergeable (statement) {
+    // only other FilterQuery can be merged
+    return statement instanceof FilterQuery
+  }
+
+  merge (statement) {
+    // merge type
+    this.type = andTypes(this.type, statement.type)
+
+    // merge filters
+    this.filters = this.filters.concat(statement.filters)
+
+    // merge inputSets
+    if (!this.inputSets) {
+      this.inputSets = {}
+    }
+
+    Object.entries(statement.inputSets ?? {}).forEach(([iId, i]) => {
+      // one nameclash, rename to avoid overwritting inputSets
+      if (this.inputSets[iId]) {
+        iId = '_' + i.set.id
+        i.set.outputSet = iId
+      }
+
+      this.inputSets[iId] = i
+    })
+  }
 }
 
 filterPart.register('default', FilterQuery)

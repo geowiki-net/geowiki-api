@@ -34,14 +34,31 @@ module.exports = class RequestQuery extends Request {
     this.type = 'query'
 
     this.filter = new Filter(options.query)
-    const outStatements = this.filter.script.filter(stmt => stmt.constructor.name === 'OutStatement')
+    this.outStatements = this.filter.script.filter(stmt => stmt.constructor.name === 'OutStatement')
 
     this.requests = []
     this.elements = []
-    async.eachOf(outStatements, (stmt, index, done) => {
+
+    this.inputSets = {}
+    this.outStatements.forEach((stmt, index) => {
+      const inputSet = stmt.inputSet
+
+      if (!(inputSet.id in this.inputSets)) {
+        this.inputSets[inputSet.id] = {
+          statements: [],
+          properties: 0,
+          features: []
+        }
+      }
+
+      this.inputSets[inputSet.id].statements.push(stmt)
+      this.inputSets[inputSet.id].properties |= stmt.properties()
+    })
+
+    async.each(this.inputSets, (inputSet, done) => {
+      const stmt = inputSet.statements[0]
       const queryOptions = { ...options }
-      queryOptions.properties = stmt.properties()
-      this.elements.push([])
+      queryOptions.properties = inputSet.properties
       let request
 
       const data = {
@@ -49,7 +66,7 @@ module.exports = class RequestQuery extends Request {
         bounds: new BoundingBox(null),
         options: queryOptions,
         featureCallback: (err, ob) => {
-          this.elements[index].push(ob.out(stmt.outOptions()))
+          inputSet.features.push(ob)
           this.featureCallback(err, ob)
         },
         finalCallback: (err) => {
@@ -96,7 +113,11 @@ module.exports = class RequestQuery extends Request {
       elements: []
     }
 
-    this.elements.forEach(elements => {
+    this.outStatements.forEach(stmt => {
+      const inputSet = this.inputSets[stmt.inputSet.id]
+      const outOptions = stmt.outOptions()
+
+      const elements = inputSet.features.map(ob => ob.out(outOptions))
       this.result.elements = this.result.elements.concat(elements)
     })
     console.log(this.result)

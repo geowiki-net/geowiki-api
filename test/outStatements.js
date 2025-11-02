@@ -96,7 +96,92 @@ var overpassFrontend
           result: {
             elements: [
               { type: 'node', id: 1863103110 },
-              { type: 'way', id: 86273642 }
+              { type: 'way', id: 86273642 },
+            ]
+          }
+        }, {}, done)
+      })
+    })
+
+    describe("Several out for same input statements (" + mode + ")", function () {
+      it ('nwr[amenity];out ids;out body;', function (done) {
+// [out:json][bbox:48.20074,16.33678,48.20227,16.33902];
+        overpassFrontend.clearCache()
+        test('nwr[amenity=place_of_worship];out ids;out body;', {
+          def: [
+            [{"op":"=","key":"amenity","value":"place_of_worship"}],
+            {out:['ids']},
+            {out:['body']}
+          ],
+          toString: 'nwr["amenity"="place_of_worship"];out ids;out body;',
+          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out ids;._1 out body;',
+          toQuery: 'nwr["amenity"="place_of_worship"]->._1;',
+          recurse: [],
+          getScript: [
+            { id: 1, properties: 1, recurse: [] }
+          ],
+          compileQuery: {
+            query: 'nwr["amenity"="place_of_worship"];',
+            loki: {
+              "tags.amenity": { $eq: "place_of_worship" }
+            }
+          },
+          toLokijs: {
+            "tags.amenity": { $eq: "place_of_worship" }
+          },
+          derefSets: [
+            { type: 'nwr', filters: [ { key: 'amenity', op: '=', value: 'place_of_worship' } ] }
+          ],
+          cacheDescriptors: [
+            { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
+          ],
+          result: {
+            elements: [
+              { type: 'node', id: 1863103110 },
+              { type: 'way', id: 86273642 },
+              { type: 'node', id: 1863103110, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
+              { type: 'way', id: 86273642, tags: {"amenity":"place_of_worship","building":"church","denomination":"catholic","name":"Lazaristenkirche","religion":"christian","wikipedia":"de:Lazaristenkirche (Neubau)"} }
+            ]
+          }
+        }, {}, done)
+      })
+      it ('nwr[amenity];out body;out ids;', function (done) {
+// [out:json][bbox:48.20074,16.33678,48.20227,16.33902];
+        overpassFrontend.clearCache()
+        test('nwr[amenity=place_of_worship];out body;out ids;', {
+          def: [
+            [{"op":"=","key":"amenity","value":"place_of_worship"}],
+            {out:['body']},
+            {out:['ids']}
+          ],
+          toString: 'nwr["amenity"="place_of_worship"];out body;out ids;',
+          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out body;._1 out ids;',
+          toQuery: 'nwr["amenity"="place_of_worship"]->._1;',
+          recurse: [],
+          getScript: [
+            { id: 1, properties: 1, recurse: [] }
+          ],
+          compileQuery: {
+            query: 'nwr["amenity"="place_of_worship"];',
+            loki: {
+              "tags.amenity": { $eq: "place_of_worship" }
+            }
+          },
+          toLokijs: {
+            "tags.amenity": { $eq: "place_of_worship" }
+          },
+          derefSets: [
+            { type: 'nwr', filters: [ { key: 'amenity', op: '=', value: 'place_of_worship' } ] }
+          ],
+          cacheDescriptors: [
+            { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
+          ],
+          result: {
+            elements: [
+              { type: 'node', id: 1863103110, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
+              { type: 'way', id: 86273642, tags: {"amenity":"place_of_worship","building":"church","denomination":"catholic","name":"Lazaristenkirche","religion":"christian","wikipedia":"de:Lazaristenkirche (Neubau)"} },
+              { type: 'node', id: 1863103110 },
+              { type: 'way', id: 86273642 },
             ]
           }
         }, {}, done)

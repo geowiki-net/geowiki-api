@@ -8,6 +8,7 @@ require('./FilterQuery')
 require('./FilterAnd')
 require('./FilterOr')
 require('./FilterRecurse')
+require('./OutStatement')
 
 function parse (def, rek = 0) {
   const script = []
@@ -30,6 +31,7 @@ function parse (def, rek = 0) {
       keyRegexp = false
       m = def.match(/^\s*(node|way|relation|rel|nwr|\(|\))/)
       const m1 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*))?\s*(>|<)\s*(?:->\s*.([A-Za-z_][A-Za-z0-9_]*))?;?/)
+      const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([a-z ]+))?;?/)
       if (m && m[1] === '(') {
         def = def.slice(m[0].length)
 
@@ -62,6 +64,13 @@ function parse (def, rek = 0) {
         }
         script.push(current)
         current = []
+      } else if (m2) {
+        def = def.slice(m2[0].length)
+        current = { out: m2[2] ? m2[2].split(/ /g).filter(v => v) : [] }
+        if (m2[1]) {
+          current.inputSet = m2[1]
+        }
+        script.push(current)
       } else {
         throw new Error("Can't parse query, expected type of object (e.g. 'node'): " + def)
       }

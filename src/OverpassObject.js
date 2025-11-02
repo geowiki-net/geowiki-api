@@ -448,6 +448,27 @@ class OverpassObject {
 
     this.overpass.db.update(this.dbData)
   }
+
+  out (options) {
+    const result = {
+      type: this.type,
+      id: this.osm_id
+    }
+
+    if (options.meta && this.meta) {
+      result.version = this.meta.version
+      result.timestamp = this.meta.timestamp
+      result.changeset = this.meta.changeset
+      result.uid = this.meta.uid
+      result.user = this.meta.user
+    }
+
+    if (options.tags && this.tags && Object.keys(this.tags).length) {
+      result.tags = this.tags
+    }
+
+    return result
+  }
 }
 
 ee(OverpassObject.prototype)

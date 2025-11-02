@@ -15,6 +15,7 @@ const OverpassRelation = require('./OverpassRelation')
 const RequestGet = require('./RequestGet')
 const RequestBBox = require('./RequestBBox')
 const RequestMulti = require('./RequestMulti')
+const RequestQuery = require('./RequestQuery')
 const defines = require('./defines')
 const loadFile = require('./loadFile')
 const copyOsm3sMetaFrom = require('./copyOsm3sMeta')
@@ -229,6 +230,18 @@ class OverpassFrontend {
         this._overpassProcess()
       }
     )
+  }
+
+  /**
+   * Query the Overpass API with Overpass QL
+   * @param {string} query - Query in Overpass QL syntax including 'out' statements.
+   * @param {object} [options] - Various options, see below
+   * @param {object} [options.featureCallback] - Will be called for each found element, disregarding the order in the final result (features already in the cache, will be returned almost immediately). This will be objects of type 'OverpassObject' (and derivatives).
+   * @param {function} callback - Will be called when all sub-requests are completed with (err, result). Format of the result will vary, depending on the format specifier. The default will be a JS Object, alternative: XML, JSON.
+   * @return {RequestQuery}
+   */
+  query (query, options, callback) {
+    return new RequestQuery(this, query, options, callback)
   }
 
   /**

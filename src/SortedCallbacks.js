@@ -46,7 +46,7 @@ class SortedCallbacks {
     }
   }
 
-  final (err) {
+  final (err, result) {
     if (this.options.sort === 'BBoxDiagonalLength') {
       for (let i = 0; i < this.list.length; i++) {
         const feature = this.list[i].feature
@@ -73,7 +73,7 @@ class SortedCallbacks {
         }
       }
 
-      this.finalCallback(err)
+      this.finalCallback(err, result)
     }.bind(this))
   }
 }

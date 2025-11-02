@@ -66,7 +66,7 @@ class Request {
    */
   finish (err) {
     if (!this.aborted) {
-      this.finalCallback(err)
+      this.finalCallback(err, this.result)
     }
 
     this.overpass._finishRequest(this)

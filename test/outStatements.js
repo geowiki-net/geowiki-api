@@ -101,6 +101,44 @@ var overpassFrontend
           }
         }, {}, done)
       })
+      it ('nwr[amenity];out count;', function (done) {
+// [out:json][bbox:48.20074,16.33678,48.20227,16.33902];
+        test('nwr[amenity=place_of_worship];out count;', {
+          def: [
+            [{"op":"=","key":"amenity","value":"place_of_worship"}],
+            {out:['count']}
+          ],
+          toString: 'nwr["amenity"="place_of_worship"];out count;',
+          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out count;',
+          toQuery: 'nwr["amenity"="place_of_worship"]->._1;',
+          recurse: [],
+          getScript: [
+            { id: 1, properties: 1, recurse: [] }
+          ],
+          compileQuery: {
+            query: 'nwr["amenity"="place_of_worship"];',
+            loki: {
+              "tags.amenity": { $eq: "place_of_worship" }
+            }
+          },
+          toLokijs: {
+            "tags.amenity": { $eq: "place_of_worship" }
+          },
+          derefSets: [
+            { type: 'nwr', filters: [ { key: 'amenity', op: '=', value: 'place_of_worship' } ] }
+          ],
+          cacheDescriptors: [
+            { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
+          ],
+          result: {
+            elements: [
+              { type: 'count', id: 0,
+                tags: { nodes: '1', ways: '1', relations: '0', total: '2' }
+              }
+            ]
+          }
+        }, {}, done)
+      })
     })
 
     describe("Several out for same input statements (" + mode + ")", function () {

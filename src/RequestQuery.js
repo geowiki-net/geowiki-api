@@ -116,9 +116,22 @@ module.exports = class RequestQuery extends Request {
     this.outStatements.forEach(stmt => {
       const inputSet = this.inputSets[stmt.inputSet.id]
       const outOptions = stmt.outOptions()
-
       const elements = inputSet.features.map(ob => ob.out(outOptions))
-      this.result.elements = this.result.elements.concat(elements)
+
+      if (outOptions.count) {
+        this.result.elements.push({
+          type: 'count',
+          id: 0,
+          tags: {
+            nodes: elements.filter(el => el.type === 'node').length.toString(),
+            ways: elements.filter(el => el.type === 'way').length.toString(),
+            relations: elements.filter(el => el.type === 'relation').length.toString(),
+            total: elements.length.toString()
+          }
+        })
+      } else {
+        this.result.elements = this.result.elements.concat(elements)
+      }
     })
     console.log(this.result)
   }

@@ -15,6 +15,7 @@ const outParams = {
 const outOtherParams = {
   asc: 0, // TODO
   qt: 0, // TODO
+  count: 0
 }
 
 class OutStatement {
@@ -32,7 +33,12 @@ class OutStatement {
       result += '.' + this.def.inputSet + ' '
     }
 
-    result += 'out ' + Object.keys(this.outOptions()).join(' ') + ';'
+    const outOptions = this.outOptions()
+    if (outOptions.count) {
+      return result += 'out count;'
+    }
+
+    result += 'out ' + Object.keys(outOptions).join(' ') + ';'
 
     return result
   }
@@ -51,16 +57,23 @@ class OutStatement {
   properties () {
     let result = 0
     let hasParams = false
+    let otherParams = {}
 
     this.def.out.forEach(outParam => {
       if (outParam in outParams) {
         result |= outParams[outParam]
         hasParams = true
       } else if (outParam in outOtherParams) {
+        otherParams[outParam] = true
       } else {
         throw new Error('Invalid parameter for print: "' + outParams + '"')
       }
     })
+
+    if (otherParams.count) {
+      result |= OverpassFrontend.ID_ONLY
+      hasParams = true
+    }
 
     if (!hasParams) {
       result = OverpassFrontend.MEMBERS | OverpassFrontend.TAGS
@@ -82,10 +95,16 @@ class OutStatement {
         result[outParam] = true
         hasParams = true
       } else if (outParam in outOtherParams) {
+        result[outParam] = true
       } else {
         throw new Error('Invalid parameter for print: "' + outParam + '"')
       }
     })
+
+    if (result.count) {
+      result.ids = true
+      hasParams = true
+    }
 
     if (!hasParams) {
       result.body = true

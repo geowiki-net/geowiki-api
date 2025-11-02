@@ -133,6 +133,5 @@ module.exports = class RequestQuery extends Request {
         this.result.elements = this.result.elements.concat(elements)
       }
     })
-    console.log(this.result)
   }
 }

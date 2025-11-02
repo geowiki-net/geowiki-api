@@ -71,6 +71,7 @@ function parse (def, rek = 0) {
           current.inputSet = m2[1]
         }
         script.push(current)
+        current = []
       } else {
         throw new Error("Can't parse query, expected type of object (e.g. 'node'): " + def)
       }

@@ -224,6 +224,49 @@ var overpassFrontend
           }
         }, {}, done)
       })
+      it ('nwr[amenity];out body;out count;nwr[railway=station];out tags;', function (done) {
+// [out:json][bbox:48.20074,16.33678,48.20227,16.33902];
+        overpassFrontend.clearCache()
+        test('nwr[amenity=place_of_worship];out body;nwr[railway=station];out tags;', {
+          def: [
+            [{"op":"=","key":"amenity","value":"place_of_worship"}],
+            {out:['body']},
+            [{"op":"=","key":"railway","value":"station"}],
+            {out:['tags']},
+          ],
+          toString: 'nwr["amenity"="place_of_worship"];out body;nwr["railway"="station"];out tags;',
+          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out body;nwr["railway"="station"]->._2;._2 out tags;',
+          toQuery: 'nwr["railway"="station"]->._2;',
+          recurse: [],
+          getScript: [
+            { id: 2, properties: 1, recurse: [] }
+          ],
+          compileQuery: {
+            query: 'nwr["railway"="station"];',
+            loki: {
+              "tags.railway": { $eq: "station" }
+            }
+          },
+          toLokijs: {
+            "tags.railway": { $eq: "station" }
+          },
+          derefSets: [
+            { type: 'nwr', filters: [ { key: 'railway', op: '=', value: 'station' } ] }
+          ],
+          cacheDescriptors: [
+            { id: 'nwr["railway"="station"](properties:1)' }
+          ],
+          result: {
+            elements: [
+              { type: 'node', id: 1863103110, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
+              { type: 'way', id: 86273642, tags: {"amenity":"place_of_worship","building":"church","denomination":"catholic","name":"Lazaristenkirche","religion":"christian","wikipedia":"de:Lazaristenkirche (Neubau)"} },
+              { type: 'node', id: 60093107, tags: {"name":"Wien Westbahnhof","operator":"ÖBB","railway":"station","railway:position":"0.0","railway:position:exact":"0.000","railway:ref":"Ws","railway:ref:DB":"XAWW","short_name":"Wien Westbf","uic_name":"Wien Westbahnhof","uic_ref":"8100003","wheelchair":"yes"} },
+              { type: 'node', id: 4161756600, tags: {"name":"Westbahnhof","network":"VOR","operator":"Wiener Linien","platforms":"2","public_transport":"station","railway":"station","railway:position":"3.5","railway:position:exact":"3.492","railway:ref":"WS","ref":"1468","station":"subway","uic_name":"Wien Westbahnhof (U3)","uic_ref":"8170066","wheelchair":"yes"} },
+              { type: 'node', id: 4281897753, tags: {"name":"Westbahnhof","network":"VOR","operator":"Wiener Linien","platforms":"2","public_transport":"station","railway":"station","railway:position":"8.0","railway:position:exact":"8.022","railway:ref":"WS","ref":"1468","station":"subway","uic_name":"Wien Westbahnhof (U6)","uic_ref":"8102005","wheelchair":"yes"} }
+            ]
+          }
+        }, {}, done)
+      })
     })
   })
 })

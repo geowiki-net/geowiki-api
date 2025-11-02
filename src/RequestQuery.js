@@ -40,7 +40,7 @@ module.exports = class RequestQuery extends Request {
     this.elements = []
     async.eachOf(outStatements, (stmt, index, done) => {
       const queryOptions = { ...options }
-      queryOptions.properties = 63 // TODO, get from out statement
+      queryOptions.properties = stmt.properties()
       this.elements.push([])
       let request
 
@@ -49,7 +49,7 @@ module.exports = class RequestQuery extends Request {
         bounds: new BoundingBox(null),
         options: queryOptions,
         featureCallback: (err, ob) => {
-          this.elements[index].push(ob.out({}))
+          this.elements[index].push(ob.out(stmt.outOptions()))
           this.featureCallback(err, ob)
         },
         finalCallback: (err) => {

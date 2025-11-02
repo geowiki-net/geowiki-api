@@ -33,8 +33,8 @@ var overpassFrontend
             [{"op":"=","key":"amenity","value":"place_of_worship"}],
             {out:[]}
           ],
-          toString: 'nwr["amenity"="place_of_worship"];out;',
-          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out;',
+          toString: 'nwr["amenity"="place_of_worship"];out body;',
+          toQlStatementIds: 'nwr["amenity"="place_of_worship"]->._1;._1 out body;',
           toQuery: 'nwr["amenity"="place_of_worship"]->._1;',
           recurse: [],
           getScript: [
@@ -57,8 +57,8 @@ var overpassFrontend
           ],
           result: {
             elements: [
-              { type: 'node', id: 1863103110 },
-              { type: 'way', id: 86273642 }
+              { type: 'node', id: 1863103110, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
+              { type: 'way', id: 86273642, tags: {"amenity":"place_of_worship","building":"church","denomination":"catholic","name":"Lazaristenkirche","religion":"christian","wikipedia":"de:Lazaristenkirche (Neubau)"} }
             ]
           }
         }, {}, done)

@@ -31,7 +31,7 @@ function parse (def, rek = 0) {
       keyRegexp = false
       m = def.match(/^\s*(node|way|relation|rel|nwr|\(|\))/)
       const m1 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*))?\s*(>|<)\s*(?:->\s*.([A-Za-z_][A-Za-z0-9_]*))?;?/)
-      const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([a-z ]+))?;?/)
+      const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([0-9a-z ]+))?;?/)
       if (m && m[1] === '(') {
         def = def.slice(m[0].length)
 

@@ -38,7 +38,8 @@ class OutStatement {
       return result += 'out count;'
     }
 
-    result += 'out ' + Object.keys(outOptions).join(' ') + ';'
+    const count = this.count()
+    result += 'out ' + (count ? count + ' ' : '') + Object.keys(outOptions).join(' ') + ';'
 
     return result
   }
@@ -57,12 +58,14 @@ class OutStatement {
   properties () {
     let result = 0
     let hasParams = false
-    let otherParams = {}
+    const otherParams = {}
 
     this.def.out.forEach(outParam => {
       if (outParam in outParams) {
         result |= outParams[outParam]
         hasParams = true
+      } else if (outParam.match(/^[0-9]+$/)) {
+        ; // ignore
       } else if (outParam in outOtherParams) {
         otherParams[outParam] = true
       } else {
@@ -94,6 +97,8 @@ class OutStatement {
       if (outParam in outParams) {
         result[outParam] = true
         hasParams = true
+      } else if (outParam.match(/^[0-9]+$/)) {
+        ; // ignore
       } else if (outParam in outOtherParams) {
         result[outParam] = true
       } else {
@@ -109,6 +114,23 @@ class OutStatement {
     if (!hasParams) {
       result.body = true
     }
+
+    return result
+  }
+
+  /**
+   * has there been a count given?
+   * @return {object}
+   */
+  count () {
+    let result = null
+    let hasParams = false
+
+    this.def.out.forEach(outParam => {
+      if (outParam.match(/^[0-9]+$/)) {
+        result = parseInt(outParam)
+      }
+    })
 
     return result
   }

@@ -80,6 +80,11 @@ module.exports = class RequestQuery extends Request {
         doneFeatures: {}
       }
 
+      let counts = inputSet.statements.map(stmt => stmt.count())
+      if (!counts.includes(null)) {
+        data.limit = Math.max(...counts)
+      }
+
       request = new RequestBBox(this.overpass, data)
       this.requests.push(request)
       this.overpass.requests.push(request)
@@ -116,7 +121,13 @@ module.exports = class RequestQuery extends Request {
     this.outStatements.forEach(stmt => {
       const inputSet = this.inputSets[stmt.inputSet.id]
       const outOptions = stmt.outOptions()
-      const elements = inputSet.features.map(ob => ob.out(outOptions))
+      const count = stmt.count()
+
+      let features = inputSet.features
+      if (count) {
+        features = features.slice(0, count)
+      }
+      const elements = features.map(ob => ob.out(outOptions))
 
       if (outOptions.count) {
         this.result.elements.push({

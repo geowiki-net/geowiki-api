@@ -25,7 +25,8 @@ module.exports = class RequestQuery extends Request {
     options.finalCallback = callback
     if (options.featureCallback) {
       const fcb = options.featureCallback
-      options.featureCallback = (err, ob) => fcb(ob)
+      // err is always `null`, because it will call the finalCallback instead
+      options.featureCallback = (err, ob) => fcb(ob) // eslint-disable-line
     } else {
       options.featureCallback = () => {}
     }
@@ -59,7 +60,6 @@ module.exports = class RequestQuery extends Request {
       const stmt = inputSet.statements[0]
       const queryOptions = { ...options }
       queryOptions.properties = inputSet.properties
-      let request
 
       const data = {
         query: stmt.toQuery(),
@@ -70,6 +70,11 @@ module.exports = class RequestQuery extends Request {
           this.featureCallback(err, ob)
         },
         finalCallback: (err) => {
+          if (err) {
+            this.abort()
+            return this.finish(err)
+          }
+
           this.requests.splice(this.requests.indexOf(request), 1)
 
           if (!this.requests.length) {
@@ -80,16 +85,22 @@ module.exports = class RequestQuery extends Request {
         doneFeatures: {}
       }
 
-      let counts = inputSet.statements.map(stmt => stmt.count())
+      const counts = inputSet.statements.map(stmt => stmt.count())
       if (!counts.includes(null)) {
         data.limit = Math.max(...counts)
       }
 
-      request = new RequestBBox(this.overpass, data)
+      const request = new RequestBBox(this.overpass, data)
       this.requests.push(request)
       this.overpass.requests.push(request)
       done()
     }, (err) => {
+      if (err) {
+        this.abort()
+        this.finish(err)
+        return
+      }
+
       this.overpass._next()
     })
   }

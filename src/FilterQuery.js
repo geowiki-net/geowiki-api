@@ -819,7 +819,7 @@ class FilterQuery extends FilterStatement {
       this.merge(inputSet.set)
 
       if (this.inputSets[inputSetId].set === inputSet.set) {
-        delete(this.inputSets[inputSetId])
+        delete (this.inputSets[inputSetId])
       }
 
       this.filter._removeStatement(inputSet.set)
@@ -828,7 +828,6 @@ class FilterQuery extends FilterStatement {
     // try to conflate again
     this.conflate()
   }
-
 }
 
 filterPart.register('default', FilterQuery)

@@ -10,7 +10,7 @@ const outParams = {
   noids: OverpassFrontend.ID_ONLY, // TODO?
   geom: OverpassFrontend.GEOM,
   bb: OverpassFrontend.BBOX,
-  center: OverpassFrontend.CENTER,
+  center: OverpassFrontend.CENTER
 }
 const outOtherParams = {
   asc: 0, // TODO
@@ -35,7 +35,7 @@ class OutStatement {
 
     const outOptions = this.outOptions()
     if (outOptions.count) {
-      return result += 'out count;'
+      return result + 'out count;'
     }
 
     const count = this.count()
@@ -124,7 +124,6 @@ class OutStatement {
    */
   count () {
     let result = null
-    let hasParams = false
 
     this.def.out.forEach(outParam => {
       if (outParam.match(/^[0-9]+$/)) {

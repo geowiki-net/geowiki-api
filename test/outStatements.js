@@ -388,7 +388,7 @@ function test (input, expected, options, callback) {
         return callback(err)
       }
 
-      // console.log(result)
+      // console.log(result.elements.map(el => JSON.stringify(el)).join('\n'))
       assert.deepEqual(result, expected.result, 'Unexpected result')
 
       /*

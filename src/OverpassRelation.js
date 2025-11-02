@@ -478,6 +478,34 @@ class OverpassRelation extends OverpassObject {
 
     return 1
   }
+
+  out (options) {
+    const result = super.out(options)
+
+    if (options.bb && this.bounds) {
+      result.bounds = this.bounds
+    }
+
+    if (options.skel || options.body || options.meta || options.geom) {
+      result.members = this.members.map(member => {
+        return {
+          ref: member.ref,
+          type: member.type,
+          role: member.role
+        }
+      })
+    }
+
+    if (options.geom) {
+      this.members.forEach((member, i) => {
+        if (['node', 'way'].includes(member.type)) {
+          result.members[i].geometry = this.memberFeatures[i].geometry
+        }
+      })
+    }
+
+    return result
+  }
 }
 
 module.exports = OverpassRelation

@@ -284,6 +284,24 @@ class OverpassWay extends OverpassObject {
 
     return 1
   }
+
+  out (options) {
+    const result = super.out(options)
+
+    if (options.bb && this.bounds) {
+      result.bounds = this.bounds
+    }
+
+    if (options.skel || options.body || options.meta) {
+      result.nodes = this.nodes
+    }
+
+    if (options.geom && this.geometry) {
+      result.geometry = this.geometry
+    }
+
+    return result
+  }
 }
 
 module.exports = OverpassWay

@@ -23,12 +23,24 @@ function handleRequest (request, response) {
   })
 
   request.on('end', () => {
-    response.writeHead(200, {
-      'Content-Type': 'application/json'
-    })
+    try {
+      overpassFrontend.query(body, handleResult)
+    } catch (e) {
+      handleResult(e)
+    }
 
-    overpassFrontend.query(body, (err, result) => {
+    function handleResult (err, result) {
+      if (err) {
+        response.writeHead(400, {
+          'Content-Type': 'text/html; charset=utf-8'
+        })
+        return response.end(err.message)
+      }
+
+      response.writeHead(200, {
+        'Content-Type': 'application/json'
+      })
       response.end(JSON.stringify(result, null, '  '))
-    })
+    }
   })
 }

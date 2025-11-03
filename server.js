@@ -1,4 +1,5 @@
 const http = require('http')
+const OverpassFrontend = require('.')
 
 const defaultConfig = {
   port: 8080,
@@ -7,6 +8,8 @@ const defaultConfig = {
 }
 
 const config = { ...defaultConfig }
+
+const overpassFrontend = new OverpassFrontend(config.overpassURL)
 
 const server = http.createServer(handleRequest)
 
@@ -24,6 +27,8 @@ function handleRequest (request, response) {
       'Content-Type': 'application/json'
     })
 
-    response.end(JSON.stringify(body))
+    overpassFrontend.query(body, (err, result) => {
+      response.end(JSON.stringify(result, null, '  '))
+    })
   })
 }

@@ -19,6 +19,18 @@ module.exports = function compileFilter (part, options = {}) {
     return result
   }
 
+  if (part.diff) {
+    const result = { diff: [], outputSet: '_' }
+    part.diff.forEach(p => {
+      if (p.outputSet) {
+        result.outputSet = p.outputSet
+      } else {
+        result.diff.push(compileFilter(p))
+      }
+    })
+    return result
+  }
+
   const keyRegexp = (part.keyRegexp ? '~' : '')
 
   if (part instanceof qlFunction) {

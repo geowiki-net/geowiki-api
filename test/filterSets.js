@@ -187,6 +187,113 @@ describe("Filter sets, compile", function () {
     var r = f.cacheDescriptors()
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
   })
+  it ('(nwr[amenity];-nwr[cuisine];)->.a;', function () {
+    var f = new Filter('(nwr[amenity];-nwr[cuisine];)->.a;')
+
+    assert.deepEqual(f.def, [{
+      diff: [
+        [ {"op":"has_key","key":"amenity"} ],
+        [ {"op":"has_key","key":"cuisine"} ],
+        {"outputSet":"a"}
+      ]
+    }])
+    assert.equal(f.toString(), '(nwr["amenity"];-nwr["cuisine"];)->.a;')
+    assert.equal(f.toQl(), '(nwr["amenity"];-nwr["cuisine"];)->.a;')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), '(nwr["amenity"]->._2;-nwr["cuisine"]->._3;)->._1;')
+    assert.equal(f.toQuery(), 'nwr["cuisine"]->._3;')
+    assert.equal(f.toQuery({ set: 'a' }), '(nwr["amenity"]->._2;-nwr["cuisine"]->._3;)->._1;')
+    assert.deepEqual(f.recurse(), [])
+    assert.deepEqual(f.recurse({ set: 'a' }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 3, properties: 1, recurse: [] }
+    ])
+    assert.deepEqual(f.getScript({ set: 'a' }), [
+      { id: 1, properties: 1, recurse: [] }
+    ])
+    assert.deepEqual(f.compileQuery(), {
+      query: 'nwr["cuisine"];',
+      loki: {
+        "tags.cuisine": { $exists: true }
+      }
+    })
+    assert.deepEqual(f.compileQuery({ set: 'a' }), {
+      query: '(nwr["amenity"];-nwr["cuisine"];)->.a;',
+      loki: {
+        "tags.amenity": { $exists: true },
+        needMatch: true
+      }
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'nwr', filters: [ { key: 'cuisine', op: 'has_key' } ] }
+    ])
+    assert.deepEqual(f.derefSets({ set: 'a' }), [
+      { type: 'nwr', filters: [ { key: 'amenity', op: 'has_key' } ] }
+    ])
+    var r = f.cacheDescriptors({ set: 'a' })
+    assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+  })
+  it ('(nwr;-nwr[cuisine];);', function () {
+    var f = new Filter('(nwr;-nwr[cuisine];);')
+
+    assert.deepEqual(f.def, [{
+      diff: [
+        [],
+        [ {"op":"has_key","key":"cuisine"} ]
+      ]
+    }])
+    assert.equal(f.toString(), '(nwr;-nwr["cuisine"];);')
+    assert.equal(f.toQl(), '(nwr;-nwr["cuisine"];);')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), '(nwr->._2;-nwr["cuisine"]->._3;)->._1;')
+    assert.equal(f.toQuery(), '(nwr->._2;-nwr["cuisine"]->._3;)->._1;')
+    assert.deepEqual(f.recurse(), [])
+    assert.deepEqual(f.recurse({ set: 'a' }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 1, properties: 1, recurse: [] }
+    ])
+    assert.deepEqual(f.compileQuery(), {
+      query: '(nwr;-nwr["cuisine"];);',
+      loki: {
+        needMatch: true
+      }
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'nwr', filters: [ ] }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+  })
+  it ('node(id:1,2)->.b;(nwr;-nwr.b;);', function () {
+    var f = new Filter('node(id:1,2)->.b;(nwr;-nwr.b;);')
+
+    assert.deepEqual(f.def, [ [
+    { type: 'node' }, { fun: 'id', value: [1,2] }, {outputSet: 'b' }
+    ],{
+      diff: [
+        [],
+        [ {inputSet:'b'} ]
+      ]
+    }])
+    assert.equal(f.toString(), 'node(id:1,2)->.b;(nwr;-nwr.b;);')
+    assert.equal(f.toQl(), 'node(id:1,2)->.b;(nwr;-nwr.b;);')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), 'node(id:1,2)->._1;(nwr->._3;-nwr._1->._4;)->._2;')
+    assert.equal(f.toQuery(), 'node(id:1,2)->._1;(nwr->._3;-nwr._1->._4;)->._2;')
+    assert.deepEqual(f.recurse(), [])
+    assert.deepEqual(f.recurse({ set: 'a' }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 2, properties: 0, recurse: [] }
+    ])
+    assert.deepEqual(f.compileQuery(), {
+      query: '(nwr;-nwr.b;);',
+      loki: {
+        needMatch: true
+      }
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'nwr', filters: [ ] }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+  })
   it ('(nwr[amenity]->.a;);', function () {
     var f = new Filter('(nwr[amenity]->.a;);')
 
@@ -3479,6 +3586,32 @@ describe("Filter sets with relations, apply base filter", function () {
           }]
         }, done)
       })
+    })
+    describe('diff', function () {
+      it('restaurants without cuisine', function (done) {
+        overpassFrontend.clearCache()
+        test({
+          mode,
+          query: '(nwr["amenity"="restaurant"];-nwr["cuisine"];);',
+          expected: [ 'n1467021062', 'n1467021072', 'n1467109667', 'n313351706', 'n334370854',  'n441576823', 'n442542434',  'n442542985', 'n442569612',  'n442570132', 'n442630742',  'n442972880', 'w369989037',  'w370577069' ],
+          expectedSubRequestCount: 1,
+          expectedCacheDescriptors: [{
+            id: 'nwr["amenity"="restaurant"](properties:1)'
+          }]
+        }, done)
+      })
+      /** TODO. Fix cacheDescriptors for diff
+      it('all restaurants after diff-cuisine check', function (done) {
+        test({
+          mode,
+          query: 'nwr["amenity"="restaurant"];',
+          expected: [ 'n441576820',  'n442066582', 'n442972880',  'n1467021072', 'n1467109667', 'n313351706', 'n355123976',  'n1467021062', 'n1955278832', 'n441576823', 'n442630742',  'n334370854', 'n442541444',  'n442542434', 'n442542985',  'n442569612', 'n442570132',  'n872404403', 'n2083468740', 'n2099023017', 'n2377471513', 'w369989037', 'w370577069' ],
+          expectedSubRequestCount: 1,
+          expectedCacheDescriptors: [{
+            id: 'nwr["amenity"="restaurant"](properties:1)'
+          }]
+        }, done)
+      }) */
     })
   })
 })

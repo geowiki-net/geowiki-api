@@ -7,6 +7,7 @@ const filterCheckSuperset = require('./filterCheckSuperset.js')
 require('./FilterQuery')
 require('./FilterAnd')
 require('./FilterOr')
+require('./FilterDiff')
 require('./FilterRecurse')
 require('./OutStatement')
 
@@ -21,28 +22,50 @@ function parse (def, rek = 0) {
   let m
   let keyRegexp = false
   let notExists = null
+  let isDiff = false
+
   while (true) {
     // console.log('rek' + rek, 'mode' + mode + '|', def.substr(0, 20), '->', script, 'next:', current)
     if (mode === 0) {
       if (def.match(/^\s*$/)) {
-        return [script, def]
+        return [script, def, isDiff]
       }
 
       keyRegexp = false
       m = def.match(/^\s*(node|way|relation|rel|nwr|\(|\))/)
       const m1 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*))?\s*(>|<)\s*(?:->\s*.([A-Za-z_][A-Za-z0-9_]*))?;?/)
       const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([0-9a-z ]+))?;?/)
+      const m3 = def.match(/^\s*-/)
+
       if (m && m[1] === '(') {
         def = def.slice(m[0].length)
 
         let parts
-        [parts, def] = parse(def, rek + 1)
+        let isDiff
+        [parts, def, isDiff] = parse(def, rek + 1)
         mode = 1
 
-        script.push({ or: parts })
+        if (isDiff) {
+          if (parts.filter(p => Array.isArray(p)).length !== 2) {
+            throw new Error("Can't parse query, difference statement needs two elements.")
+          }
+
+          script.push({ diff: parts })
+        } else {
+          script.push({ or: parts })
+        }
+
         current = []
       } else if (m && m[1] === ')') {
         mode = 1
+      } else if (m3) {
+        def = def.slice(m3[0].length)
+        if (script.length !== 1) {
+          throw new Error("Can't parse query, difference statement needs two elements.")
+        }
+
+        isDiff = true
+        mode = 0
       } else if (m) {
         if (m[1] === 'rel') {
           current.push({ type: 'relation' })
@@ -83,10 +106,10 @@ function parse (def, rek = 0) {
         }
 
         if (rek === 0) {
-          return [script, def]
+          return [script, def, isDiff]
         } else {
           def = def.slice(m[0].length)
-          return [script, def]
+          return [script, def, isDiff]
         }
       } else {
         mode = 0
@@ -118,7 +141,7 @@ function parse (def, rek = 0) {
         mode = 1
       } else if (!m && def.match(/^\s*$/)) {
         script.push(current)
-        return [script, '']
+        return [script, '', isDiff]
       } else {
         throw new Error("Can't parse query, expected '[' or '->' or ';': " + def)
       }

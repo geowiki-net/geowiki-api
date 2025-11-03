@@ -32,13 +32,15 @@ function handleRequest (request, response) {
     function handleResult (err, result) {
       if (err) {
         response.writeHead(400, {
-          'Content-Type': 'text/html; charset=utf-8'
+          'Content-Type': 'text/html; charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
         })
         return response.end(err.message)
       }
 
       response.writeHead(200, {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       })
       response.end(JSON.stringify(result, null, '  '))
     }

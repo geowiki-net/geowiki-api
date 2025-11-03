@@ -80,7 +80,7 @@
     "version": "rm -r doc/ && npm run doc && npm run build && npm run build-test && git add -A doc/ dist/",
     "prepare": "require-self",
     "lint": "eslint --fix src/*.js src/qlFunctions/*.js src/evaluator/* index.js",
-    "start": "http-server ./ -p 8000",
+    "demo": "http-server ./ -p 8000",
     "doc": "jsdoc -d doc/ src/*.js"
   },
   "repository": {

@@ -38,6 +38,12 @@ module.exports = class RequestQuery extends Request {
       options.query = parseQueryOptions(options.query, options)
     }
 
+    if (options.bbox) {
+      const keys = ['minlat', 'minlon', 'maxlat', 'maxlon']
+      const values = options.bbox.split(',').map(v => parseFloat(v))
+      options.bbox = Object.fromEntries(keys.map((key, i) => [key, values[i]]))
+    }
+
     this.filter = new Filter(options.query)
     this.outStatements = this.filter.script.filter(stmt => stmt.constructor.name === 'OutStatement')
 
@@ -67,7 +73,7 @@ module.exports = class RequestQuery extends Request {
 
       const data = {
         query: stmt.toQuery(),
-        bounds: new BoundingBox(null),
+        bounds: new BoundingBox(queryOptions.bbox),
         options: queryOptions,
         featureCallback: (err, ob) => {
           inputSet.features.push(ob)

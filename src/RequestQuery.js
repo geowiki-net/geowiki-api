@@ -34,6 +34,10 @@ module.exports = class RequestQuery extends Request {
     super(overpass, options)
     this.type = 'query'
 
+    if (options.query.match(/^s*\[/)) { // query starts with [ - indication for query options
+      options.query = parseQueryOptions(options.query, options)
+    }
+
     this.filter = new Filter(options.query)
     this.outStatements = this.filter.script.filter(stmt => stmt.constructor.name === 'OutStatement')
 
@@ -156,4 +160,17 @@ module.exports = class RequestQuery extends Request {
       }
     })
   }
+}
+
+function parseQueryOptions (query, options) {
+  const m = query.match(/^\s*\[([a-z]+):([^\]]+)\]\s*;?/)
+
+  if (m) {
+    query = query.substr(m[0].length)
+    options[m[1].trim()] = m[2].trim()
+
+    query = parseQueryOptions(query, options)
+  }
+
+  return query
 }

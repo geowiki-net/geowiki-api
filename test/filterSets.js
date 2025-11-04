@@ -3653,7 +3653,7 @@ function test (options, callback) {
         return callback(err)
       }
 
-      assert.equal(request.filterQuery.toString(), options.expectedQuery || options.query)
+      assert.equal(request.filterQuery.toString(), options.expectedQuery || options.query, "Query does not compile into itself.")
       const expected = (options.mode === 'via-server' ? options.expectedViaServer : options.expectedViaFile) || options.expected
       if (options.ignoreMissing) {
         found = found.filter(id => !options.ignoreMissing.includes(id))

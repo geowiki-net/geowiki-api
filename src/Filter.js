@@ -47,7 +47,7 @@ function parse (def, rek = 0) {
         mode = 1
 
         if (isDiff) {
-          if (parts.filter(p => Array.isArray(p)).length !== 2) {
+          if (parts.filter(p => !p.outputSet && !p.inputSet).length !== 2) {
             throw new Error("Can't parse query, difference statement needs two elements.")
           }
 

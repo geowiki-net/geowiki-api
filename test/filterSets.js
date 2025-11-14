@@ -150,6 +150,43 @@ describe("Filter sets, compile", function () {
     r = f.cacheDescriptors({ set: 'a' })
     assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' }])
   })
+  it ('nwr[amenity]->.a;.a;', function () {
+    var f = new Filter('nwr[amenity]->.a;.a;')
+
+    assert.deepEqual(f.def, [[
+      {"op":"has_key","key":"amenity"},
+      {outputSet:'a'}
+    ], [
+      {inputSet:'a'}
+    ]])
+    assert.equal(f.toString(), 'nwr["amenity"]->.a;nwr.a;')
+    assert.equal(f.toQl(), 'nwr["amenity"]->.a;nwr.a;')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), 'nwr["amenity"]->._1;nwr._1->._2;')
+    assert.equal(f.toQuery(), 'nwr["amenity"]->._1;nwr._1->._2;')
+    assert.deepEqual(f.recurse(), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 2, properties: 1, recurse: [] }
+    ])
+
+    assert.deepEqual(f.compileQuery(), {
+      query: 'nwr["amenity"]->.a;nwr.a;',
+      loki: {
+        $and: [{
+          "tags.amenity": { $exists: true }
+        }]
+      }
+    })
+    assert.deepEqual(f.toLokijs(), {
+      $and: [{
+        "tags.amenity": { $exists: true }
+      }]
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'nwr', filters: [ { key: 'amenity', op: 'has_key' } ] }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' }])
+  })
   it ('(nwr[amenity];)->.a;', function () {
     var f = new Filter('(nwr[amenity];)->.a;')
 
@@ -264,6 +301,38 @@ describe("Filter sets, compile", function () {
   })
   it ('node(id:1,2)->.b;(nwr;-nwr.b;);', function () {
     var f = new Filter('node(id:1,2)->.b;(nwr;-nwr.b;);')
+
+    assert.deepEqual(f.def, [ [
+    { type: 'node' }, { fun: 'id', value: [1,2] }, {outputSet: 'b' }
+    ],{
+      diff: [
+        [],
+        [ {inputSet:'b'} ]
+      ]
+    }])
+    assert.equal(f.toString(), 'node(id:1,2)->.b;(nwr;-nwr.b;);')
+    assert.equal(f.toQl(), 'node(id:1,2)->.b;(nwr;-nwr.b;);')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), 'node(id:1,2)->._1;(nwr->._3;-nwr._1->._4;)->._2;')
+    assert.equal(f.toQuery(), 'node(id:1,2)->._1;(nwr->._3;-nwr._1->._4;)->._2;')
+    assert.deepEqual(f.recurse(), [])
+    assert.deepEqual(f.recurse({ set: 'a' }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 2, properties: 0, recurse: [] }
+    ])
+    assert.deepEqual(f.compileQuery(), {
+      query: '(nwr;-nwr.b;);',
+      loki: {
+        needMatch: true
+      }
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'nwr', filters: [ ] }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+  })
+  it ('node(id:1,2)->.b;(nwr;-.b;);', function () {
+    var f = new Filter('node(id:1,2)->.b;(nwr;-.b;);')
 
     assert.deepEqual(f.def, [ [
     { type: 'node' }, { fun: 'id', value: [1,2] }, {outputSet: 'b' }

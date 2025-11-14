@@ -37,6 +37,7 @@ function parse (def, rek = 0) {
       const m1 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*))?\s*(>|<)\s*(?:->\s*.([A-Za-z_][A-Za-z0-9_]*))?;?/)
       const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([0-9a-z ]+))?;?/)
       const m3 = def.match(/^\s*-/)
+      const m4 = def.match(/^\s*\.([A-Za-z_][A-Za-z0-9_]*)/)
 
       if (m && m[1] === '(') {
         def = def.slice(m[0].length)
@@ -96,6 +97,10 @@ function parse (def, rek = 0) {
         }
         script.push(current)
         current = []
+      } else if (m4) {
+        def = def.slice(m4[0].length)
+        current.push({ inputSet: m4[1] })
+        mode = 10
       } else {
         throw new Error("Can't parse query, expected type of object (e.g. 'node'): " + def)
       }

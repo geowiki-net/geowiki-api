@@ -107,7 +107,7 @@ window.onload = function() {
   if (form.elements.lat.value !== '' && form.elements.lng.value !== '') {
     map.setView([form.elements.lat.value, form.elements.lng.value], form.elements.zoom.value || 18)
   } else {
-    map.setView([51.505, -0.09], 18)
+    map.setView([48.200923, 16.341208], 18)
 
     const center = map.getCenter()
     form.elements.lat.value = center.lat.toFixed(5)

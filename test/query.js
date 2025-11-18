@@ -34,6 +34,20 @@ const queries = [
     query: '[out:json];nwr[building];out geom;',
     expectedSubRequests: 1,
   },
+  {
+    query: '[out:json];(node[amenity=restaurant];nwr[building];);out ids;',
+    expectedSubRequests: 0,
+  },
+  {
+    query: '[out:json];(node[amenity=restaurant];nwr[building];);out meta;',
+    clearCache: true,
+    expectedSubRequests: 2,
+  },
+  {
+    query: '[out:json];(node[amenity=restaurant];nwr[building];);out ids;out count;out meta;out count;out geom;',
+    clearCache: true,
+    expectedSubRequests: 2,
+  },
 ]
 
 describe('Overpass QL Queries - load expected data from Overpass API', function () {

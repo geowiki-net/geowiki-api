@@ -25,6 +25,9 @@ const queries = [
   {
     query: '[out:json];way[building];out geom;'
   },
+  {
+    query: '[out:json];nwr[building];out geom;'
+  },
 ]
 
 describe('Overpass QL Queries - load expected data from Overpass API', function () {

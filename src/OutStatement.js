@@ -8,7 +8,7 @@ const outParams = {
   tags: OverpassFrontend.TAGS,
   meta: OverpassFrontend.MEMBERS | OverpassFrontend.TAGS | OverpassFrontend.META,
   noids: OverpassFrontend.ID_ONLY, // TODO?
-  geom: OverpassFrontend.GEOM,
+  geom: OverpassFrontend.GEOM | OverpassFrontend.MEMBERS,
   bb: OverpassFrontend.BBOX,
   center: OverpassFrontend.CENTER
 }

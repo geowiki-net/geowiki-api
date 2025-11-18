@@ -11,22 +11,28 @@ const overpassFrontend = new OverpassFrontend(conf.url)
 const queries = [
   {
     query: '[out:json];node[place];out;',
-    clearCache: true
+    clearCache: true,
+    expectedSubRequests: 1,
   },
   {
     query: '[out:json];node[place];out;',
+    expectedSubRequests: 0,
   },
   {
-    query: '[out:json];node[amenity=restaurant];out;'
+    query: '[out:json];node[amenity=restaurant];out;',
+    expectedSubRequests: 1,
   },
   {
     query: '[out:json];node[amenity=restaurant];out;out count;way[highway=primary];out body;',
+    expectedSubRequests: 1,
   },
   {
-    query: '[out:json];way[building];out geom;'
+    query: '[out:json];way[building];out geom;',
+    expectedSubRequests: 2,
   },
   {
-    query: '[out:json];nwr[building];out geom;'
+    query: '[out:json];nwr[building];out geom;',
+    expectedSubRequests: 1,
   },
 ]
 
@@ -89,11 +95,17 @@ Object.entries({
 
     async.each(queries, (def, callback) => {
       it(def.query, function (done) {
+        let foundSubRequestCount = 0
+
         if (def.clearCache) {
           overpassFrontend.clearCache()
         }
 
-        overpassFrontend.query(def.query, {}, (err, result) => {
+        function compileListener (subRequest) {
+          foundSubRequestCount++
+        }
+
+        const req = overpassFrontend.query(def.query, {}, (err, result) => {
           const errors = compareResults(def, result)
 
           if (errors) {
@@ -101,8 +113,16 @@ Object.entries({
           }
           //assert.deepEqual(def.expected, result)
 
+          if (mode === 'via-server' && 'expectedSubRequests' in def) {
+            assert.equal(foundSubRequestCount, def.expectedSubRequests, 'sub request count wrong')
+          }
+
+          req.off('subrequest-compile', compileListener)
+
           done()
         })
+
+        req.on('subrequest-compile', compileListener)
       })
     })
   })

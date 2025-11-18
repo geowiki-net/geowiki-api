@@ -101,6 +101,7 @@ module.exports = class RequestQuery extends Request {
       }
 
       const request = new RequestBBox(this.overpass, data)
+      request.on('subrequest-compile', subRequest => this.emit('subrequest-compile', subRequest))
       this.requests.push(request)
       this.overpass.requests.push(request)
       done()

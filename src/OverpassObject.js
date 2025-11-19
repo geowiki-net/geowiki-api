@@ -451,8 +451,11 @@ class OverpassObject {
 
   out (options) {
     const result = {
-      type: this.type,
-      id: this.osm_id
+      type: this.type
+    }
+
+    if (!options.noids) {
+      result.id = this.osm_id
     }
 
     if (options.meta && this.meta) {

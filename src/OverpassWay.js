@@ -288,11 +288,15 @@ class OverpassWay extends OverpassObject {
   out (options) {
     const result = super.out(options)
 
-    if (options.bb && this.bounds) {
-      result.bounds = this.bounds
+    if ((options.bb || options.geom) && this.bounds) {
+      result.bounds = { ...this.bounds }
     }
 
-    if (options.skel || options.body || options.meta) {
+    if (options.center && this.bounds) {
+      result.center = this.bounds.getCenter()
+    }
+
+    if ((!options.ids && !options.noids && !options.tags) || options.body || options.skel) {
       result.nodes = this.nodes
     }
 

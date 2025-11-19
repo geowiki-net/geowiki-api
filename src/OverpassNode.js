@@ -142,7 +142,7 @@ class OverpassNode extends OverpassObject {
   out (options) {
     const result = super.out(options)
 
-    if ((options.geom || options.skel || options.body || options.bb || options.center) && this.geometry) {
+    if ((options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
       result.lat = this.geometry.lat
       result.lon = this.geometry.lon
     }

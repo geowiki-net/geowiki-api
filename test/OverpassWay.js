@@ -4,6 +4,7 @@ const BoundingBox = require('boundingbox')
 const OverpassWay = require('../src/OverpassWay')
 const OverpassFrontend = require('..')
 const testIntersects = require('../src/testIntersects')
+const testOverpassObject = require('./src/testOverpassObject')
 
 const example = {
   "type": "way",
@@ -239,5 +240,175 @@ describe('OverpassWay', function () {
         assert.fail('Meta has timestamp')
       }
     })
+  })
+
+  describe('out()', function () {
+    const outResults = {
+      ids: {
+        id: 299709376,
+        type: 'way',
+      },
+      skel: {
+        id: 299709376,
+        type: 'way',
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ]
+      },
+      body: {
+        id: 299709376,
+        type: 'way',
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ],
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        }
+      },
+      tags: {
+        id: 299709376,
+        type: 'way',
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        }
+      },
+      meta: {
+        id: 299709376,
+        type: 'way',
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        },
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ],
+        changeset: 24962130,
+        timestamp: "2014-08-23T18:33:19Z",
+        id: 299709376,
+        type: 'way',
+        uid: 770238,
+        user: "Kevin Kofler",
+        version: 1
+      },
+      noids: {
+        type: 'way'
+      },
+      geom: {
+        id: 299709376,
+        type: 'way',
+        bounds: {
+          "minlat": 48.1986493,
+          "minlon": 16.3385645,
+          "maxlat": 48.1989158,
+          "maxlon": 16.3386515
+        },
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        },
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ],
+        geometry: [
+          { "lat": 48.1989158, "lon": 16.3385645 },
+          { "lat": 48.1988801, "lon": 16.3385907 },
+          { "lat": 48.1988310, "lon": 16.3386213 },
+          { "lat": 48.1987690, "lon": 16.3386461 },
+          { "lat": 48.1987326, "lon": 16.3386515 },
+          { "lat": 48.1987013, "lon": 16.3386488 },
+          { "lat": 48.1986768, "lon": 16.3386399 },
+          { "lat": 48.1986493, "lon": 16.3386184 }
+        ],
+      },
+      bb: {
+        id: 299709376,
+        type: 'way',
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        },
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ],
+        bounds: {
+          "minlat": 48.1986493,
+          "minlon": 16.3385645,
+          "maxlat": 48.1989158,
+          "maxlon": 16.3386515
+        },
+      },
+      center: {
+        id: 299709376,
+        type: 'way',
+        tags: {
+          "highway": "footway",
+          "name": "Emil-Maurer-Platz",
+          "source": "basemap.at"
+        },
+        nodes: [
+          3037431639,
+          3037431690,
+          3037431691,
+          3037431692,
+          3037431693,
+          3037431694,
+          3037431695,
+          3037431680
+        ],
+        center: {
+          lat: 48.198782550000004,
+          lon: 16.338608,
+        }
+      },
+    }
+
+    const ob = new OverpassWay('w299709376')
+    ob.overpass = new OverpassFrontend('')
+    let d = JSON.parse(JSON.stringify(example))
+    ob.updateData(d, { properties: 63 })
+
+    testOverpassObject(ob, outResults)
   })
 })

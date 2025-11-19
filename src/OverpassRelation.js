@@ -482,11 +482,15 @@ class OverpassRelation extends OverpassObject {
   out (options) {
     const result = super.out(options)
 
-    if (options.bb && this.bounds) {
-      result.bounds = this.bounds
+    if ((options.bb || options.geom) && this.bounds) {
+      result.bounds = { ...this.bounds }
     }
 
-    if (options.skel || options.body || options.meta || options.geom) {
+    if (options.center && this.bounds) {
+      result.center = this.bounds.getCenter()
+    }
+
+    if ((!options.ids && !options.noids && !options.tags) || options.body || options.skel) {
       result.members = this.members.map(member => {
         return {
           ref: member.ref,
@@ -499,7 +503,11 @@ class OverpassRelation extends OverpassObject {
     if (options.geom) {
       this.members.forEach((member, i) => {
         if (['node', 'way'].includes(member.type)) {
-          result.members[i].geometry = this.memberFeatures[i].geometry
+          if (this.memberFeatures[i].geometry) {
+            result.members[i].geometry = this.memberFeatures[i].geometry
+          } else {
+            result.members[i].geometry = []
+          }
         }
       })
     }

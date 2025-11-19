@@ -4,6 +4,7 @@ const BoundingBox = require('boundingbox')
 const OverpassFrontend = require('..')
 const OverpassNode = require('../src/OverpassNode')
 const testIntersects = require('../src/testIntersects')
+const testOverpassObject = require('./src/testOverpassObject')
 
 const example = {
   "type": "node",
@@ -144,5 +145,105 @@ describe('OverpassNode', function () {
         assert.fail('Meta has timestamp')
       }
     })
+  })
+
+  describe('out()', function () {
+    const outResults = {
+      ids: {
+        id: 3037893171,
+        type: 'node'
+      },
+      skel: {
+        id: 3037893171,
+        type: 'node',
+        lat: 48.1985386,
+        lon: 16.3387032,
+      },
+      body: {
+        id: 3037893171,
+        type: 'node',
+        lat: 48.1985386,
+        lon: 16.3387032,
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        }
+      },
+      tags: {
+        id: 3037893171,
+        type: 'node',
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        }
+      },
+      meta: {
+        id: 3037893171,
+        type: 'node',
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        },
+        lat: 48.1985386,
+        lon: 16.3387032,
+        changeset: 24967165,
+        timestamp: "2014-08-23T23:04:35Z",
+        uid: 770238,
+        user: "Kevin Kofler",
+        version: 1
+      },
+      noids: {
+        type: 'node'
+      },
+      geom: {
+        id: 3037893171,
+        type: 'node',
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        },
+        lat: 48.1985386,
+        lon: 16.3387032
+      },
+      bb: {
+        id: 3037893171,
+        type: 'node',
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        },
+        lat: 48.1985386,
+        lon: 16.3387032
+      },
+      center: {
+        id: 3037893171,
+        type: 'node',
+        tags: {
+          "amenity": "bench",
+          "backrest": "yes",
+          "material": "wood",
+          "source": "survey"
+        },
+        lat: 48.1985386,
+        lon: 16.3387032
+      },
+    }
+
+    const ob = new OverpassNode('n3037893171')
+    ob.overpass = new OverpassFrontend('')
+    let d = JSON.parse(JSON.stringify(example))
+    ob.updateData(d, { properties: 63 })
+
+    testOverpassObject(ob, outResults)
   })
 })

@@ -1,6 +1,7 @@
 const fs = require('fs')
-const assert = require('assert')
+const assert = require('assert').strict
 const async = require('async')
+const deepEqualCheck = require('deep-equal-check').default
 
 const conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 
@@ -160,7 +161,11 @@ function compareResults (def, actual) {
 
       block++
       done = {}
-    } else if (!(id in def.expectedElements[block])) {
+    } else if (id in def.expectedElements[block]) {
+      if (!deepEqualCheck(el, def.expectedElements[block][id], { numberPrecision: 0.0000001 })) {
+        assert.deepEqual(el, def.expectedElements[block][id], 'Items are not equal')
+      }
+    } else {
       errors.push('Unexpected element ' + id)
     }
   })

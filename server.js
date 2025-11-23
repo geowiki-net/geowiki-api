@@ -35,6 +35,7 @@ function handleRequest (request, response) {
           'Content-Type': 'text/html; charset=utf-8',
           'Access-Control-Allow-Origin': '*'
         })
+        console.error('Error loading data from API', err)
         return response.end(err.message)
       }
 

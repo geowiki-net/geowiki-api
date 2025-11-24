@@ -1,15 +1,38 @@
+#!/usr/bin/env node
+const ArgumentParser = require('argparse').ArgumentParser
 const http = require('http')
+
 const OverpassFrontend = require('.')
 
 const defaultConfig = {
   port: 8080,
   ip: '0.0.0.0',
-  overpassURL: 'https://www.overpass-api.de/api/interpreter'
+  db: 'https://www.overpass-api.de/api/interpreter'
 }
 
-const config = { ...defaultConfig }
+const parser = new ArgumentParser({
+  add_help: true,
+  description: 'Starts an overpass-frontend server'
+})
 
-const overpassFrontend = new OverpassFrontend(config.overpassURL)
+parser.add_argument('--db', {
+  help: 'Override the default database (e.g. Overpass API URL)',
+  default: defaultConfig.db
+})
+
+parser.add_argument('--port', '-p', {
+  help: 'Port to listen on',
+  default: defaultConfig.port
+})
+
+parser.add_argument('--ip', {
+  help: 'IP to listen on',
+  default: defaultConfig.ip
+})
+
+const config = { ...parser.parse_args() }
+
+const overpassFrontend = new OverpassFrontend(config.db)
 
 const server = http.createServer(handleRequest)
 

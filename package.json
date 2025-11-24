@@ -29,6 +29,7 @@
     "@turf/length": "^6.5.0",
     "@turf/union": "^6.5.0",
     "@xmldom/xmldom": "^0.8.10",
+    "argparse": "^2.0.1",
     "async": "^3.2.4",
     "boundingbox": "^1.4.0",
     "browserify-shim": "^3.8.15",

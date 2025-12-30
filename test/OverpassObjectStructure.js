@@ -31,7 +31,7 @@ const exceptions = {
 }
 
 const outVariants = [
-  '', 'ids', 'skel', 'body', 'tags', 'meta', 'geom', 'ids geom', 'ids tags', 'tags geom', 'meta geom', 'noids', 'noids skel', 'noids geom', 'noids tags', 'bb', 'noids bb', 'center', 'noids center',
+  '', 'ids', 'skel', 'body', 'tags', 'meta', 'geom', 'ids geom', 'ids tags', 'tags geom', 'meta geom', 'skel geom', 'noids', 'noids skel', 'noids geom', 'noids tags', 'bb', 'noids bb', 'center', 'noids center',
 ]
 
 const originalResults = {}

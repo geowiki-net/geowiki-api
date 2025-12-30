@@ -310,11 +310,11 @@ describe('Filter', function () {
       )
 
       assert.deepEqual(f.derefSets(), [
-        { type: 'nwr', filters: [{ key: 'amenity', op: 'has_key' }] },
+        { type: 'nwr', filters: [{ key: 'amenity', op: 'has_key' }], diff: [{ filters: [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] },
       ])
 
       var r = f.cacheDescriptors()
-      assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+      assert.deepEqual(r, [ { id: '(nwr["amenity"](properties:1);-nwr["cuisine"](properties:1);)' } ])
 
       var r = f.match({ type: 'node', tags: { amenity: 'restaurant' } })
       assert.equal(r, true, 'Object should match')
@@ -358,11 +358,11 @@ describe('Filter', function () {
       )
 
       assert.deepEqual(f.derefSets(), [
-        { type: 'nwr', filters: [] },
+        { type: 'nwr', filters: [], diff: [{ filters: [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] },
       ])
 
       var r = f.cacheDescriptors()
-      assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+      assert.deepEqual(r, [ { id: '(nwr(properties:1);-nwr["cuisine"](properties:1);)' } ])
 
       var r = f.match({ type: 'node', tags: { amenity: 'restaurant' } })
       assert.equal(r, true, 'Object should match')
@@ -392,6 +392,57 @@ describe('Filter', function () {
       check(f, [ 1, 7 ])
     })
 
+    it ('(nwr;-(nwr[amenity];nwr[cuisine];);)', function () {
+      var f = new Filter('(nwr;-(nwr[amenity];nwr[cuisine];);)')
+      assert.deepEqual(f.def, [{diff:[
+        [],
+        {or:[
+          [{"key":"amenity","op":"has_key"}],
+          [{"key":"cuisine","op":"has_key"}]
+        ]},
+      ]}])
+      assert.equal(f.toString(), '(nwr;-(nwr["amenity"];nwr["cuisine"];););')
+
+      var r = f.toLokijs()
+      assert.deepEqual(r,
+        { needMatch: true }
+      )
+
+      assert.deepEqual(f.derefSets(), [
+        { type: 'nwr', filters: [], diff: [{ filters: [ { "key": "amenity", "op": "has_key" } ], "type": "nwr" }, { filters: [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] },
+      ])
+
+      var r = f.cacheDescriptors()
+      assert.deepEqual(r, [ { id: '(nwr(properties:1);-(nwr["amenity"](properties:1);nwr["cuisine"](properties:1););)' } ])
+
+      var r = f.match({ type: 'node', tags: { amenity: 'restaurant' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'node', tags: { amenity: 'restaurant', cuisine: 'kebab' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'node', tags: { amenity: 'cafe' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'node', tags: { shop: 'supermarket' } })
+      assert.equal(r, true, 'Object should match')
+
+      var r = f.match({ type: 'way', tags: { amenity: 'restaurant' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'way', tags: { amenity: 'cafe' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'way', tags: { shop: 'supermarket' } })
+      assert.equal(r, true, 'Object should match')
+
+      var r = f.match({ type: 'relation', tags: { amenity: 'restaurant' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'relation', tags: { amenity: 'restaurant', cuisine: 'kebab' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'relation', tags: { amenity: 'cafe' } })
+      assert.equal(r, false, 'Object should not match')
+      var r = f.match({ type: 'relation', tags: { shop: 'supermarket' } })
+      assert.equal(r, true, 'Object should match')
+
+      check(f, [ ])
+    })
+
     it ('nwr[cuisine]->.b;(nwr[amenity];-nwr.b;)', function () {
       var f = new Filter('nwr[cuisine]->.b;(nwr[amenity];-nwr.b;)')
       assert.deepEqual(f.def, [
@@ -408,11 +459,11 @@ describe('Filter', function () {
       )
 
       assert.deepEqual(f.derefSets(), [
-        { type: 'nwr', filters: [{ key: 'amenity', op: 'has_key' }] },
+        { type: 'nwr', filters: [{ key: 'amenity', op: 'has_key' }], diff: [{ filters: [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] },
       ])
 
       var r = f.cacheDescriptors()
-      assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+      assert.deepEqual(r, [ { id: '(nwr["amenity"](properties:1);-nwr["cuisine"](properties:1);)' } ])
 
       var r = f.match({ type: 'node', tags: { amenity: 'restaurant' } })
       assert.equal(r, true, 'Object should match')

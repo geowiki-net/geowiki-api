@@ -23,7 +23,7 @@ function _compileCacheDescriptors (result) {
         '(properties:' + entry.properties + ')'
 
     if (entry.diff) {
-      entry.id = '(' + entry.id + ';-' + entry.diff + ')'
+      entry.id = '(' + entry.id + ';-' + entry.diff + ';)'
       delete entry.diff
     }
 

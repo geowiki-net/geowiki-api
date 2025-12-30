@@ -264,10 +264,10 @@ describe("Filter sets, compile", function () {
       { type: 'nwr', filters: [ { key: 'cuisine', op: 'has_key' } ] }
     ])
     assert.deepEqual(f.derefSets({ set: 'a' }), [
-      { type: 'nwr', filters: [ { key: 'amenity', op: 'has_key' } ] }
+      { type: 'nwr', filters: [ { key: 'amenity', op: 'has_key' } ], diff: [ { "filters": [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] }
     ])
     var r = f.cacheDescriptors({ set: 'a' })
-    assert.deepEqual(r, [ { id: 'nwr["amenity"](properties:1)' } ])
+    assert.deepEqual(r, [ { id: '(nwr["amenity"](properties:1);-nwr["cuisine"](properties:1);)' } ])
   })
   it ('(nwr;-nwr[cuisine];);', function () {
     var f = new Filter('(nwr;-nwr[cuisine];);')
@@ -294,10 +294,10 @@ describe("Filter sets, compile", function () {
       }
     })
     assert.deepEqual(f.derefSets(), [
-      { type: 'nwr', filters: [ ] }
+      { type: 'nwr', filters: [ ], diff: [ { "filters": [ { "key": "cuisine", "op": "has_key" } ], "type": "nwr" } ] }
     ])
     var r = f.cacheDescriptors()
-    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+    assert.deepEqual(r, [ { id: '(nwr(properties:1);-nwr["cuisine"](properties:1);)' } ])
   })
   it ('node(id:1,2)->.b;(nwr;-nwr.b;);', function () {
     var f = new Filter('node(id:1,2)->.b;(nwr;-nwr.b;);')
@@ -326,10 +326,10 @@ describe("Filter sets, compile", function () {
       }
     })
     assert.deepEqual(f.derefSets(), [
-      { type: 'nwr', filters: [ ] }
+      { type: 'nwr', filters: [ ], diff: [ { "filters": [ { "fun": "id", "value": [ 1, 2 ] } ], "type": "node" } ] }
     ])
     var r = f.cacheDescriptors()
-    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0);)' } ])
   })
   it ('node(id:1,2)->.b;(nwr;-.b;);', function () {
     var f = new Filter('node(id:1,2)->.b;(nwr;-.b;);')
@@ -358,10 +358,10 @@ describe("Filter sets, compile", function () {
       }
     })
     assert.deepEqual(f.derefSets(), [
-      { type: 'nwr', filters: [ ] }
+      { type: 'nwr', filters: [ ], "diff": [ { "filters": [ { "fun": "id", "value": [ 1, 2 ] } ], "type": "node" } ] }
     ])
     var r = f.cacheDescriptors()
-    assert.deepEqual(r, [ { id: 'nwr(properties:0)' } ])
+    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0);)' } ])
   })
   it ('(nwr[amenity]->.a;);', function () {
     var f = new Filter('(nwr[amenity]->.a;);')
@@ -3665,7 +3665,7 @@ describe("Filter sets with relations, apply base filter", function () {
           expected: [ 'n1467021062', 'n1467021072', 'n1467109667', 'n313351706', 'n334370854',  'n441576823', 'n442542434',  'n442542985', 'n442569612',  'n442570132', 'n442630742',  'n442972880', 'w369989037',  'w370577069' ],
           expectedSubRequestCount: 1,
           expectedCacheDescriptors: [{
-            id: 'nwr["amenity"="restaurant"](properties:1)'
+            id: '(nwr["amenity"="restaurant"](properties:1);-nwr["cuisine"](properties:1);)'
           }]
         }, done)
       })

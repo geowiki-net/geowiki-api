@@ -46,6 +46,13 @@ function compare (f, o) {
     })
   })
 
+  if (result && f.diff) {
+    if (filterCheckSuperset(f.diff, o.diff ?? [])) {
+      return false
+    }
+  }
+
+
   // if the filters are a superset, also check recurses
   if (result && f.recurse) {
     return f.recurse.every(filterRec =>

@@ -1,6 +1,7 @@
 const FilterStatement = require('./FilterStatement')
 const filterPart = require('./filterPart')
 const turf = require('./turf')
+const compileCacheDescriptors = require('./compileCacheDescriptors.js')
 
 class FilterDiff extends FilterStatement {
   constructor (def, filter) {
@@ -125,7 +126,27 @@ class FilterDiff extends FilterStatement {
   }
 
   _caches (options) {
-    return [this.parts[0]._caches(options)].flat()
+    const minuends = [this.parts[0]._caches(options)].flat()
+    const subtrahends = compileCacheDescriptors([this.parts[1]._caches(options)].flat())
+    const subtrahendCaches = this.parts[1]._caches(options)
+    let properties = 0
+    subtrahendCaches.forEach(c => {
+      properties |= c.properties
+    })
+
+    const result = []
+    minuends.forEach(m => {
+      const entry = { ...m }
+      entry.properties |= properties
+      if (subtrahends.length === 1) {
+        entry.diff = subtrahends[0].id
+      } else {
+        entry.diff = '(' + subtrahends.map(s => s.id + ';').join('') + ')'
+      }
+      result.push(entry)
+    })
+
+    return result
   }
 
   match (ob) {
@@ -133,7 +154,17 @@ class FilterDiff extends FilterStatement {
   }
 
   derefSets () {
-    return [this.parts[0].derefSets()].flat()
+    const minuends = [this.parts[0].derefSets()].flat()
+    const subtrahends = [this.parts[1].derefSets()].flat()
+
+    const result = []
+    minuends.forEach(m => {
+      const entry = { ...m }
+      entry.diff = subtrahends
+      result.push(entry)
+    })
+
+    return result
   }
 
   properties () {

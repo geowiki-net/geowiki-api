@@ -69,24 +69,27 @@ describe('Overpass Object Structures', function () {
         let varPoi = 0
         let variant = outVariants[varPoi]
 
+        originalResults[osmId] = {}
+        originalResults[osmId][variant] = []
+
         results.elements.forEach(el => {
           if (el.type === 'count') {
             if (++varPoi >= outVariants.length) {
               varPoi = 0
               osmPoi++
               osmId = toTest[osmPoi]
+
+              if (osmId) {
+                originalResults[osmId] = {}
+              }
             }
 
             variant = outVariants[varPoi]
-          } else {
-            if (!(osmId in originalResults)) {
-              originalResults[osmId] = {}
-            }
-            if (!(variant in originalResults[osmId])) {
+            if (osmId && variant !== undefined) {
               originalResults[osmId][variant] = []
             }
-
-            originalResults[toTest[osmPoi]][outVariants[varPoi]].push(el)
+          } else {
+            originalResults[osmId][variant].push(el)
           }
         })
 

@@ -5,6 +5,7 @@ const httpLoad = require('../src/httpLoad')
 
 const OverpassFrontend = require('..')
 const testOverpassObject = require('./src/testOverpassObject')
+const loadOverpassFrontendFile = require('./src/loadOverpassFrontendFile.js')
 
 const toTest = [
   'n3037893171',
@@ -36,6 +37,8 @@ const outVariants = [
 ]
 
 const originalResults = {}
+
+const overpassFrontendFile = loadOverpassFrontendFile('test/data.osm.bz2')
 
 const types = { n: 'node', w: 'way', r: 'relation' }
 describe('Overpass Object Structures', function () {
@@ -101,7 +104,7 @@ describe('Overpass Object Structures', function () {
   })
 
   describe('Load from OverpassFrontend via file', function () {
-    const overpassFrontend = new OverpassFrontend('test/data.osm.bz2')
+    const overpassFrontend = overpassFrontendFile
 
     toTest.forEach(osmId => {
       outVariants.forEach(outParam => {
@@ -168,7 +171,7 @@ describe('Overpass Object Structures', function () {
   })
 
   describe('Load individually via OverpassFrontend.query() from file', function () {
-    const overpassFrontend = new OverpassFrontend('test/data.osm.bz2')
+    const overpassFrontend = overpassFrontendFile
 
     toTest.forEach(osmId => {
       let type = osmId[0]

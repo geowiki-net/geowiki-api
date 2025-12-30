@@ -139,9 +139,9 @@ class FilterDiff extends FilterStatement {
       const entry = { ...m }
       entry.properties |= properties
       if (subtrahends.length === 1) {
-        entry.diff = subtrahends[0].id
+        entry.diff = printCacheDescriptor(subtrahends[0])
       } else {
-        entry.diff = '(' + subtrahends.map(s => s.id + ';').join('') + ')'
+        entry.diff = '(' + subtrahends.map(s => printCacheDescriptor(s) + ';').join('') + ')'
       }
       result.push(entry)
     })
@@ -235,6 +235,10 @@ class FilterDiff extends FilterStatement {
     // try to conflate again
     this.conflate()
   }
+}
+
+function printCacheDescriptor (entry) {
+  return entry.id
 }
 
 filterPart.register('diff', FilterDiff)

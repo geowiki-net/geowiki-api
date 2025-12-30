@@ -47,7 +47,11 @@ class RequestBBox extends Request {
       if (!boundsIsFullWorld(this.bounds)) {
         let boundsFilter
         if (this.bounds instanceof BoundingBox) {
-          boundsFilter = '(' + this.bbox.toLatLonString() + ')'
+          if (!this.bbox) {
+            boundsFilter = '(' + this.bounds.toLatLonString() + ')'
+          } else {
+            boundsFilter = '(' + this.bbox.toLatLonString() + ')'
+          }
         } else {
           // this does not support polygons with holes
           const coords = this.bounds.geometry.coordinates[0]

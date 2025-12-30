@@ -17,7 +17,7 @@ const toTest = [
   'r6384718',
   'r6487824',
   'r6412377',
-  //'r20313', // bounds missing in file load mode
+  'r20313',
 ]
 
 const exceptions = {
@@ -28,6 +28,7 @@ const exceptions = {
   'r6384718': ['bb', 'noids bb', 'center', 'noids center'],
   'r6487824': ['bb', 'noids bb', 'center', 'noids center'],
   'r6412377': ['center', 'noids center'],
+  'r20313': ['geom', 'ids geom', 'tags geom', 'meta geom', 'skel geom', 'noids geom', 'bb', 'noids bb', 'center', 'noids center'], // bounds missing in file load mode
 }
 
 const outVariants = [

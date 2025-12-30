@@ -3752,7 +3752,7 @@ function test (options, callback) {
       assert.deepEqual(cacheDescriptors, options.expectedCacheDescriptors, 'Expected cache info')
     }
     if ('expectedProperties' in options) {
-      assert.equal(request.filterQuery.properties(), options.expectedProperties)
+      assert.equal(request.filterQuery.properties(), options.expectedProperties, 'Expected properties wrong')
     }
   }
 

@@ -7,15 +7,15 @@ const outParams = {
   body: OverpassFrontend.MEMBERS | OverpassFrontend.TAGS,
   tags: OverpassFrontend.TAGS,
   meta: OverpassFrontend.MEMBERS | OverpassFrontend.TAGS | OverpassFrontend.META,
-  noids: OverpassFrontend.ID_ONLY, // TODO?
-  geom: OverpassFrontend.GEOM | OverpassFrontend.MEMBERS,
-  bb: OverpassFrontend.BBOX,
-  center: OverpassFrontend.CENTER
+  geom: OverpassFrontend.GEOM | OverpassFrontend.MEMBERS | OverpassFrontend.TAGS,
+  bb: OverpassFrontend.BBOX | OverpassFrontend.TAGS | OverpassFrontend.MEMBERS,
+  center: OverpassFrontend.CENTER | OverpassFrontend.TAGS | OverpassFrontend.MEMBERS
 }
 const outOtherParams = {
   asc: 0, // TODO
   qt: 0, // TODO
-  count: 0
+  count: 0,
+  noids: 0
 }
 
 class OutStatement {
@@ -69,7 +69,7 @@ class OutStatement {
       } else if (outParam in outOtherParams) {
         otherParams[outParam] = true
       } else {
-        throw new Error('Invalid parameter for print: "' + outParams + '"')
+        throw new Error('Invalid parameter for print: "' + outParam + '"')
       }
     })
 

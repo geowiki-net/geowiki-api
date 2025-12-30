@@ -500,10 +500,15 @@ class OverpassRelation extends OverpassObject {
       })
     }
 
-    if (options.geom) {
+    if (options.geom && ((!options.ids && !options.noids && !options.tags) || options.body || options.skel)) {
       this.members.forEach((member, i) => {
-        if (['node', 'way'].includes(member.type)) {
+        if (member.type === 'node') {
           if (this.memberFeatures[i].geometry) {
+            result.members[i].lat = this.memberFeatures[i].geometry.lat
+            result.members[i].lon = this.memberFeatures[i].geometry.lon
+          }
+        } else if (member.type === 'way') {
+          if (this.memberFeatures[i].geometry && this.memberFeatures[i].geometry.length) {
             result.members[i].geometry = this.memberFeatures[i].geometry
           } else {
             result.members[i].geometry = []

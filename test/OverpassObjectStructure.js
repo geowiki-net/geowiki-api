@@ -165,4 +165,43 @@ describe('Overpass Object Structures', function () {
       })
     })
   })
+
+  describe('Load individually via OverpassFrontend.query() from file', function () {
+    const overpassFrontend = new OverpassFrontend('test/data.osm.bz2')
+
+    toTest.forEach(osmId => {
+      let type = osmId[0]
+      let id = osmId.substr(1)
+
+      outVariants.forEach(outParam => {
+        it (osmId + ' ' + outParam, function (done) {
+          const query = '[out:json];' + types[type] + '(' + id + ');out ' + outParam + ';'
+          overpassFrontend.query(query, {},
+            (err, result) => {
+              if (err) {
+                assert.fail('Got error: ' + err.message)
+              }
+
+              const expected = originalResults[osmId][outParam][0]
+
+              if (expected) {
+                assert.equal(result.elements.length, 1, 'Expecting one element')
+              } else {
+                assert.equal(result.elements.length, 0, 'Expecting no elements')
+              }
+
+              const actual = result.elements[0]
+              if (osmId in exceptions && exceptions[osmId].includes(outParam)) {
+                console.log('skip test')
+              } else {
+                assert.deepEqual(actual, expected, 'Items are not equal')
+              }
+
+              done()
+            }
+          )
+        })
+      })
+    })
+  })
 })

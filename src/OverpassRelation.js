@@ -490,7 +490,7 @@ class OverpassRelation extends OverpassObject {
       result.center = this.bounds.getCenter()
     }
 
-    if ((!options.ids && !options.noids && !options.tags) || options.body || options.skel) {
+    if ((!options.ids && !options.tags) || options.body || options.skel) {
       result.members = this.members.map(member => {
         return {
           ref: member.ref,
@@ -500,7 +500,7 @@ class OverpassRelation extends OverpassObject {
       })
     }
 
-    if (options.geom && ((!options.ids && !options.noids && !options.tags) || options.body || options.skel)) {
+    if (options.geom && ((!options.ids && !options.tags) || options.body || options.skel)) {
       this.members.forEach((member, i) => {
         if (member.type === 'node') {
           if (this.memberFeatures[i].geometry) {

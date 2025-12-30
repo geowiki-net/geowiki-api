@@ -23,7 +23,7 @@ const toTest = [
 ]
 
 const outVariants = [
-  'ids', 'skel', 'body', 'tags', 'meta', 'ids geom', 'tags geom', 'meta geom',
+  '', 'ids', 'skel', 'body', 'tags', 'meta', 'geom', 'ids geom', 'ids tags', 'tags geom', 'meta geom', 'noids', 'noids skel', 'noids geom', 'noids tags',
 ]
 
 const originalResults = {}

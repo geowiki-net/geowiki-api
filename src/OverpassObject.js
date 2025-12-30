@@ -466,7 +466,7 @@ class OverpassObject {
       result.user = this.meta.user
     }
 
-    if (((!options.ids && !options.skel && !options.noids) || options.body || options.tags) && this.tags && Object.keys(this.tags).length) {
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags && Object.keys(this.tags).length) {
       result.tags = this.tags
     }
 

@@ -296,7 +296,7 @@ class OverpassWay extends OverpassObject {
       result.center = this.bounds.getCenter()
     }
 
-    if ((!options.ids && !options.noids && !options.tags) || options.body || options.skel) {
+    if ((!options.ids && !options.tags) || options.body || options.skel) {
       result.nodes = this.nodes
     }
 

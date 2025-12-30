@@ -329,7 +329,7 @@ describe("Filter sets, compile", function () {
       { type: 'nwr', filters: [ ], diff: [ { "filters": [ { "fun": "id", "value": [ 1, 2 ] } ], "type": "node" } ] }
     ])
     var r = f.cacheDescriptors()
-    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0);)' } ])
+    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0)(id:1,2);)' } ])
   })
   it ('node(id:1,2)->.b;(nwr;-.b;);', function () {
     var f = new Filter('node(id:1,2)->.b;(nwr;-.b;);')
@@ -361,7 +361,7 @@ describe("Filter sets, compile", function () {
       { type: 'nwr', filters: [ ], "diff": [ { "filters": [ { "fun": "id", "value": [ 1, 2 ] } ], "type": "node" } ] }
     ])
     var r = f.cacheDescriptors()
-    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0);)' } ])
+    assert.deepEqual(r, [ { id: '(nwr(properties:0);-node(properties:0)(id:1,2);)' } ])
   })
   it ('(nwr[amenity]->.a;);', function () {
     var f = new Filter('(nwr[amenity]->.a;);')

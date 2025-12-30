@@ -252,6 +252,14 @@ describe("Filters - test isSupersetOf", function () {
     assert.equal(f2.isSupersetOf(f1), false, f2.toString() + " should not be a super set of " + f1.toString())
   })
 
+  it("(node;-node(id:1,2);) - (node;-node(id:1,2,3,4);)", function () {
+    const f1 = new Filter("(node;-node(id:1,2);)")
+    const f2 = new Filter("(node;-node(id:1,2,3,4);)")
+
+    assert.equal(f1.isSupersetOf(f2), true, f1.toString() + " should be a super set of " + f2.toString())
+    assert.equal(f2.isSupersetOf(f1), false, f2.toString() + " should not be a super set of " + f1.toString())
+  })
+
   it("node[amenity] - node(1)", function () {
     const f1 = new Filter("node[amenity]")
     const f2 = new Filter("node(1)")

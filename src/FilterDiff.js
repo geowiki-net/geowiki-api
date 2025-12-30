@@ -238,7 +238,13 @@ class FilterDiff extends FilterStatement {
 }
 
 function printCacheDescriptor (entry) {
-  return entry.id
+  let result = entry.id
+
+  if (entry.ids) {
+    result += '(id:' + entry.ids.join(',') + ')'
+  }
+
+  return result
 }
 
 filterPart.register('diff', FilterDiff)

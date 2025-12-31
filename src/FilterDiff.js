@@ -28,11 +28,6 @@ class FilterDiff extends FilterStatement {
   }
 
   toLokijs (options = {}) {
-    const allRecurse = this.parts.filter(p => p.recurse().length)
-    if (allRecurse.length) {
-      return {}
-    }
-
     const r = this.parts[0].toLokijs(options)
     r.needMatch = true
 
@@ -66,14 +61,14 @@ class FilterDiff extends FilterStatement {
   }
 
   recurse () {
-    const allRecurse = this.parts.filter(p => p.recurse().length)
-    if (!allRecurse.length) {
-      return []
-    }
-
-    return this.parts.map(p => {
-      return { id: p.id, properties: p.properties(), type: 'diff' }
+    const result = []
+    this.parts.forEach(p => {
+      p.recurse().forEach(r => {
+        result.push(r)
+      })
     })
+
+    return result
   }
 
   toQuery (options = {}) {
@@ -112,7 +107,14 @@ class FilterDiff extends FilterStatement {
     }
 
     result.loki = this.toLokijs(options)
-    delete result.loki.recurse
+
+    const minuents = this.parts[0].compileQuery(options)
+    const subtrahends = this.parts[1].compileQuery(options)
+
+    result.recurse = (minuents.recurse || []).concat(subtrahends.recurse || [])
+    if (!result.recurse.length) {
+      delete result.recurse
+    }
 
     return result
   }

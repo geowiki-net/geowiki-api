@@ -13,12 +13,13 @@ function _compileCacheDescriptors (result) {
       recurse = _compileCacheDescriptors(entry.recurse)
     }
 
-    entry.id = recurse
+    let recurses = recurse
       .map(r => {
         return r.id + '->' + r.setId + ';'
       })
-      .join('') +
-      (entry.type || 'nwr') + entry.filters +
+      .join('')
+
+    entry.id = (entry.type || 'nwr') + entry.filters +
         recurse.map(r => r.filtersFwd ?? '').join('') +
         '(properties:' + entry.properties + ')'
 
@@ -26,6 +27,8 @@ function _compileCacheDescriptors (result) {
       entry.id = '(' + entry.id + ';-' + entry.diff + ';)'
       delete entry.diff
     }
+
+    entry.id = recurses + entry.id
 
     return entry
   })

@@ -1,23 +1,27 @@
-function compileCacheDescriptors (result) {
-  result = _compileCacheDescriptors(result)
+function compileCacheDescriptors (result, options={}) {
+  result = _compileCacheDescriptors(result, options)
   _compileCacheDescriptorsRecurses(result)
   _compileCacheDescriptorsClearProperties(result)
 
   return result
 }
 
-function _compileCacheDescriptors (result) {
+function _compileCacheDescriptors (result, options) {
   return result.map(entry => {
+    let recurses = ''
+
     let recurse = []
     if (entry.recurse) {
-      recurse = _compileCacheDescriptors(entry.recurse)
+      recurse = _compileCacheDescriptors(entry.recurse, options)
     }
 
-    let recurses = recurse
-      .map(r => {
-        return r.id + '->' + r.setId + ';'
-      })
-      .join('')
+    if (!options.skipRecurses) {
+      recurses = recurse
+        .map(r => {
+          return r.id + '->' + r.setId + ';'
+        })
+        .join('')
+    }
 
     entry.id = (entry.type || 'nwr') + entry.filters +
         recurse.map(r => r.filtersFwd ?? '').join('') +

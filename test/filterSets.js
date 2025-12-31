@@ -1072,14 +1072,12 @@ describe("Filter sets with relations, compile", function () {
     assert.equal(f.toQuery(), '(nwr._3;-nwr._4;)->._2;')
     assert.equal(f.toQuery({ statement: 1 }), 'nwr["amenity"]->._1;')
     assert.deepEqual(f.recurse(), [
-      { id: 1, properties: 5, type: 'w' },
       { id: 1, properties: 5, type: 'w' }
     ])
     assert.deepEqual(f.recurse({ statement: 1 }), [])
     assert.deepEqual(f.getScript(), [
       { id: 1, properties: 1, recurse: [] },
       { id: 2, properties: 0, recurse: [
-        { id: 1, properties: 5, type: 'w' },
         { id: 1, properties: 5, type: 'w' }
       ]}
     ])
@@ -1121,11 +1119,11 @@ describe("Filter sets with relations, compile", function () {
         ]} ]
       }
     ])
-    var r = f.cacheDescriptors() // TODO: wrong!!!
+    var r = f.cacheDescriptors()
     assert.deepEqual(r, [
-      { id: 'nwr["amenity"](properties:5)->._1;(node(w._1)(properties:0);-nwr["amenity"](properties:5)->._1;node(w._1)(properties:0)(id:1);)',
+      { id: 'nwr["amenity"](properties:5)->._1;(node(w._1)(properties:0);-node(w._1)(properties:0)(id:1);)',
         recurse: [
-          { id: 'nwr["amenity"](properties:5)->._1;(node(w._1)(properties:0);-nwr["amenity"](properties:5)->._1;node(w._1)(properties:0)(id:1);)->._1;nwr["amenity"](bn._1)(properties:5)' }
+          { id: 'nwr["amenity"](properties:5)->._1;(node(w._1)(properties:0);-node(w._1)(properties:0)(id:1);)->._1;nwr["amenity"](bn._1)(properties:5)' }
         ]
       }
     ])
@@ -1194,10 +1192,99 @@ describe("Filter sets with relations, compile", function () {
     ])
     var r = f.cacheDescriptors() // TODO: wrong!!!
     assert.deepEqual(r, [
-      { id: '(node(properties:0);-nwr["amenity"](properties:5)->._1;node(w._1)(properties:0)(id:1);)',
-//        recurse: [
-//          { id: '(node(w._1)(properties:0);-nwr["amenity"](properties:5)->._1;node(w._1)(properties:0)(id:1);)->._1;nwr["amenity"](bn._1)(properties:5)' }
-//        ]
+      { id: 'nwr["amenity"](properties:5)->._1;(node(properties:0);-node(w._1)(properties:0)(id:1);)',
+        recurse: [
+          { id: 'nwr["amenity"](properties:5)->._1;(node(properties:0);-node(w._1)(properties:0)(id:1);)->._1;nwr["amenity"](bn._1)(properties:5)' }
+        ]
+      }
+    ])
+  })
+  it ('nwr[amenity]->.a;nwr[shop]->.b;(node(w.a);-node(w.b);)', function () {
+    var f = new Filter('nwr[amenity]->.a;nwr[shop]->.b;(node(w.a);-node(w.b);)')
+
+    assert.deepEqual(f.def, [
+      [
+        {"op":"has_key","key":"amenity"},
+        {outputSet:'a'}
+      ],
+      [
+        {"op":"has_key","key":"shop"},
+        {outputSet:'b'}
+      ],
+      { diff: [
+        [
+          {"type": "node"},
+          {"recurse":"w", "inputSet":"a"}
+        ],
+        [
+          {"type": "node"},
+          {"recurse":"w", "inputSet":"b"},
+        ]
+      ]}
+    ])
+    assert.equal(f.toString(), 'nwr["amenity"]->.a;nwr["shop"]->.b;(node(w.a);-node(w.b););')
+    assert.equal(f.toQl(), 'nwr["amenity"]->.a;nwr["shop"]->.b;(node(w.a);-node(w.b););')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), 'nwr["amenity"]->._1;nwr["shop"]->._2;(node(w._1)->._4;-node(w._2)->._5;)->._3;')
+    assert.equal(f.toQuery(), '(nwr._4;-nwr._5;)->._3;')
+    assert.equal(f.toQuery({ statement: 1 }), 'nwr["amenity"]->._1;')
+    assert.deepEqual(f.recurse(), [
+      { id: 1, properties: 5, type: 'w' },
+      { id: 2, properties: 5, type: 'w' }
+    ])
+    assert.deepEqual(f.recurse({ statement: 1 }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 1, properties: 1, recurse: [] },
+      { id: 2, properties: 1, recurse: [] },
+      { id: 3, properties: 0, recurse: [
+        { id: 1, properties: 5, type: 'w' },
+        { id: 2, properties: 5, type: 'w' }
+      ]}
+    ])
+
+    assert.deepEqual(f.compileQuery(), {
+      query: '(node(w.a);-node(w.b););',
+      loki: {
+        "type": { $eq: 'node' },
+        needMatch: true,
+      },
+      recurse: [{
+        type: 'w',
+        inputSet: 'a',
+        query: 'nwr["amenity"]->.a;',
+        loki: {
+          "tags.amenity": { $exists: true }
+        }
+      },{
+        type: 'w',
+        inputSet: 'b',
+        query: 'nwr["shop"]->.b;',
+        loki: {
+          "tags.shop": { $exists: true }
+        }
+      }]
+    })
+    assert.deepEqual(f.toLokijs(), {
+      type: { $eq: 'node' },
+      needMatch: true
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: 'node', filters: [], recurse:
+        [
+          { recurseType: 'w', type: 'nwr', filters: [ { key: 'amenity', op: 'has_key' } ] }
+        ],
+        diff: [ { "filters": [], "type": "node", recurse:
+        [
+          { recurseType: 'w', type: 'nwr', filters: [ { key: 'shop', op: 'has_key' } ] }
+        ]} ]
+      }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [
+      { id: 'nwr["amenity"](properties:5)->._1;nwr["shop"](properties:5)->._2;(node(w._1)(properties:0);-node(w._2)(properties:0);)',
+        recurse: [
+          { id: 'nwr["amenity"](properties:5)->._1;nwr["shop"](properties:5)->._2;(node(w._1)(properties:0);-node(w._2)(properties:0);)->._1;nwr["amenity"](bn._1)(properties:5)' },
+          { id: 'nwr["amenity"](properties:5)->._1;nwr["shop"](properties:5)->._2;(node(w._1)(properties:0);-node(w._2)(properties:0);)->._2;nwr["shop"](bn._2)(properties:5)' }
+        ]
       }
     ])
   })

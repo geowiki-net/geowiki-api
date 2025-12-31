@@ -64,7 +64,13 @@ class FilterDiff extends FilterStatement {
     const result = []
     this.parts.forEach(p => {
       p.recurse().forEach(r => {
-        result.push(r)
+        const alreadyExist = result
+          .filter(e => r.id === e.id && r.properties === e.properties && r.type === e.type)
+          .length
+
+        if (!alreadyExist) {
+          result.push(r)
+        }
       })
     })
 
@@ -129,12 +135,12 @@ class FilterDiff extends FilterStatement {
 
   _caches (options) {
     const minuends = [this.parts[0]._caches(options)].flat()
-    const subtrahends = compileCacheDescriptors([this.parts[1]._caches(options)].flat())
-    const subtrahendCaches = this.parts[1]._caches(options)
+    const subtrahendCaches = [this.parts[1]._caches(options)].flat()
     let properties = 0
     subtrahendCaches.forEach(c => {
       properties |= c.properties
     })
+    const subtrahends = compileCacheDescriptors([this.parts[1]._caches(options)].flat(), { skipRecurses: true })
 
     const result = []
     minuends.forEach(m => {
@@ -145,6 +151,26 @@ class FilterDiff extends FilterStatement {
       } else {
         entry.diff = '(' + subtrahends.map(s => printCacheDescriptor(s) + ';').join('') + ')'
       }
+
+      entry.recurse = entry.recurse || []
+      ;(subtrahendCaches || []).forEach(s => {
+        (s.recurse || []).forEach(r => {
+          const alreadyExist = entry.recurse
+            .filter(e => r.setId === e.setId)
+            .length
+
+          if (!alreadyExist) {
+            r.filtersFwd = ''
+            entry.recurse.push(r)
+          }
+        })
+      })
+
+      console.log(entry)
+      if (!entry.recurse.length) {
+        delete entry.recurse
+      }
+
       result.push(entry)
     })
 

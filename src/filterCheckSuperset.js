@@ -52,7 +52,6 @@ function compare (f, o) {
     }
   }
 
-
   // if the filters are a superset, also check recurses
   if (result && f.recurse) {
     return f.recurse.every(filterRec =>

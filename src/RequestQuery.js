@@ -203,21 +203,34 @@ module.exports = class RequestQuery extends Request {
         features = features.slice(0, count)
       }
 
-      features.forEach(ob => {
-        const element = ob.outXml(outOptions, document)
-        osm.appendChild(element)
-      })
-
       if (outOptions.count) {
-        this.result.elements.push({
-          type: 'count',
-          id: 0,
-          tags: {
-            nodes: elements.filter(el => el.type === 'node').length.toString(),
-            ways: elements.filter(el => el.type === 'way').length.toString(),
-            relations: elements.filter(el => el.type === 'relation').length.toString(),
-            total: elements.length.toString()
-          }
+        const element = document.createElement('count')
+        element.setAttribute('id', 0)
+
+        Object.entries(countElements(features)).forEach(([type, c]) => {
+          const blank = document.createTextNode('\n  ')
+          element.appendChild(blank)
+
+          const tag = document.createElement('tag')
+          tag.setAttribute('k', type)
+          tag.setAttribute('v', c)
+          element.appendChild(tag)
+        })
+
+        let blank = document.createTextNode('\n')
+        element.appendChild(blank)
+
+        osm.appendChild(element)
+
+        blank = document.createTextNode('\n')
+        osm.appendChild(blank)
+      } else {
+        features.forEach(ob => {
+          const element = ob.outXml(outOptions, document)
+          osm.appendChild(element)
+
+          const blank = document.createTextNode('\n')
+          osm.appendChild(blank)
         })
       }
     })

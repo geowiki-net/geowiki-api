@@ -1,4 +1,4 @@
-function compileCacheDescriptors (result, options={}) {
+function compileCacheDescriptors (result, options = {}) {
   result = _compileCacheDescriptors(result, options)
   _compileCacheDescriptorsRecurses(result)
   _compileCacheDescriptorsClearProperties(result)

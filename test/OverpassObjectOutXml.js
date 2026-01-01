@@ -2,6 +2,7 @@ const fs = require('fs')
 const conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 const assert = require('assert').strict
 const DOMParser = require('@xmldom/xmldom').DOMParser
+const XMLSerializer = require('@xmldom/xmldom').XMLSerializer
 
 const OverpassFrontend = require('..')
 const testOverpassObject = require('./src/testOverpassObject')
@@ -22,18 +23,19 @@ const toTest = [
 ]
 
 const exceptions = {
-  'w299709376': ['center', 'noids center'],
-  'w31254026': ['center', 'noids center'],
-  'r2334391': ['center', 'noids center'],
+//  'w299709376': ['center', 'noids center'],
+//  'w31254026': ['center', 'noids center'],
+//  'r2334391': ['center', 'noids center'],
   'r3237099': ['center', 'noids center'],
   'r6384718': ['bb', 'noids bb', 'center', 'noids center'],
   'r6487824': ['bb', 'noids bb', 'center', 'noids center'],
-  'r6412377': ['center', 'noids center'],
+//  'r6412377': ['center', 'noids center'],
   'r20313': ['geom', 'ids geom', 'tags geom', 'meta geom', 'skel geom', 'noids geom', 'bb', 'noids bb', 'center', 'noids center'], // bounds missing in file load mode
 }
 
 const outVariants = [
   '', 'ids', 'skel', 'body', 'tags', 'meta', 'geom', 'ids geom', 'ids tags', 'tags geom', 'meta geom', 'skel geom', 'noids', 'noids skel', 'noids geom', 'noids tags', 'bb', 'noids bb', 'center', 'noids center',
+  // 'bb center', -- Overpass API always returns either center OR bounds
 ]
 
 const originalResults = {}
@@ -71,6 +73,7 @@ describe('Overpass Object Structures', function () {
         .then(receive)
 
       function receive (results) {
+        results = results.split('\n  ').join('\n') // remove the first 2 spaces on each line
         data = parser.parseFromString(results, 'text/xml')
 
         let osmPoi = 0
@@ -85,8 +88,7 @@ describe('Overpass Object Structures', function () {
         originalResults[osmId][variant] = []
 
         while (el) {
-          console.log(el.nodeName)
-          if (el.NodeName === 'count') {
+          if (el.nodeName === 'count') {
             if (++varPoi >= outVariants.length) {
               varPoi = 0
               osmPoi++
@@ -105,11 +107,10 @@ describe('Overpass Object Structures', function () {
             originalResults[osmId][variant].push(el)
           }
 
-          console.log('here')
           el = el.nextSibling
         }
 
-        console.log(JSON.stringify(originalResults, null, '  '))
+        //console.log(JSON.stringify(originalResults, null, '  '))
         done()
       }
     })
@@ -117,24 +118,29 @@ describe('Overpass Object Structures', function () {
 
   describe('Load from OverpassFrontend via file', function () {
     const overpassFrontend = overpassFrontendFile
+    const xml = parser.parseFromString('<xml/>', 'text/xml')
+    const document = xml.ownerDocument
+    const serializer = new XMLSerializer()
 
     toTest.forEach(osmId => {
       outVariants.forEach(outParam => {
+
         const outOptions = {}
         outParam.split(' ').forEach(o => outOptions[o] = true)
 
         it (osmId + ' ' + outParam, function (done) {
           overpassFrontend.get(osmId, {},
             (err, object) => {
-              const actual = object.outJson(outOptions)
+              const actual = object.outXml(outOptions, document)
               const expected = originalResults[osmId][outParam][0]
-              // console.log('actual', result)
-              // console.log('expect', originalResults[osmId][outParam][0])
+
+              const actualText = serializer.serializeToString(actual)
+              const expectText = serializer.serializeToString(originalResults[osmId][outParam][0])
 
               if (osmId in exceptions && exceptions[osmId].includes(outParam)) {
                 console.log('skip test')
               } else {
-                assert.deepEqual(actual, expected, 'Items are not equal')
+                assert.equal(actualText, expectText, 'Items are not equal')
               }
             },
             (err) => {
@@ -147,6 +153,7 @@ describe('Overpass Object Structures', function () {
 
   describe('Load individually via OverpassFrontend.query() from server', function () {
     const overpassFrontend = new OverpassFrontend(conf.url)
+    const serializer = new XMLSerializer()
 
     toTest.forEach(osmId => {
       let type = osmId[0]
@@ -156,23 +163,43 @@ describe('Overpass Object Structures', function () {
         it (osmId + ' ' + outParam, function (done) {
           overpassFrontend.clearCache()
 
-          const query = '[out:json];' + types[type] + '(' + id + ');out ' + outParam + ';'
+          const query = '[out:xml];' + types[type] + '(' + id + ');out ' + outParam + ';'
           overpassFrontend.query(query, {},
             (err, result) => {
               if (err) {
                 assert.fail('Got error: ' + err.message)
               }
 
+              const xml = parser.parseFromString(result, 'text/xml')
+              const document = xml.ownerDocument
+
+              const osm = document.getElementsByTagName('osm')[0]
+
+              let countChildren = 0
+              let current = osm.firstChild
+              let element
+              while (current) {
+                if (current.tagName) {
+                  countChildren++
+                  element = current
+                }
+                current = current.nextSibling
+              }
+
               const expected = originalResults[osmId][outParam][0]
 
               if (expected) {
-                assert.equal(result.elements.length, 1, 'Expecting one element')
+                assert.equal(countChildren, 1, 'Expecting one element')
               } else {
-                assert.equal(result.elements.length, 0, 'Expecting no elements')
+                assert.equal(countChildren, 0, 'Expecting no elements')
               }
 
-              const actual = result.elements[0]
-              assert.deepEqual(actual, expected)
+              if (element) {
+                const actualText = serializer.serializeToString(element)
+                const expectText = serializer.serializeToString(expected)
+
+                assert.equal(actualText, expectText)
+              }
 
               done()
             }
@@ -184,6 +211,7 @@ describe('Overpass Object Structures', function () {
 
   describe('Load individually via OverpassFrontend.query() from file', function () {
     const overpassFrontend = overpassFrontendFile
+    const serializer = new XMLSerializer()
 
     toTest.forEach(osmId => {
       let type = osmId[0]
@@ -191,26 +219,48 @@ describe('Overpass Object Structures', function () {
 
       outVariants.forEach(outParam => {
         it (osmId + ' ' + outParam, function (done) {
-          const query = '[out:json];' + types[type] + '(' + id + ');out ' + outParam + ';'
+          overpassFrontend.clearCache()
+
+          const query = '[out:xml];' + types[type] + '(' + id + ');out ' + outParam + ';'
           overpassFrontend.query(query, {},
             (err, result) => {
               if (err) {
                 assert.fail('Got error: ' + err.message)
               }
 
+              const xml = parser.parseFromString(result, 'text/xml')
+              const document = xml.ownerDocument
+
+              const osm = document.getElementsByTagName('osm')[0]
+
+              let countChildren = 0
+              let current = osm.firstChild
+              let element
+              while (current) {
+                if (current.tagName) {
+                  countChildren++
+                  element = current
+                }
+                current = current.nextSibling
+              }
+
               const expected = originalResults[osmId][outParam][0]
 
               if (expected) {
-                assert.equal(result.elements.length, 1, 'Expecting one element')
+                assert.equal(countChildren, 1, 'Expecting one element')
               } else {
-                assert.equal(result.elements.length, 0, 'Expecting no elements')
+                assert.equal(countChildren, 0, 'Expecting no elements')
               }
 
-              const actual = result.elements[0]
-              if (osmId in exceptions && exceptions[osmId].includes(outParam)) {
-                console.log('skip test')
-              } else {
-                assert.deepEqual(actual, expected, 'Items are not equal')
+              if (element) {
+                const actualText = serializer.serializeToString(element)
+                const expectText = serializer.serializeToString(expected)
+
+                if (osmId in exceptions && exceptions[osmId].includes(outParam)) {
+                  console.log('skip test')
+                } else {
+                  assert.equal(actualText, expectText, 'Items are not equal')
+                }
               }
 
               done()

@@ -1,8 +1,12 @@
+const DOMParser = require('@xmldom/xmldom').DOMParser
+const XMLSerializer = require('@xmldom/xmldom').XMLSerializer
 const Request = require('./Request')
 const Filter = require('./Filter')
 const async = require('async')
 const RequestBBox = require('./RequestBBox')
 const BoundingBox = require('boundingbox')
+
+let domParser, xmlSerializer
 
 /**
  * A query request
@@ -36,6 +40,7 @@ module.exports = class RequestQuery extends Request {
 
     if (options.query.match(/^s*\[/)) { // query starts with [ - indication for query options
       options.query = parseQueryOptions(options.query, options)
+      this.options = { ...this.options, ...options }
     }
 
     if (options.bbox) {
@@ -88,7 +93,11 @@ module.exports = class RequestQuery extends Request {
           this.requests.splice(this.requests.indexOf(request), 1)
 
           if (!this.requests.length) {
-            this.buildResultJson()
+            if (this.options.out === 'xml') {
+              this.buildResultXml()
+            } else {
+              this.buildResultJson()
+            }
             this.finish()
           }
         },
@@ -166,6 +175,62 @@ module.exports = class RequestQuery extends Request {
         this.result.elements = this.result.elements.concat(elements)
       }
     })
+  }
+
+  buildResultXml () {
+    if (!domParser) {
+      domParser = new DOMParser({
+        errorHandler: {
+          error: (err) => { throw new Error('Error parsing XML file: ' + err) },
+          fatalError: (err) => { throw new Error('Error parsing XML file: ' + err) }
+        }
+      })
+      xmlSerializer = new XMLSerializer()
+    }
+
+    const xml = domParser.parseFromString('<xml>\n<osm/>\n</xml>', 'text/xml')
+    const document = xml.ownerDocument
+
+    const osm = document.getElementsByTagName('osm')[0]
+    osm.setAttribute('version', '0.6')
+    //xml.appendChild(osm)
+
+    let blank = document.createTextNode('\n')
+    osm.appendChild(blank)
+
+    this.outStatements.forEach(stmt => {
+      const inputSet = this.inputSets[stmt.inputSet.id]
+      const outOptions = stmt.outOptions()
+      const count = stmt.count()
+
+      let features = inputSet.features
+      if (count) {
+        features = features.slice(0, count)
+      }
+
+      features.forEach(ob => {
+        const element = ob.outXml(outOptions, document)
+        osm.appendChild(element)
+      })
+
+      if (outOptions.count) {
+        this.result.elements.push({
+          type: 'count',
+          id: 0,
+          tags: {
+            nodes: elements.filter(el => el.type === 'node').length.toString(),
+            ways: elements.filter(el => el.type === 'way').length.toString(),
+            relations: elements.filter(el => el.type === 'relation').length.toString(),
+            total: elements.length.toString()
+          }
+        })
+      }
+    })
+
+    blank = document.createTextNode('\n')
+    osm.appendChild(blank)
+
+    this.result = xmlSerializer.serializeToString(xml)
   }
 }
 

@@ -488,6 +488,39 @@ class OverpassObject {
    */
   outXml (options, document) {
     const result = document.createElement(this.type)
+
+    if (!options.noids) {
+      result.setAttribute('id', this.osm_id)
+    }
+
+    this._outXml(options, document, result)
+
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags && Object.keys(this.tags).length) {
+      Object.entries(this.tags).forEach(([k, v]) => {
+        const blank = document.createTextNode('\n  ')
+        result.appendChild(blank)
+
+        const tag = document.createElement('tag')
+        tag.setAttribute('k', k)
+        tag.setAttribute('v', v)
+        result.appendChild(tag)
+      })
+    }
+
+    if (options.meta && this.meta) {
+      result.setAttribute('version', this.meta.version)
+      result.setAttribute('timestamp', this.meta.timestamp)
+      result.setAttribute('changeset', this.meta.changeset)
+      result.setAttribute('uid', this.meta.uid)
+      result.setAttribute('user', this.meta.user)
+    }
+
+    if (result.firstChild) {
+      const blank = document.createTextNode('\n')
+      result.appendChild(blank)
+    }
+
+    return result
   }
 }
 

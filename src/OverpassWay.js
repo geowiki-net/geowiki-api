@@ -293,7 +293,10 @@ class OverpassWay extends OverpassObject {
     }
 
     if (options.center && this.bounds) {
-      result.center = this.bounds.getCenter()
+      result.center = {
+        lat: parseFloat(this.center.lat.toFixed(7)),
+        lon: parseFloat(this.center.lon.toFixed(7))
+      }
     }
 
     if ((!options.ids && !options.tags) || options.body || options.skel) {
@@ -302,6 +305,49 @@ class OverpassWay extends OverpassObject {
 
     if (options.geom && this.geometry) {
       result.geometry = this.geometry
+    }
+
+    return result
+  }
+
+  _outXml (options, document, result) {
+    if ((options.bb || options.geom) && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('bounds')
+      node.setAttribute('minlat', this.bounds.minlat.toFixed(7))
+      node.setAttribute('minlon', this.bounds.minlon.toFixed(7))
+      node.setAttribute('maxlat', this.bounds.maxlat.toFixed(7))
+      node.setAttribute('maxlon', this.bounds.maxlon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if (options.center && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('center')
+      node.setAttribute('lat', this.center.lat.toFixed(7))
+      node.setAttribute('lon', this.center.lon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if ((!options.ids && !options.tags) || options.body || options.skel) {
+      this.nodes.forEach((id, i) => {
+        const blank = document.createTextNode('\n  ')
+        result.appendChild(blank)
+
+        const nd = document.createElement('nd')
+        nd.setAttribute('ref', id)
+
+        if (options.geom && this.geometry) {
+          nd.setAttribute('lat', this.geometry[i].lat.toFixed(7))
+          nd.setAttribute('lon', this.geometry[i].lon.toFixed(7))
+        }
+
+        result.appendChild(nd)
+      })
     }
 
     return result

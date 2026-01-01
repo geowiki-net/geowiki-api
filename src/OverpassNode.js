@@ -149,6 +149,13 @@ class OverpassNode extends OverpassObject {
 
     return result
   }
+
+  _outXml (options, document, result) {
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
+      result.setAttribute('lat', this.geometry.lat)
+      result.setAttribute('lon', this.geometry.lon)
+    }
+  }
 }
 
 module.exports = OverpassNode

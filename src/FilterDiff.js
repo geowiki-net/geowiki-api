@@ -3,6 +3,8 @@ const filterPart = require('./filterPart')
 const turf = require('./turf')
 const compileCacheDescriptors = require('./compileCacheDescriptors.js')
 
+// TODO: concerning recurses in the subtrahend, the cache descriptors might still be wrong, as they recurse to 'r;(node;node(r)->.1);r(bn.1);' <- why would we be interested in 'r(bn.1);'?
+
 class FilterDiff extends FilterStatement {
   constructor (def, filter) {
     super(def, filter)

@@ -188,7 +188,6 @@ module.exports = class RequestQuery extends Request {
 
     const osm = document.getElementsByTagName('osm')[0]
     osm.setAttribute('version', '0.6')
-    //xml.appendChild(osm)
 
     let blank = document.createTextNode('\n')
     osm.appendChild(blank)

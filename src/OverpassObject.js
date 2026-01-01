@@ -478,6 +478,17 @@ class OverpassObject {
 
     return result
   }
+
+  /**
+   * return object as 'out' would export it in XML mode
+   *
+   * @param {object} options - options as object of keys, e.g. { 'skel': true, 'tags': true }
+   * @param {DOMDocument} document
+   * @returns DOMNode
+   */
+  outXml (options, document) {
+    const result = document.createElement(this.type)
+  }
 }
 
 ee(OverpassObject.prototype)

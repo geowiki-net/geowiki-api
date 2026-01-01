@@ -41,7 +41,7 @@ const originalResults = {}
 const overpassFrontendFile = loadOverpassFrontendFile('test/data.osm.bz2')
 
 const types = { n: 'node', w: 'way', r: 'relation' }
-describe('Overpass Object Structures', function () {
+describe('Overpass Object outJson()', function () {
   describe('get original results', function () {
    
     it('get all objects', function (done) { 
@@ -114,7 +114,7 @@ describe('Overpass Object Structures', function () {
         it (osmId + ' ' + outParam, function (done) {
           overpassFrontend.get(osmId, {},
             (err, object) => {
-              const actual = object.out(outOptions)
+              const actual = object.outJson(outOptions)
               const expected = originalResults[osmId][outParam][0]
               // console.log('actual', result)
               // console.log('expect', originalResults[osmId][outParam][0])

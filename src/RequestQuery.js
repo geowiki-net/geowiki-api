@@ -88,7 +88,7 @@ module.exports = class RequestQuery extends Request {
           this.requests.splice(this.requests.indexOf(request), 1)
 
           if (!this.requests.length) {
-            this.buildResult()
+            this.buildResultJson()
             this.finish()
           }
         },
@@ -135,7 +135,7 @@ module.exports = class RequestQuery extends Request {
     return !this.requests.length
   }
 
-  buildResult () {
+  buildResultJson () {
     this.result = {
       elements: []
     }
@@ -149,7 +149,7 @@ module.exports = class RequestQuery extends Request {
       if (count) {
         features = features.slice(0, count)
       }
-      const elements = features.map(ob => ob.out(outOptions))
+      const elements = features.map(ob => ob.outJson(outOptions))
 
       if (outOptions.count) {
         this.result.elements.push({

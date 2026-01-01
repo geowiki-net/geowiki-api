@@ -139,8 +139,8 @@ class OverpassNode extends OverpassObject {
     return bbox.intersects(this.bounds) ? 2 : 0
   }
 
-  out (options) {
-    const result = super.out(options)
+  outJson (options) {
+    const result = super.outJson(options)
 
     if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
       result.lat = this.geometry.lat

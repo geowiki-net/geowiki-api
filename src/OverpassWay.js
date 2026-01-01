@@ -285,8 +285,8 @@ class OverpassWay extends OverpassObject {
     return 1
   }
 
-  out (options) {
-    const result = super.out(options)
+  outJson (options) {
+    const result = super.outJson(options)
 
     if ((options.bb || options.geom) && this.bounds) {
       result.bounds = { ...this.bounds }

@@ -449,7 +449,13 @@ class OverpassObject {
     this.overpass.db.update(this.dbData)
   }
 
-  out (options) {
+  /**
+   * return object as 'out' would export it in JSON mode
+   *
+   * @param {object} options - options as object of keys, e.g. { 'skel': true, 'tags': true }
+   * @returns object
+   */
+  outJson (options) {
     const result = {
       type: this.type
     }

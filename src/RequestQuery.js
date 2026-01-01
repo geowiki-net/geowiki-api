@@ -164,12 +164,7 @@ module.exports = class RequestQuery extends Request {
         this.result.elements.push({
           type: 'count',
           id: 0,
-          tags: {
-            nodes: elements.filter(el => el.type === 'node').length.toString(),
-            ways: elements.filter(el => el.type === 'way').length.toString(),
-            relations: elements.filter(el => el.type === 'relation').length.toString(),
-            total: elements.length.toString()
-          }
+          tags: countElements(elements)
         })
       } else {
         this.result.elements = this.result.elements.concat(elements)
@@ -245,4 +240,13 @@ function parseQueryOptions (query, options) {
   }
 
   return query
+}
+
+function countElements (elements) {
+  return {
+    nodes: elements.filter(el => el.type === 'node').length.toString(),
+    ways: elements.filter(el => el.type === 'way').length.toString(),
+    relations: elements.filter(el => el.type === 'relation').length.toString(),
+    total: elements.length.toString()
+  }
 }

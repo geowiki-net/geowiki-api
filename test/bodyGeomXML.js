@@ -97,11 +97,11 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
             "source": "geoimage.at",
             "surface": "dirt",
             "tracktype": "grade4",
-            "@osm3s:version": 0.6,
-            "@osm3s:generator": "Overpass API 0.7.56.9 76e5016d",
-            "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-            "@osm3s:timestamp_osm_base": "2021-08-28T13:58:14Z",
-            "@osm3s:bounds": {
+            "@meta:version": 0.6,
+            "@meta:generator": "Overpass API 0.7.56.9 76e5016d",
+            "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+            "@meta:timestamp_osm_base": "2021-08-28T13:58:14Z",
+            "@meta:bounds": {
               "maxlat": 48.1296814,
               "maxlon": 16.3384938,
               "minlat": 48.1266093,
@@ -239,11 +239,11 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
             "@id": "relation/11308701",
             "natural": "grassland",
             "type": "multipolygon",
-            "@osm3s:version": 0.6,
-            "@osm3s:generator": "Overpass API 0.7.56.9 76e5016d",
-            "@osm3s:timestamp_osm_base": "2021-08-28T13:58:14Z",
-            "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-            "@osm3s:bounds": {
+            "@meta:version": 0.6,
+            "@meta:generator": "Overpass API 0.7.56.9 76e5016d",
+            "@meta:timestamp_osm_base": "2021-08-28T13:58:14Z",
+            "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+            "@meta:bounds": {
               "maxlat": 48.1296814,
               "maxlon": 16.3384938,
               "minlat": 48.1266093,

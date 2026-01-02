@@ -18,7 +18,7 @@ const RequestMulti = require('./RequestMulti')
 const RequestQuery = require('./RequestQuery')
 const defines = require('./defines')
 const loadFile = require('./loadFile')
-const copyOsm3sMetaFrom = require('./copyOsm3sMeta')
+const readDbMeta = require('./readDbMeta')
 const timestamp = require('./timestamp')
 const Filter = require('./Filter')
 const isGeoJSON = require('./isGeoJSON')
@@ -58,12 +58,12 @@ const isFileURL = require('./isFileURL')
 /**
  * When a file is specified as URL, this event notifies, that the file has been completely loaded. When a Overpass API is used, every time when data has been received.
  * @event OverpassFrontend#load
- * @param {object} osm3sMeta Meta data (not all properties of meta data might be set)
- * @param {number} osm3sMeta.version OpenStreetMap API version (currently 0.6)
- * @param {string} osm3sMeta.generator Data generator
- * @param {string} osm3sMeta.timestamp_osm_base RFC8601 timestamp of OpenStreetMap data
- * @param {string} osm3sMeta.copyright Copyright statement
- * @param {BoundingBox} [osm3sMeta.bounds] Bounding Box (only when loading from file)
+ * @param {object} dbMeta Meta data (not all properties of meta data might be set)
+ * @param {number} dbMeta.version OpenStreetMap API version (currently 0.6)
+ * @param {string} dbMeta.generator Data generator
+ * @param {string} dbMeta.timestamp_osm_base RFC8601 timestamp of OpenStreetMap data
+ * @param {string} dbMeta.copyright Copyright statement
+ * @param {BoundingBox} [dbMeta.bounds] Bounding Box (only when loading from file)
  * @param {OverpassFrontend#Context} [context] - context of the request
  */
 
@@ -92,6 +92,7 @@ const isFileURL = require('./isFileURL')
  * @param {number} [options.timeGap429Exp=3] If we keep getting 429 responses, increase the time exponentially with the specified factor (e.g. 2: 500ms, 1000ms, 2000ms, ...; 3: 500ms, 1500ms, 4500ms, ...)
  * @param {number} [options.loadChunkSize=1000] When loading a file (instead connecting to an Overpass URL) load elements in chunks of n items.
  * @property {boolean} hasStretchLon180=false Are there any map features in the cache which stretch over lon=180/-180?
+ * @property {object} meta Database meta information (copyright, attribution, license)
  */
 class OverpassFrontend {
   constructor (url, options) {
@@ -185,7 +186,7 @@ class OverpassFrontend {
   }
 
   _loadFileContent (result) {
-    const osm3sMeta = copyOsm3sMetaFrom(result)
+    const dbMeta = readDbMeta(result)
 
     const chunks = []
     for (let i = 0; i < result.elements.length; i += this.options.loadChunkSize) {
@@ -201,7 +202,7 @@ class OverpassFrontend {
         chunk.forEach(
           (element) => {
             const ob = this.createOrUpdateOSMObject(element, {
-              osm3sMeta,
+              dbMeta,
               properties: OverpassFrontend.TAGS | OverpassFrontend.META | OverpassFrontend.MEMBERS
             })
 
@@ -223,8 +224,8 @@ class OverpassFrontend {
           return this.emit('error', err)
         }
 
-        this.meta = osm3sMeta
-        this.emit('load', osm3sMeta)
+        this.meta = dbMeta
+        this.emit('load', dbMeta)
 
         this.ready = true
         this._overpassProcess()
@@ -501,9 +502,8 @@ class OverpassFrontend {
 
     this.errorCount = 0
 
-    const osm3sMeta = copyOsm3sMetaFrom(results)
-    this.meta = osm3sMeta
-    this.emit('load', osm3sMeta, context)
+    this.meta = readDbMeta(results)
+    this.emit('load', this.meta, context)
 
     let subRequestsIndex = 0
     let partIndex = 0
@@ -542,7 +542,7 @@ class OverpassFrontend {
         continue
       }
 
-      part.osm3sMeta = osm3sMeta
+      part.dbMeta = this.meta
       const ob = this.createOrUpdateOSMObject(el, part)
       delete context.todo[ob.id]
 

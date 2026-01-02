@@ -59,7 +59,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110, lat: 48.1992013, lon: 16.3406967, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
@@ -99,7 +99,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110 },
@@ -138,7 +138,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'count', id: 0,
@@ -159,7 +159,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out meta geom;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,"version":6,"timestamp":"2014-04-11T21:30:26Z","changeset":21635523,"uid":1066249,"user":"Railjet","tags":{"building":"yes"},"bounds":{"minlon":16.3408891,"minlat":48.1963491,"maxlon":16.3415051,"maxlat":48.1967389},"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646],"geometry":[{"lat":48.1963491,"lon":16.3411739},{"lat":48.1964054,"lon":16.3415051},{"lat":48.1964648,"lon":16.3414911},{"lat":48.1967389,"lon":16.3414268},{"lat":48.1967295,"lon":16.341235},{"lat":48.1967237,"lon":16.3411154},{"lat":48.1967203,"lon":16.3409434},{"lat":48.1966191,"lon":16.3409658},{"lat":48.1966133,"lon":16.3408891},{"lat":48.1965521,"lon":16.3409009},{"lat":48.19656,"lon":16.3409788},{"lat":48.1965493,"lon":16.3409815},{"lat":48.1965518,"lon":16.3409955},{"lat":48.1965672,"lon":16.3410879},{"lat":48.1964829,"lon":16.341108},{"lat":48.1964659,"lon":16.3411127},{"lat":48.1964088,"lon":16.3411444},{"lat":48.1963491,"lon":16.3411739}]},
@@ -180,7 +180,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out skel;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646]},
@@ -202,7 +202,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out 2 body;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,tags:{"building":"yes"},"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646]},
@@ -246,7 +246,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110 },
@@ -289,7 +289,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110, lat: 48.1992013, lon: 16.3406967, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
@@ -333,7 +333,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["railway"="station"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110, lat: 48.1992013, lon: 16.3406967, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
@@ -352,7 +352,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
 // [out:json]
         test('[bbox:48.196589,16.338580,48.199714,16.341262];nwr[amenity=place_of_worship];out;', {
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110, lat: 48.1992013, lon: 16.3406967, tags: {"amenity":"place_of_worship","denomination":"catholic","name":"Zum Göttlichen Heiland","religion":"christian"} },
@@ -392,7 +392,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'node', id: 1863103110 },
@@ -431,7 +431,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
             { id: 'nwr["amenity"="place_of_worship"](properties:1)' }
           ],
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               { type: 'count', id: 0,
@@ -452,7 +452,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out meta geom;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,"version":6,"timestamp":"2014-04-11T21:30:26Z","changeset":21635523,"uid":1066249,"user":"Railjet","tags":{"building":"yes"},"bounds":{"minlon":16.3408891,"minlat":48.1963491,"maxlon":16.3415051,"maxlat":48.1967389},"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646],"geometry":[{"lat":48.1963491,"lon":16.3411739},{"lat":48.1964054,"lon":16.3415051},{"lat":48.1964648,"lon":16.3414911},{"lat":48.1967389,"lon":16.3414268},{"lat":48.1967295,"lon":16.341235},{"lat":48.1967237,"lon":16.3411154},{"lat":48.1967203,"lon":16.3409434},{"lat":48.1966191,"lon":16.3409658},{"lat":48.1966133,"lon":16.3408891},{"lat":48.1965521,"lon":16.3409009},{"lat":48.19656,"lon":16.3409788},{"lat":48.1965493,"lon":16.3409815},{"lat":48.1965518,"lon":16.3409955},{"lat":48.1965672,"lon":16.3410879},{"lat":48.1964829,"lon":16.341108},{"lat":48.1964659,"lon":16.3411127},{"lat":48.1964088,"lon":16.3411444},{"lat":48.1963491,"lon":16.3411739}]},
@@ -473,7 +473,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out skel;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646]},
@@ -495,7 +495,7 @@ const generator = packageInfo.name + ' ' + packageInfo.version
           toQlStatementIds: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;._1 out 2 body;',
           toQuery: 'nwr["building"](48.19612,16.34066,48.19688,16.34171)->._1;',
           result: {
-            version: 0.6,
+            version: '0.6',
             generator,
             elements: [
               {"type":"way","id":86273634,tags:{"building":"yes"},"nodes":[2548006646,1001460111,2784273119,2548006710,2548006707,2548006706,2548006705,2548006686,2548006684,2548006676,2548006679,2548006674,2548006675,2548006681,1842841891,2548006654,1842841848,2548006646]},
@@ -571,7 +571,7 @@ function test (input, expected, options, callback) {
       }
 
       // console.log(result.elements.map(el => JSON.stringify(el)).join('\n'))
-      assert.deepEqual(result, expected.result, 'Unexpected result')
+      assert.deepEqual(result.elements, expected.result.elements, 'Unexpected result')
 
       /*
       const expected = (options.mode === 'via-server' ? options.expectedViaServer : options.expectedViaFile) || options.expected

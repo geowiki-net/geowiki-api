@@ -147,8 +147,9 @@ module.exports = class RequestQuery extends Request {
 
   buildResultJson () {
     this.result = {
-      version: 0.6,
+      version: '0.6',
       generator: packageInfo.name + ' ' + packageInfo.version,
+      ...this.overpass.meta,
       elements: []
     }
 

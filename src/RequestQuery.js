@@ -5,6 +5,7 @@ const Filter = require('./Filter')
 const async = require('async')
 const RequestBBox = require('./RequestBBox')
 const BoundingBox = require('boundingbox')
+const packageInfo = require('../version.json')
 
 let domParser, xmlSerializer
 
@@ -146,6 +147,8 @@ module.exports = class RequestQuery extends Request {
 
   buildResultJson () {
     this.result = {
+      version: 0.6,
+      generator: packageInfo.name + ' ' + packageInfo.version,
       elements: []
     }
 
@@ -188,6 +191,7 @@ module.exports = class RequestQuery extends Request {
 
     const osm = document.getElementsByTagName('osm')[0]
     osm.setAttribute('version', '0.6')
+    osm.setAttribute('generator', packageInfo.name + ' ' + packageInfo.version)
 
     let blank = document.createTextNode('\n')
     osm.appendChild(blank)

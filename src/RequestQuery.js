@@ -44,10 +44,10 @@ module.exports = class RequestQuery extends Request {
       this.options = { ...this.options, ...options }
     }
 
-    if (options.bbox) {
+    if (this.options.bbox) {
       const keys = ['minlat', 'minlon', 'maxlat', 'maxlon']
-      const values = options.bbox.split(',').map(v => parseFloat(v))
-      options.bbox = Object.fromEntries(keys.map((key, i) => [key, values[i]]))
+      const values = this.options.bbox.split(',').map(v => parseFloat(v))
+      this.options.bbox = Object.fromEntries(keys.map((key, i) => [key, values[i]]))
     }
 
     this.filter = new Filter(options.query)
@@ -74,7 +74,7 @@ module.exports = class RequestQuery extends Request {
 
     async.each(this.inputSets, (inputSet, done) => {
       const stmt = inputSet.statements[0]
-      const queryOptions = { ...options }
+      const queryOptions = { ...this.options }
       queryOptions.properties = inputSet.properties
 
       const data = {
@@ -153,6 +153,11 @@ module.exports = class RequestQuery extends Request {
       elements: []
     }
 
+    delete this.result.bounds
+    if (this.options.bbox) {
+      this.result.bounds = { ...this.options.bbox }
+    }
+
     this.outStatements.forEach(stmt => {
       const inputSet = this.inputSets[stmt.inputSet.id]
       const outOptions = stmt.outOptions()
@@ -193,6 +198,25 @@ module.exports = class RequestQuery extends Request {
     const osm = document.getElementsByTagName('osm')[0]
     osm.setAttribute('version', '0.6')
     osm.setAttribute('generator', packageInfo.name + ' ' + packageInfo.version)
+
+    Object.entries(this.overpass.meta).forEach(([k, v]) => {
+      if (k !== 'bounds') {
+        osm.setAttribute(k, v)
+      }
+    })
+
+    if (this.options.bbox) {
+      const blank = document.createTextNode('\n')
+      osm.appendChild(blank)
+
+      const bounds = new BoundingBox(this.options.bbox)
+      const node = document.createElement('bounds')
+      node.setAttribute('minlat', bounds.minlat.toFixed(7))
+      node.setAttribute('minlon', bounds.minlon.toFixed(7))
+      node.setAttribute('maxlat', bounds.maxlat.toFixed(7))
+      node.setAttribute('maxlon', bounds.maxlon.toFixed(7))
+      osm.appendChild(node)
+    }
 
     let blank = document.createTextNode('\n')
     osm.appendChild(blank)

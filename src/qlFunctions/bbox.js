@@ -2,6 +2,7 @@ const BoundingBox = require('boundingbox')
 const turf = require('../turf')
 const OverpassFrontend = require('../defines')
 const qlFunction = require('./qlFunction')
+const boundsToLokiQuery = require('../boundsToLokiQuery')
 
 module.exports = class bbox extends qlFunction {
   constructor (str) {
@@ -25,18 +26,22 @@ module.exports = class bbox extends qlFunction {
   }
 
   test (ob) {
-    return ob.intersects(this.value)
+    const r = ob.intersects(this.value)
+    return r === 2 ? true : r === 0 ? false : null
   }
 
   toString () {
     return '(' + this.value.toLatLonString() + ')'
   }
 
-  compileLokiJS () {
-    return { needMatch: true }
+  compileLokiJS (options) {
+    const r = boundsToLokiQuery(this.value, options)
+    r.needMatch = true
+
+    return r
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     const bounds = this.value.toGeoJSON()
 
     descriptors.forEach(d => {
@@ -45,7 +50,7 @@ module.exports = class bbox extends qlFunction {
         d.invalid = true
       } else {
         d.bounds = newBounds.geometry
-        d.properties |= OverpassFrontend.GEOM
+        d.properties |= OverpassFrontend.BBOX
       }
     })
   }
@@ -61,6 +66,14 @@ module.exports = class bbox extends qlFunction {
   }
 
   bounds () {
+    return this.value.toGeoJSON()
+  }
+
+  properties () {
+    return OverpassFrontend.BBOX
+  }
+
+  possibleBounds (ob) {
     return this.value.toGeoJSON()
   }
 }

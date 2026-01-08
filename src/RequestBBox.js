@@ -1,10 +1,12 @@
+const BoundingBox = require('boundingbox')
 const Request = require('./Request')
 const overpassOutOptions = require('./overpassOutOptions')
 const defines = require('./defines')
 const RequestBBoxMembers = require('./RequestBBoxMembers')
 const Filter = require('./Filter')
-const boundsToLokiQuery = require('./boundsToLokiQuery')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
+const compileRecurseReverse = require('./compileRecurseReverse')
+const compileRecurseFilter = require('./compileRecurseFilter')
 
 /**
  * A BBox request
@@ -22,7 +24,6 @@ class RequestBBox extends Request {
     if (typeof this.options.properties === 'undefined') {
       this.options.properties = defines.DEFAULT
     }
-    this.options.properties |= defines.BBOX
     this.options.minEffort = this.options.minEffort || 256
 
     // make sure the request ends with ';'
@@ -32,33 +33,57 @@ class RequestBBox extends Request {
 
     if (!('noCacheQuery' in this.options) || !this.options.noCacheQuery) {
       try {
-        if (this.options.filter) {
-          this.filterQuery = new Filter({ and: [this.query, this.options.filter] })
+        this.filterQuery = new Filter(this.query)
+        if (this.options.filter && this.options.filter.length) {
+          this.filterQuery.setBaseFilter(this.options.filter)
           this.query = this.filterQuery.toQl()
-        } else {
-          this.filterQuery = new Filter(this.query)
         }
       } catch (err) {
         return this.finish(err)
       }
 
-      this.lokiQuery = this.filterQuery.toLokijs()
-      this.lokiQueryNeedMatch = !!this.lokiQuery.needMatch
-      delete this.lokiQuery.needMatch
+      this.lokiQuery = new Filter(this.filterQuery.toString() + 'nwr._(properties:' + this.options.properties + ');')
 
       if (!boundsIsFullWorld(this.bounds)) {
-        this.lokiQuery = { $and: [this.lokiQuery, boundsToLokiQuery(this.bbox, this.overpass)] }
+        let boundsFilter
+        if (this.bounds instanceof BoundingBox) {
+          if (!this.bbox) {
+            boundsFilter = '(' + this.bounds.toLatLonString() + ')'
+          } else {
+            boundsFilter = '(' + this.bbox.toLatLonString() + ')'
+          }
+        } else {
+          // this does not support polygons with holes
+          const coords = this.bounds.geometry.coordinates[0]
+            .slice(0, -1)
+            .map(c => c[1] + ' ' + c[0])
+            .join(' ')
+          boundsFilter = '(poly:"' + coords + '")'
+        }
+
+        if (!this.options.boundsRecurseSelector || this.options.boundsRecurseSelector === 'input') {
+          this.lokiQuery.setBaseFilter('nwr' + boundsFilter)
+        } else if (this.options.boundsRecurseSelector === 'result') {
+          const filter = this.lokiQuery.toQl({ setsUseStatementIds: true })
+          const finalStatement = this.lokiQuery.getStatement()
+          this.lokiQuery = new Filter(filter + 'nwr._' + finalStatement.id + boundsFilter)
+        } else {
+          throw new Error("RequestBBox: options boundsRecurseSelector, invalid option '" + this.options.boundsRecurseSelector + "'")
+        }
       }
 
-      const cacheFilter = new Filter({ and: [this.filterQuery, new Filter('nwr(properties:' + this.options.properties + ')')] })
-      this.options.properties = cacheFilter.properties()
+      this.lokiQuery = new Filter(this.lokiQuery) // TODO: get rid of this statement
+      this.lokiQuery.conflate()
 
-      this.cacheDescriptors = cacheFilter.cacheDescriptors().map(cacheDescriptors => {
+      this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
         return {
-          cache: this.overpass.bboxQueryCache.get(cacheDescriptors.id),
-          cacheDescriptors
+          cache: this.overpass.bboxQueryCache.get(cacheDescriptor),
+          cacheDescriptor
         }
       })
+
+      this.doneFeaturesSets = {}
+      this.undecidedItems = null
     }
 
     this.loadFinish = false
@@ -73,8 +98,11 @@ class RequestBBox extends Request {
    */
   preprocess () {
     let items = []
+    this.undecidedItems = null
+
     if (this.lokiQuery) {
-      items = this.overpass.db.find(this.lokiQuery)
+      items = this.overpass.queryLokiDB(this.lokiQuery, { properties: this.options.properties }, null, this.doneFeaturesSets)
+      this.undecidedItems = items.undecidedItems
     }
 
     for (let i = 0; i < items.length; i++) {
@@ -91,16 +119,6 @@ class RequestBBox extends Request {
       const ob = this.overpass.cacheElements[id]
 
       if (id in this.doneFeatures) {
-        continue
-      }
-
-      // maybe we need an additional check
-      if (this.lokiQueryNeedMatch && !this.filterQuery.match(ob)) {
-        continue
-      }
-
-      // also check the object directly if it intersects the bbox - if possible
-      if (ob.intersects(this.bounds) < 2) {
         continue
       }
 
@@ -124,11 +142,6 @@ class RequestBBox extends Request {
     if (this.loadFinish) {
       return false
     }
-
-    if (context.bbox && context.bbox.toLatLonString() !== this.bbox.toLatLonString()) {
-      return false
-    }
-    context.bbox = this.bbox
 
     for (const i in context.requests) {
       const request = context.requests[i]
@@ -180,9 +193,18 @@ class RequestBBox extends Request {
       effortAvailable = Math.min(effortAvailable, efforts.maxEffort)
     }
 
+    let query; let resultSet = '.result'; let resultSetId = null
+
     // if the context already has a bbox and it differs from this, we can't add
     // ours
-    let query = this.query.substr(0, this.query.length - 1) + '->.result;\n'
+    if (this.lokiQuery) {
+      query = this.lokiQuery.toQl({ setsUseStatementIds: true }) + '\n'
+      this.options.properties |= this.lokiQuery.properties()
+      resultSetId = this.lokiQuery.getStatement().id
+      resultSet = resultSetId ? '._' + resultSetId : '.result'
+    } else {
+      query = this.query.substr(0, this.query.length - 1) + '->.result;\n'
+    }
 
     let queryRemoveDoneFeatures = ''
     let countRemoveDoneFeatures = 0
@@ -200,19 +222,21 @@ class RequestBBox extends Request {
 
     if (countRemoveDoneFeatures) {
       query += '(' + queryRemoveDoneFeatures + ')->.done;\n'
-      query += '(.result; - .done;)->.result;\n'
+      query += '(' + resultSet + '; - .done;)->' + resultSet + ';\n'
     }
 
     if (!('split' in this.options)) {
       this.options.effortSplit = Math.ceil(effortAvailable / this.overpass.options.effortBBoxFeature)
     }
-    query += '.result out ' + overpassOutOptions(this.options) + ';'
+    query += resultSet + ' out ' + overpassOutOptions(this.options) + ';\n'
 
     const subRequest = {
       query,
       request: this,
       parts: [
         {
+          filter: this.lokiQuery,
+          statementId: resultSetId,
           properties: this.options.properties,
           receiveObject: this.receiveObject.bind(this),
           checkFeatureCallback: this.checkFeatureCallback.bind(this),
@@ -221,6 +245,47 @@ class RequestBBox extends Request {
       ],
       effort: this.options.split ? this.options.split * this.overpass.options.effortBBoxFeature : effortAvailable
     }
+
+    if (!this.lokiQuery) {
+      return subRequest
+    }
+
+    const script = this.lokiQuery.getScript()
+    const filter = this.lokiQuery.toQl({ setsUseStatementIds: true })
+    const reverseParts = {}
+    script.reverse().forEach(e => {
+      e.recurse.forEach(r => {
+        subRequest.query += compileRecurseReverse(r, e)
+        if (!(r.id in reverseParts)) {
+          reverseParts[r.id] = []
+        }
+        reverseParts[r.id].push({
+          id: e.id,
+          properties: r.properties
+        })
+      })
+    })
+
+    Object.entries(reverseParts).forEach(([rid, from]) => {
+      const options = { properties: defines.ID_ONLY }
+      from.forEach(e => {
+        options.properties |= e.properties
+      })
+
+      subRequest.query += 'out count;\n(' +
+        from.map(e => 'nwr._' + rid + '._rev' + e.id + '_' + rid + ';')
+          .join('') + ');\n' +
+        'out ' + overpassOutOptions(options) + ';'
+
+      const statementId = this.lokiQuery.getStatement().id
+      subRequest.parts.push({
+        statementId: rid,
+        filter: new Filter(filter + compileRecurseFilter(script, statementId, rid) + 'nwr._rev' + statementId + '_' + rid),
+        properties: options.properties,
+        receiveObject: this.receiveRevObject.bind(this)
+      })
+    })
+
     return subRequest
   }
 
@@ -230,16 +295,22 @@ class RequestBBox extends Request {
    * @param {Request#SubRequest} subRequest - sub request which is being handled right now
    * @param {int} partIndex - Which part of the subRequest is being received
    */
-  receiveObject (ob) {
-    super.receiveObject(ob)
+  receiveObject (ob, subRequest, partIndex) {
+    super.receiveObject(ob, subRequest, partIndex)
     this.doneFeatures[ob.id] = ob
+
+    if (subRequest) {
+      const statementId = subRequest.parts[partIndex].statementId
+      this.doneFeaturesSets[statementId].list.push(ob)
+    }
+  }
+
+  receiveRevObject (ob, subRequest, partIndex) {
+    const statementId = subRequest.parts[partIndex].statementId
+    this.doneFeaturesSets[statementId].list.push(ob)
   }
 
   checkFeatureCallback (ob) {
-    if (this.bounds && ob.intersects(this.bounds) === 0) {
-      return false
-    }
-
     return true
   }
 
@@ -255,7 +326,7 @@ class RequestBBox extends Request {
       this.loadFinish = true
 
       this.cacheDescriptors && this.cacheDescriptors.forEach(cache => {
-        cache.cache.add(this.bbox, cache.cacheDescriptors)
+        cache.cache.add(cache.cacheDescriptor)
       })
     }
 
@@ -273,8 +344,12 @@ class RequestBBox extends Request {
       return false
     }
 
+    if (this.undecidedItems) {
+      return true
+    }
+
     return !this.cacheDescriptors || !this.cacheDescriptors.every(cache => {
-      return cache.cache.check(this.bbox, cache.cacheDescriptors)
+      return cache.cache.check(cache.cacheDescriptor)
     })
   }
 

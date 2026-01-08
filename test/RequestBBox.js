@@ -1419,6 +1419,57 @@ describe('BBoxQuery({ limit })', function () {
   })
 })
 
+describe('BBoxQuery with recurse', function () {
+  it('Query relation nodes', function (done) {
+    overpassFrontend.clearCache()
+    test({
+      query: "relation[route=tram][ref=9];node(r);",
+      bounds: {
+	"maxlat": 48.200,
+	"maxlon": 16.350,
+	"minlat": 48.190,
+	"minlon": 16.330
+      },
+      expected: ['n2293993991', 'n287235515', 'n2285911704', 'n2293993859', 'n2411909898', 'n2411911256', 'n2285911663', 'n2285911667', 'n2285911665', 'n2285911692', 'n2285911702', 'n1546106141', 'n1546106157', 'n2223156317', 'n2285945342', 'n2423365127', 'n473167212', 'n1630416816', 'n2216507460', 'n2216530088', 'n1394529428', 'n2293993848', 'n2293993867', 'n2293993929', 'n2407351716', 'n2407351717', 'n2407231833', 'n2407231834', 'n2407325778', 'n252511595', 'n253233651', 'n2292452224', 'n2411950477', 'n269541925', 'n2407260774', 'n2407325779'],
+      expectedSubRequestCount: 1
+    }, done)
+  })
+
+  it('Query relation nodes with result bounding box', function (done) {
+    test({
+      query: "relation[route=tram][ref=9];node(r);",
+      bounds: {
+	"maxlat": 48.300,
+	"maxlon": 16.350,
+	"minlat": 48.190,
+	"minlon": 16.330
+      },
+      options: {
+        boundsRecurseSelector: 'result',
+      },
+      expected: ['n287235515', 'n1630416816', 'n2216507460', 'n1394529428', 'n2293993848', 'n2293993867', 'n2293993929', 'n2407351716', 'n2407351717', 'n2407325778', 'n269541925', 'n2407260774', 'n2407325779'],
+      expectedSubRequestCount: 1
+    }, done)
+  })
+
+  it('Query relation nodes with smaller result bounding box', function (done) {
+    test({
+      query: "relation[route=tram][ref=9];node(r);",
+      bounds: {
+	"maxlat": 48.200,
+	"maxlon": 16.350,
+	"minlat": 48.190,
+	"minlon": 16.330
+      },
+      options: {
+        boundsRecurseSelector: 'result',
+      },
+      expected: ['n287235515', 'n2293993867', 'n2293993929'],
+      expectedSubRequestCount: 0
+    }, done)
+  })
+})
+
 function test (options, callback) {
   var finalCalled = 0
   var found = []
@@ -1437,7 +1488,7 @@ function test (options, callback) {
       found.push(result.id)
 
       if (options.expected.indexOf(result.id) === -1) {
-        error += 'Unexpected result ' + result.id + '\n'
+        error += 'Unexpected result ' + result.id + ' ' + result.tags.name + '\n'
       }
     },
     function (err) {
@@ -1451,6 +1502,7 @@ function test (options, callback) {
       }
 
       const expectedCount = 'expectedCount' in options ? options.expectedCount : options.expected.length
+      console.log(found.length)
       assert.equal(found.length, expectedCount, 'Wrong count of objects returned')
       assert.equal(request.count, expectedCount, 'request\'s count should equal ' + expectedCount)
 

@@ -1,132 +1,16 @@
-const turf = require('./turf')
-const strsearch2regexp = require('strsearch2regexp')
-const filterJoin = require('./filterJoin')
-const OverpassFrontend = require('./defines')
 const qlFunctions = require('./qlFunctions/__index__')
 const parseString = require('./parseString')
 const parseParentheses = require('./parseParentheses')
 const qlFunction = require('./qlFunctions/qlFunction')
-
-function qlesc (str) {
-  return '"' + str.replace(/"/g, '\\"') + '"'
-}
-
-function compile (part, options = {}) {
-  if (Array.isArray(part)) {
-    return part.map(compile).join('')
-  }
-
-  if (part.or) {
-    return { or: part.or.map(compile) }
-  }
-
-  const keyRegexp = (part.keyRegexp ? '~' : '')
-
-  if (part instanceof qlFunction) {
-    return part.toString(options)
-  }
-
-  if (part.type) {
-    return part.type
-  }
-
-  switch (part.op) {
-    case 'has_key':
-      if (part.keyRegexp === 'i') {
-        return '[~' + qlesc(part.key) + '~".",i]'
-      } else if (keyRegexp) {
-        return '[~' + qlesc(part.key) + '~"."]'
-      } else {
-        return '[' + keyRegexp + qlesc(part.key) + ']'
-      }
-    case 'not_exists':
-      return '[!' + qlesc(part.key) + ']'
-    case '=':
-    case '!=':
-    case '~':
-    case '!~':
-      return '[' + keyRegexp + qlesc(part.key) + part.op + qlesc(part.value) + ']'
-    case '~i':
-    case '!~i':
-      return '[' + keyRegexp + qlesc(part.key) + part.op.substr(0, part.op.length - 1) + qlesc(part.value) + ',i]'
-    case 'has':
-      return '[' + keyRegexp + qlesc(part.key) + '~' + qlesc('^(.*;|)' + part.value + '(|;.*)$') + ']'
-    case 'strsearch':
-      return '[' + keyRegexp + qlesc(part.key) + '~' + qlesc(strsearch2regexp(part.value)) + ',i]'
-    default:
-      throw new Error('unknown operator' + JSON.stringify(part))
-  }
-}
-
-function test (ob, part) {
-  if (Array.isArray(part)) {
-    return part.every(part => test(ob, part))
-  }
-
-  if (part.type) {
-    return ob.type === part.type
-  }
-
-  if (part.or) {
-    return part.or.some(part => test(ob, part))
-  }
-
-  if (part.and) {
-    return part.and.every(part => test(ob, part))
-  }
-
-  if (part.keyRegexp) {
-    let regex
-    if (part.value) {
-      regex = new RegExp(part.value, part.op.match(/i$/) ? 'i' : '')
-    }
-
-    const keyRegex = new RegExp(part.key, part.keyRegexp === 'i' ? 'i' : '')
-
-    for (const k in ob.tags) {
-      if (k.match(keyRegex)) {
-        if (regex) {
-          if (ob.tags[k].match(regex)) {
-            return true
-          }
-        } else {
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  if (part instanceof qlFunction) {
-    return part.test(ob)
-  }
-
-  switch (part.op) {
-    case 'has_key':
-      return ob.tags && (part.key in ob.tags)
-    case 'not_exists':
-      return ob.tags && (!(part.key in ob.tags))
-    case '=':
-      return ob.tags && (part.key in ob.tags) && (ob.tags[part.key] === part.value)
-    case '!=':
-      return ob.tags && (!(part.key in ob.tags) || (ob.tags[part.key] !== part.value))
-    case '~':
-      return ob.tags && (part.key in ob.tags) && (ob.tags[part.key].match(part.value))
-    case '!~':
-      return ob.tags && (!(part.key in ob.tags) || (!ob.tags[part.key].match(part.value)))
-    case '~i':
-      return ob.tags && (part.key in ob.tags) && (ob.tags[part.key].match(new RegExp(part.value, 'i')))
-    case '!~i':
-      return ob.tags && (!(part.key in ob.tags) || !ob.tags[part.key].match(new RegExp(part.value, 'i')))
-    case 'has':
-      return ob.tags && (part.key in ob.tags) && (ob.tags[part.key].split(/;/).indexOf(part.value) !== -1)
-    case 'strsearch':
-      return ob.tags && (part.key in ob.tags) && (ob.tags[part.key].match(new RegExp(strsearch2regexp(part.value), 'i')))
-    default:
-      console.log('match: unknown operator in filter', part)
-      return false
-  }
-}
+const filterPart = require('./filterPart')
+const filterCheckSuperset = require('./filterCheckSuperset.js')
+const compileCacheDescriptors = require('./compileCacheDescriptors.js')
+require('./FilterQuery')
+require('./FilterAnd')
+require('./FilterOr')
+require('./FilterDiff')
+require('./FilterRecurse')
+require('./OutStatement')
 
 function parse (def, rek = 0) {
   const script = []
@@ -139,24 +23,51 @@ function parse (def, rek = 0) {
   let m
   let keyRegexp = false
   let notExists = null
+  let isDiff = false
+
   while (true) {
     // console.log('rek' + rek, 'mode' + mode + '|', def.substr(0, 20), '->', script, 'next:', current)
     if (mode === 0) {
       if (def.match(/^\s*$/)) {
-        return [rek === 0 && script.length === 1 ? script[0] : script, def]
+        return [script, def, isDiff]
       }
 
       keyRegexp = false
-      m = def.match(/^\s*(node|way|relation|rel|nwr|\()/)
+      m = def.match(/^\s*(node|way|relation|rel|nwr|\(|\))/)
+      const m1 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*))?\s*(>|<)\s*(?:->\s*.([A-Za-z_][A-Za-z0-9_]*))?;?/)
+      const m2 = def.match(/^\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s+)?out(?:\s+([0-9a-z ]+)?)?;?/)
+      const m3 = def.match(/^\s*-/)
+      const m4 = def.match(/^\s*\.([A-Za-z_][A-Za-z0-9_]*)/)
+
       if (m && m[1] === '(') {
         def = def.slice(m[0].length)
 
         let parts
-        [parts, def] = parse(def, rek + 1)
+        let isDiff
+        [parts, def, isDiff] = parse(def, rek + 1)
         mode = 1
 
-        script.push({ or: parts })
+        if (isDiff) {
+          if (parts.filter(p => !p.outputSet && !p.inputSet).length !== 2) {
+            throw new Error("Can't parse query, difference statement needs two elements.")
+          }
+
+          script.push({ diff: parts })
+        } else {
+          script.push({ or: parts })
+        }
+
         current = []
+      } else if (m && m[1] === ')') {
+        mode = 1
+      } else if (m3) {
+        def = def.slice(m3[0].length)
+        if (script.length !== 1) {
+          throw new Error("Can't parse query, difference statement needs two elements.")
+        }
+
+        isDiff = true
+        mode = 0
       } else if (m) {
         if (m[1] === 'rel') {
           current.push({ type: 'relation' })
@@ -165,31 +76,69 @@ function parse (def, rek = 0) {
         } else {
           current.push({ type: m[1] })
         }
-        mode = 10
+        mode = 9
         def = def.slice(m[0].length)
+      } else if (m1) {
+        def = def.slice(m1[0].length)
+        current = { recurse: m1[2] }
+        if (m1[1]) {
+          current.inputSet = m1[1]
+        }
+        if (m1[3]) {
+          current.outputSet = m1[3]
+        }
+        script.push(current)
+        current = []
+      } else if (m2) {
+        def = def.slice(m2[0].length)
+        current = { out: m2[2] ? m2[2].split(/ /g).filter(v => v) : [] }
+        if (m2[1]) {
+          current.inputSet = m2[1]
+        }
+        script.push(current)
+        current = []
+      } else if (m4) {
+        def = def.slice(m4[0].length)
+        current.push({ inputSet: m4[1] })
+        mode = 10
       } else {
         throw new Error("Can't parse query, expected type of object (e.g. 'node'): " + def)
       }
     } else if (mode === 1) {
-      m = def.match(/^\s*\)\s*;?\s*/)
+      m = def.match(/^\s*\)\s*(->\.([A-Za-z_][A-Za-z0-9_]*))?;?\s*/)
       if (m) {
+        if (m[1]) {
+          script.push({ outputSet: m[2] })
+        }
+
         if (rek === 0) {
-          return [script.length === 1 ? script[0] : script, def]
+          return [script, def, isDiff]
         } else {
           def = def.slice(m[0].length)
-          return [script, def]
+          return [script, def, isDiff]
         }
       } else {
         mode = 0
       }
+    } else if (mode === 9) {
+      const m = def.match(/^\s*\.([A-Za-z_][A-Za-z0-9_]*)/)
+      if (m) {
+        def = def.slice(m[0].length)
+        current.push({ inputSet: m[1] })
+      } else {
+        mode = 10
+      }
     } else if (mode === 10) {
-      const m = def.match(/^\s*(\[|\(|;)/)
+      const m = def.match(/^\s*(\[|\(|;|->)/)
       if (m && m[1] === '[') {
         def = def.slice(m[0].length)
         mode = 11
       } else if (m && m[1] === '(') {
         def = def.slice(m[0].length - 1)
         mode = 20
+      } else if (m && m[1] === '->') {
+        def = def.slice(m[0].length)
+        mode = 15
       } else if (m && m[1] === ';') {
         def = def.slice(m[0].length)
         script.push(current)
@@ -197,12 +146,10 @@ function parse (def, rek = 0) {
         notExists = null
         mode = 1
       } else if (!m && def.match(/^\s*$/)) {
-        if (current.length) {
-          script.push(current)
-        }
-        return [rek === 0 && script.length === 1 ? script[0] : script, '']
+        script.push(current)
+        return [script, '', isDiff]
       } else {
-        throw new Error("Can't parse query, expected '[' or ';': " + def)
+        throw new Error("Can't parse query, expected '[' or '->' or ';': " + def)
       }
     } else if (mode === 11) {
       m = def.match(/^(\s*)(([~!])\s*)?([a-zA-Z0-9_]+|"|')/)
@@ -293,20 +240,56 @@ function parse (def, rek = 0) {
       } else {
         throw new Error("Can't parse query, expected ']': " + def)
       }
+    } else if (mode === 15) {
+      const m = def.match(/^\s*\.([A-Za-z_][A-Za-z0-9_]*)\s*;/)
+      if (m) {
+        current.push({ outputSet: m[1] })
+        def = def.slice(m[0].length)
+        script.push(current)
+        current = []
+        notExists = null
+        mode = 1
+      } else {
+        throw new Error("Can't parse query, expected output set and ';': " + def)
+      }
     } else if (mode === 20) {
       const r = parseParentheses(def)
-      def = r[1]
       const mId = r[0].match(/^\s*(\d+)\s*$/)
       const mBbox = r[0].match(/^((\s*-?\d+(.\d+)?\s*,){3}\s*-?\d+(.\d+)?\s*)$/)
-      const m = r[0].match(/^\s*(\w+)\s*:\s*(.*)\s*$/)
+      const mRecurse = r[0].match(/^\s*(w|r|bn|bw|br)\s*(?:\.([A-Za-z_][A-Za-z0-9_]*)\s*)?(?::(.*))?$/)
+      const m = r[0].match(/^\s*(\w+)\s*:(.*)$/)
       /* eslint-disable new-cap */
       if (mId) {
+        def = r[1]
         current.push(new qlFunctions.id(mId[1]))
         mode = 10
       } else if (mBbox) {
+        def = r[1]
         current.push(new qlFunctions.bbox(mBbox[1]))
         mode = 10
+      } else if (mRecurse) {
+        def = r[1]
+        const c = { recurse: mRecurse[1] }
+        if (mRecurse[2]) {
+          c.inputSet = mRecurse[2]
+        }
+        if (mRecurse[3]) {
+          let v = mRecurse[3].trim()
+          let trail
+          if (v[0] === '"' || v[0] === "'") {
+            [v, trail] = parseString(v)
+
+            if (!trail.match(/^\s*$/)) {
+              throw new Error('Failing parsing recurse role, trailing characters: ' + trail)
+            }
+          }
+
+          c.role = v
+        }
+        current.push(c)
+        mode = 10
       } else if (m) {
+        def = r[1]
         const fun = m[1]
         if (!qlFunctions[fun]) {
           throw new Error('Unsupported filter function: ' + fun)
@@ -331,15 +314,29 @@ function check (def) {
   } else if (def === null) {
     return
   } else if (typeof def === 'object' && def instanceof Filter) {
-    def = def.def
+    const result = parse(def.toString())
+    if (result[1].trim()) {
+      throw new Error("Can't parse query, trailing characters: " + result[1])
+    }
+    return result[0]
   } else if (Array.isArray(def)) {
     def = def.map(d => check(d))
   }
   if (def.and) {
-    def.and = def.and.map(p => check(p))
+    def = [{
+      and: def.and.map(p => {
+        const d = check(p)
+        return Array.isArray(d[0]) || (Array.isArray(d) && (d[0].or || d[0].and)) ? d[0] : d
+      })
+    }]
   }
   if (def.or) {
-    def.or = def.or.map(p => check(p))
+    def = [{
+      or: def.or.map(p => {
+        const d = check(p)
+        return Array.isArray(d[0]) || (Array.isArray(d) && (d[0].or || d[0].and)) ? d[0] : d
+      })
+    }]
   } else if (def.fun && !(def instanceof qlFunction)) {
     def = new qlFunctions[def.fun](def.value)
   }
@@ -369,40 +366,98 @@ class Filter {
     return this._uniqId
   }
 
+  createStatementId () {
+    this._statementId = (this._statementId || 0) + 1
+    return this._statementId
+  }
+
   constructor (def) {
     if (!def) {
       this.def = []
       return
     }
 
+    this.baseFilter = null
     this.def = check(def)
+    this.statements = {}
+
+    if (typeof def === 'string') {
+      this.script = this.convertToFilterScript(this.def)
+    } else {
+      def = this.def
+      if (!Array.isArray(def)) {
+        if (!def.or && !def.and) {
+          def = [[def]]
+        } else {
+          def = [def]
+        }
+      }
+
+      def = this.expandOr(def)
+
+      this.script = this.convertToFilterScript(def)
+    }
+  }
+
+  /**
+   * return the filter statement for the specified output set (or '_')
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should the object be matched against.
+   * @param {int} [options.statement] Return the statement with this id
+   * @return {FilterStatement}
+   */
+  getStatement (options = {}) {
+    if ('set' in options) {
+      return this.sets[options.set]
+    }
+
+    if ('statement' in options) {
+      return this.statements[options.statement]
+    }
+
+    return this.sets._
+  }
+
+  getScript (options = {}) {
+    const statement = this.getStatement(options)
+    if (!statement) {
+      return []
+    }
+
+    const result = []
+    const recurse = statement.recurse()
+    recurse.forEach(e => {
+      const r = this.getScript({ statement: e.id })
+      r.forEach(f => {
+        if (!result.filter(g => g.id === f.id).length) {
+          result.push(f)
+        }
+      })
+    })
+
+    result.push({ id: statement.id, properties: statement.properties(), recurse })
+    return result
+  }
+
+  /**
+   * set a filter which is applied to all queries which do not have a specified input set.
+   * @param {string|Filter} filter a filter, e.g. 'nwr[x=y](1,1,2,2)'
+   */
+  setBaseFilter (filter) {
+    this.baseFilter = new Filter(filter)
   }
 
   /**
    * Check if an object matches this filter
    * @param {OverpassNode|OverpassWay|OverpassRelation} ob an object from Overpass API
-   * @return {boolean}
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should the object be matched against.
+   * @param {int} [options.statement] Return the statement with this id
+   * @return {boolean|null} true if matches, null if unsure, false if not
    */
-  match (ob, def) {
-    if (!def) {
-      def = this.def
-    }
-
-    if (Array.isArray(def) && Array.isArray(def[0])) {
-      // script with several statements detected. only use the last one, as previous statements
-      // can't have an effect on the last statement yet.
-      def = def[def.length - 1]
-    }
-
-    if (def.or) {
-      return def.or.some(part => this.match(ob, part))
-    }
-
-    if (def.and) {
-      return def.and.every(test.bind(this, ob))
-    }
-
-    return def.filter(test.bind(this, ob)).length === def.length
+  match (ob, options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.match(ob) : false
   }
 
   /**
@@ -413,6 +468,11 @@ class Filter {
     return this.toQl({ toString: true }, def)
   }
 
+  toQuery (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.toQuery(options) : null
+  }
+
   /**
    * Convert query to Overpass QL
    * @param {object} [options] Additional options
@@ -421,370 +481,57 @@ class Filter {
    * @return {string}
    */
   toQl (options = {}, def) {
-    if (!def) {
-      def = this.def
+    let result = ''
+
+    if (this.baseFilter) {
+      result += this.baseFilter.toQl({ outputSet: '._base' })
     }
 
-    if (Array.isArray(def) && Array.isArray(def[0])) {
-      return def.map(d => this.toQl(options, d)).join('')
-    }
+    return result + this.script.map(s => s.toQl(options)).join('')
+  }
 
-    if (def.or) {
-      return '(' + def.or.map(part => {
-        const subOptions = JSON.parse(JSON.stringify(options))
-        subOptions.inputSet = options.inputSet
-        subOptions.outputSet = ''
-        return this.toQl(subOptions, part)
-      }).join('') + ')' + (options.outputSet ? '->' + options.outputSet : '') + ';'
-    }
+  /**
+   * Compile all (recursing) parts of a query
+   */
+  compileQuery (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.compileQuery(options) : { query: null }
+  }
 
-    if (def.and) {
-      const first = def.and[0]
-      const last = def.and[def.and.length - 1]
-      const others = def.and.concat().slice(1, def.and.length - 1)
-      const set = '.x' + this.uniqId()
-      const subOptions1 = JSON.parse(JSON.stringify(options))
-      const subOptions2 = JSON.parse(JSON.stringify(options))
-      const subOptions3 = JSON.parse(JSON.stringify(options))
-      subOptions1.outputSet = set
-      subOptions2.inputSet = set
-      subOptions2.outputSet = set
-      subOptions3.inputSet = set
-
-      return this.toQl(subOptions1, first) +
-        others.map(part => this.toQl(subOptions2, part)).join('') +
-        this.toQl(subOptions3, last)
-    }
-
-    if (!options.inputSet) {
-      options.inputSet = ''
-    }
-
-    if (!options.outputSet) {
-      options.outputSet = ''
-    }
-
-    const parts = def.filter(part => part.type)
-    let types
-
-    switch (parts.length) {
-      case 0:
-        types = ['nwr']
-        break
-      case 1:
-        types = [parts[0].type]
-        break
-      default:
-        throw new Error('Filter: only one type query allowed!')
-    }
-
-    const queries = filterJoin(def
-      .filter(part => !part.type)
-      .map(part => compile(part, options)))
-
-    let result
-    if (queries.length > 1) {
-      result = '(' + queries.map(q => types.map(type => type + options.inputSet + q).join(';')).join(';') + ';)'
-    } else if (types.length === 1) {
-      result = types[0] + options.inputSet + queries[0]
-    } else {
-      result = '(' + types.map(type => type + options.inputSet + queries[0]).join(';') + ';)'
-    }
-
-    return result + (options.outputSet ? '->' + options.outputSet : '') + ';'
+  recurse (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.recurse() : []
   }
 
   /**
    * Convert query to LokiJS query for local database. If the property 'needMatch' is set on the returned object, an additional match() should be executed for each returned object, as the query can't be fully compiled (and the 'needMatch' property removed).
    * @param {object} [options] Additional options
+   * @param {string} [options.set=_] For which set should the query be compiled.
+   * @param {int} [options.statement] Return the statement with this id
    * @return {object}
    */
-  toLokijs (options = {}, def) {
-    if (!def) {
-      def = this.def
-    }
-
-    if (Array.isArray(def) && Array.isArray(def[0])) {
-      // script with several statements detected. only compile the last one, as previous statements
-      // can't have an effect on the last statement yet.
-      def = def[def.length - 1]
-    }
-
-    if (def.or) {
-      let needMatch = false
-
-      const r = {
-        $or:
-        def.or.map(part => {
-          const r = this.toLokijs(options, part)
-          if (r.needMatch) {
-            needMatch = true
-          }
-          delete r.needMatch
-          return r
-        })
-      }
-
-      // if the $or has elements that are always true, remove whole $or
-      if (r.$or.filter(p => Object.keys(p).length === 0).length > 0) {
-        delete r.$or
-      }
-
-      if (needMatch) {
-        r.needMatch = true
-      }
-
-      return r
-    }
-
-    if (def.and) {
-      let needMatch = false
-
-      const r = {
-        $and:
-        def.and
-          .map(part => {
-            const r = this.toLokijs(options, part)
-            if (r.needMatch) {
-              needMatch = true
-            }
-            delete r.needMatch
-            return r
-          })
-          .filter(part => Object.keys(part).length)
-      }
-
-      if (needMatch) {
-        r.needMatch = true
-      }
-
-      return r
-    }
-
-    const query = {}
-    let orQueries = []
-
-    if (!Array.isArray(def)) {
-      def = [def]
-    }
-
-    def.forEach(filter => {
-      let k, v
-      if (filter.keyRegexp) {
-        k = 'needMatch'
-        v = true
-        // can't query for key regexp, skip
-      } else if (filter instanceof qlFunction) {
-        const d = filter.compileLokiJS()
-        if (d.needMatch) {
-          query.needMatch = true
-        }
-        delete d.needMatch
-        if (Object.keys(d).length) {
-          if (query.$and) {
-            query.$and.push(d)
-          } else {
-            query.$and = [d]
-          }
-        }
-      } else if (filter.op === '=') {
-        k = 'tags.' + filter.key
-        v = { $eq: filter.value }
-      } else if (filter.op === '!=') {
-        k = 'tags.' + filter.key
-        v = { $ne: filter.value }
-      } else if (filter.op === 'has_key') {
-        k = 'tags.' + filter.key
-        v = { $exists: true }
-      } else if (filter.op === 'not_exists') {
-        k = 'tags.' + filter.key
-        v = { $exists: false }
-      } else if (filter.op === 'has') {
-        k = 'tags.' + filter.key
-        v = { $regex: '^(.*;|)' + filter.value + '(|;.*)$' }
-      } else if ((filter.op === '~') || (filter.op === '~i')) {
-        k = 'tags.' + filter.key
-        v = { $regex: new RegExp(filter.value, (filter.op === '~i' ? 'i' : '')) }
-      } else if ((filter.op === '!~') || (filter.op === '!~i')) {
-        k = 'tags.' + filter.key
-        v = { $not: { $regex: new RegExp(filter.value, (filter.op === '!~i' ? 'i' : '')) } }
-      } else if (filter.op === 'strsearch') {
-        k = 'tags.' + filter.key
-        v = { $regex: new RegExp(strsearch2regexp(filter.value), 'i') }
-      } else if (filter.type) {
-        k = 'type'
-        v = { $eq: filter.type }
-      } else if (filter.or) {
-        orQueries.push(filter.or.map(p => {
-          const r = this.toLokijs(options, p)
-          if (r.needMatch) {
-            query.needMatch = true
-            delete r.needMatch
-          }
-          return r
-        }))
-      } else {
-        console.log('unknown filter', filter)
-      }
-
-      if (k && v) {
-        if (k === 'needMatch') {
-          query.needMatch = true
-        } else if (k in query) {
-          if (!('$and' in query[k])) {
-            query[k] = { $and: [query[k]] }
-          }
-          query[k].$and.push(v)
-        } else {
-          query[k] = v
-        }
-      }
-    })
-
-    orQueries = orQueries.filter(q => Object.keys(q).length)
-    if (orQueries.length === 1) {
-      query.$or = orQueries[0]
-    } else if (orQueries.length > 1) {
-      query.$and = orQueries.map(q => { return { $or: q } })
-    }
-
-    return query
+  toLokijs (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.toLokijs(options) : { $not: true }
   }
 
-  cacheDescriptors () {
-    let result
+  /**
+   * Get the cache descriptors for this query
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should the object be matched against.
+   * @return [string]
+   */
+  cacheDescriptors (options = {}) {
+    const result = this._caches(options)
 
-    if (Array.isArray(this.def) && Array.isArray(this.def[0])) {
-      // script with several statements detected. only compile the last one, as previous statements
-      // can't have an effect on the last statement yet.
-      result = this._caches(this.def[this.def.length - 1])
-    } else {
-      result = this._caches(this.def)
-    }
-
-    result.forEach(entry => {
-      entry.id = (entry.type || 'nwr') + entry.filters + '(properties:' + entry.properties + ')'
-      delete entry.type
-      delete entry.filters
-      delete entry.properties
-    })
+    compileCacheDescriptors(result)
 
     return result
   }
 
-  _caches (def) {
-    let options = [{ filters: '', properties: 0 }]
-
-    if (def.or) {
-      let result = []
-      def.or.forEach(e => {
-        const r = this._caches(e)
-        if (Array.isArray(r)) {
-          result = result.concat(r)
-        } else {
-          result.push(r)
-        }
-      })
-      return result
-    }
-
-    if (!Array.isArray(def)) {
-      def = [def]
-    }
-
-    def.forEach(part => {
-      if (part.type) {
-        options = options.map(o => {
-          if (o.type && o.type !== part.type) {
-            o.type = '-'
-          } else {
-            o.type = part.type
-          }
-          return o
-        })
-      } else if (part.op) {
-        options = options.map(o => {
-          o.filters += compile(part)
-          o.properties |= OverpassFrontend.TAGS
-          return o
-        })
-      } else if (part instanceof qlFunction) {
-        part.cacheDescriptors(options)
-      } else if (part.or) {
-        const result = []
-        part.or.forEach(e => {
-          const r = this._caches(e)
-
-          options.forEach(o => {
-            r.forEach(r1 => {
-              result.push(this._cacheMerge(o, r1))
-            })
-          })
-        })
-
-        options = result
-      } else if (part.and) {
-        let result = options
-        part.and.forEach(e => {
-          const current = result
-          result = []
-          const r = this._caches(e)
-          r.forEach(r1 => {
-            current.forEach(c => {
-              result.push(this._cacheMerge(c, r1))
-            })
-          })
-        })
-
-        options = result
-      } else {
-        throw new Error('caches(): invalid entry')
-      }
-    })
-
-    return options
-  }
-
-  _cacheMerge (a, b) {
-    const r = {}
-    for (const k in a) {
-      r[k] = a[k]
-    }
-    r.filters += b.filters
-    r.properties |= b.properties
-
-    if (b.type) {
-      if (a.type && a.type !== b.type) {
-        r.type = '-'
-      } else {
-        r.type = b.type
-      }
-    }
-
-    if (b.ids) {
-      r.ids = b.ids
-      if (a.ids) {
-        r.ids = b.ids.filter(n => a.ids.includes(n))
-      }
-    }
-
-    if (b.invalid) {
-      r.invalid = true
-    }
-
-    if (b.bounds && a.bounds) {
-      const mergeBounds = turf.intersect(a.bounds, b.bounds)
-      if (mergeBounds) {
-        r.bounds = mergeBounds.geometry
-      } else {
-        r.invalid = true
-        delete r.bounds
-      }
-    } else if (b.bounds) {
-      r.bounds = b.bounds
-    }
-
-    return r
+  _caches (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement._caches(options) : []
   }
 
   /**
@@ -793,68 +540,171 @@ class Filter {
    * @return boolean true, if the current filter is equal other or a super-set of other.
    */
   isSupersetOf (other) {
-    return this._isSupersetOf(this.def, other.def)
-  }
-
-  _isSupersetOf (def, otherDef) {
-    if (def.or) {
-      return def.or.some(d => this._isSupersetOf(d, otherDef))
-    }
-    if (def.and) {
-      return def.and.every(d => this._isSupersetOf(d, otherDef))
-    }
-
-    if (otherDef.or) {
-      return otherDef.or.every(d => this._isSupersetOf(def, d))
-    }
-    if (otherDef.and) {
-      return otherDef.and.some(d => this._isSupersetOf(def, d))
-    }
-
-    // search for something, where otherPart is not equal or subset
-    return !def.some(part => {
-      return !otherDef.some(otherPart => {
-        if (part.type && otherPart.type) {
-          return part.type === otherPart.type
-        }
-        if (compile(otherPart, { toString: true }) === compile(part, { toString: true })) {
-          return true
-        }
-        if (['~', '~i'].includes(part.op) && otherPart.op === '=' && part.key === otherPart.key && otherPart.value.match(RegExp(part.value, part.op === '~i' ? 'i' : ''))) {
-          return true
-        }
-        if (['~', '~i'].includes(part.op) && part.keyRegexp && otherPart.op === '=' && otherPart.key.match(RegExp(part.key, part.keyRegexp === 'i' ? 'i' : '')) && otherPart.value.match(RegExp(part.value, part.op === '~i' ? 'i' : ''))) {
-          return true
-        }
-        if (part.op === 'has_key' && otherPart.op && !['!=', '!~', '!~i', 'not_exists'].includes(otherPart.op) && part.key === otherPart.key) {
-          return true
-        }
-        if (part.op === 'has_key' && part.keyRegexp && otherPart.op && !['!=', '!~', '!~i', 'not_exists'].includes(otherPart.op) && otherPart.key.match(RegExp(part.key, part.keyRegexp === 'i' ? 'i' : ''))) {
-          return true
-        }
-        if (part instanceof qlFunction && otherPart instanceof qlFunction && part.isSupersetOf(otherPart)) {
-          return true
-        }
-        return false
-      })
-    })
+    return filterCheckSuperset(this.derefSets(), other.derefSets())
   }
 
   /**
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should the object be matched against.
    * @returns {number} properties which are required for this filter
    */
-  properties () {
-    let result
+  properties (options = {}) {
+    const statement = this.getStatement(options)
+    return statement.properties()
+  }
 
-    if (Array.isArray(this.def) && Array.isArray(this.def[0])) {
-      // script with several statements detected. only compile the last one, as previous statements
-      // can't have an effect on the last statement yet.
-      result = this._caches(this.def[this.def.length - 1])
-    } else {
-      result = this._caches(this.def)
+  expandOr (def) {
+    def.forEach((part, index) => {
+      if (Array.isArray(part)) {
+        const or = []
+        const other = []
+
+        part.forEach(q => {
+          if (q.or) {
+            or.push(q)
+          } else {
+            other.push(q)
+          }
+        })
+
+        if (or.length) {
+          def = def.concat()
+          def[index] = { or: or.shift().or.concat() }
+
+          or.forEach(q => {
+            const current = def[index].or
+            def[index].or = []
+
+            q.or.forEach(q1 => {
+              current.forEach(orp => {
+                def[index].or.push(orp.concat(q1))
+              })
+            })
+          })
+
+          other.forEach(q => {
+            def[index].or.forEach((orp, i) => {
+              def[index].or[i] = def[index].or[i].concat([q])
+            })
+          })
+        }
+      }
+    })
+
+    return def
+  }
+
+  convertToFilterScript (def) {
+    this.sets = {}
+    const r = def.map(d => filterPart.get(d, this))
+
+    return r
+  }
+
+  /**
+   * dereferences input sets into a list of simple filters
+   */
+  derefSets (options = {}) {
+    const statement = this.getStatement(options)
+    return statement ? statement.derefSets() : []
+  }
+
+  /**
+   * Conflate statements reduce length of script and make the query faster.
+   * @param {object} [options] Options
+   * @param {string} [options.set=_] Which set should be queried.
+   */
+  conflate (options = {}) {
+    const statement = this.getStatement(options)
+    statement.conflate()
+  }
+
+  /**
+   * returns possible bounds for this object as GeoJSON
+   * @param {OverpassObject} ob the object to test against
+   * @param {object} [options] Additional options
+   * @param {string} [options.set=_] For which set should the query be compiled.
+   * @returns {null|GeoJSON} null if the filter does not use a geometry (bbox, around, ...)
+   */
+  possibleBounds (ob, options = {}) {
+    const statement = this.getStatement(options)
+    return statement.possibleBounds(ob, options)
+  }
+
+  /**
+   * replace a statement 'replace' by another statement 'by'. The dependant
+   * statements will be modified to use the 'by' statement instead. The
+   * 'replace' statement will be removed.
+   * @param {FilterStatement} replace The statement to be replaced.
+   * @param {FilterStatement} by The statement which will replace.
+   */
+  _replaceStatement (replace, by) {
+    Object.entries(this.sets).forEach(([id, stmt]) => {
+      if (stmt === replace) {
+        this.sets[id] = by
+      }
+    })
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === replace) {
+            inputSet.set = by
+          }
+        })
+      }
+    })
+
+    if (this.script.includes(replace)) {
+      const pos = this.script.indexOf(replace)
+      if (this.script.includes(by)) {
+        this.script.splice(pos, 1)
+      } else {
+        this.script[pos] = by
+      }
     }
 
-    return result.reduce((current, entry) => current | entry.properties, 0)
+    this._removeStatement(replace)
+  }
+
+  /**
+   * The statement will be removed from this filter.
+   * @param {FilterStatement} statement The statement to be removed.
+   */
+  _removeStatement (statement) {
+    delete this.statements[statement.id]
+
+    if (this.script.includes(statement)) {
+      this.script.splice(this.script.indexOf(statement), 1)
+    }
+
+    Object.entries(this.sets)
+      .forEach(([id, stmt]) => {
+        if (stmt === statement) {
+          delete this.sets[id]
+        }
+      })
+  }
+
+  /**
+   * List all statements which depend on the given statement.
+   * @param {FilterStatement} statement The statement to be analyzed.
+   * @returns {FilterStatement[]} a list of all statements which depend on this statement.
+   */
+  _statementUsage (statement) {
+    const result = []
+
+    Object.values(this.statements).forEach(stmt => {
+      if (stmt.inputSets) {
+        Object.values(stmt.inputSets).forEach(inputSet => {
+          if (inputSet.set === statement) {
+            result.push(stmt)
+          }
+        })
+      }
+    })
+
+    return result
   }
 }
 

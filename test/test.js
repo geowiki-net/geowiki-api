@@ -311,10 +311,10 @@ describe('Overpass get', function() {
 	      "source": "survey",
 	      "@changeset": 24967165,
 	      "@id": "node/3037893169",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2014-08-23T23:04:34Z",
 	      "@uid": 770238,
 	      "@user": "Kevin Kofler",
@@ -359,10 +359,10 @@ describe('Overpass get', function() {
 	      "source:maxspeed": "AT:zone:30",
 	      "@changeset": 18574192,
 	      "@id": "way/146678749",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2013-10-27T20:43:03Z",
 	      "@uid": 1066249,
 	      "@user": "Railjet",
@@ -437,10 +437,10 @@ describe('Overpass get', function() {
 	    "properties": {
 	      "@changeset": 32165173,
 	      "@id": "relation/3854502",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2015-06-23T16:09:42Z",
 	      "@uid": 161619,
 	      "@user": "FvGordon",
@@ -1417,8 +1417,8 @@ describe('Overpass objects structure', function() {
             done('Query wrong, should not be successful')
 
           else if(err.message == "line 2: parse error: ']' expected - '->' found.\n" +
-            "line 4: parse error: Unexpected end of input.\n" +
-            "line 4: parse error: Unexpected end of input.\n\n")
+            "line 5: parse error: Unexpected end of input.\n" +
+            "line 5: parse error: Unexpected end of input.\n\n")
             done()
 
           else

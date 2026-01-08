@@ -138,6 +138,24 @@ class OverpassNode extends OverpassObject {
 
     return bbox.intersects(this.bounds) ? 2 : 0
   }
+
+  outJson (options) {
+    const result = super.outJson(options)
+
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
+      result.lat = this.geometry.lat
+      result.lon = this.geometry.lon
+    }
+
+    return result
+  }
+
+  _outXml (options, document, result) {
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
+      result.setAttribute('lat', this.geometry.lat)
+      result.setAttribute('lon', this.geometry.lon)
+    }
+  }
 }
 
 module.exports = OverpassNode

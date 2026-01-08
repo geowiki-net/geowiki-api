@@ -15,9 +15,10 @@ const OverpassRelation = require('./OverpassRelation')
 const RequestGet = require('./RequestGet')
 const RequestBBox = require('./RequestBBox')
 const RequestMulti = require('./RequestMulti')
+const RequestQuery = require('./RequestQuery')
 const defines = require('./defines')
 const loadFile = require('./loadFile')
-const copyOsm3sMetaFrom = require('./copyOsm3sMeta')
+const readDbMeta = require('./readDbMeta')
 const timestamp = require('./timestamp')
 const Filter = require('./Filter')
 const isGeoJSON = require('./isGeoJSON')
@@ -57,12 +58,12 @@ const isFileURL = require('./isFileURL')
 /**
  * When a file is specified as URL, this event notifies, that the file has been completely loaded. When a Overpass API is used, every time when data has been received.
  * @event OverpassFrontend#load
- * @param {object} osm3sMeta Meta data (not all properties of meta data might be set)
- * @param {number} osm3sMeta.version OpenStreetMap API version (currently 0.6)
- * @param {string} osm3sMeta.generator Data generator
- * @param {string} osm3sMeta.timestamp_osm_base RFC8601 timestamp of OpenStreetMap data
- * @param {string} osm3sMeta.copyright Copyright statement
- * @param {BoundingBox} [osm3sMeta.bounds] Bounding Box (only when loading from file)
+ * @param {object} dbMeta Meta data (not all properties of meta data might be set)
+ * @param {number} dbMeta.version OpenStreetMap API version (currently 0.6)
+ * @param {string} dbMeta.generator Data generator
+ * @param {string} dbMeta.timestamp_osm_base RFC8601 timestamp of OpenStreetMap data
+ * @param {string} dbMeta.copyright Copyright statement
+ * @param {BoundingBox} [dbMeta.bounds] Bounding Box (only when loading from file)
  * @param {OverpassFrontend#Context} [context] - context of the request
  */
 
@@ -91,6 +92,7 @@ const isFileURL = require('./isFileURL')
  * @param {number} [options.timeGap429Exp=3] If we keep getting 429 responses, increase the time exponentially with the specified factor (e.g. 2: 500ms, 1000ms, 2000ms, ...; 3: 500ms, 1500ms, 4500ms, ...)
  * @param {number} [options.loadChunkSize=1000] When loading a file (instead connecting to an Overpass URL) load elements in chunks of n items.
  * @property {boolean} hasStretchLon180=false Are there any map features in the cache which stretch over lon=180/-180?
+ * @property {object} meta Database meta information (copyright, attribution, license)
  */
 class OverpassFrontend {
   constructor (url, options) {
@@ -184,7 +186,7 @@ class OverpassFrontend {
   }
 
   _loadFileContent (result) {
-    const osm3sMeta = copyOsm3sMetaFrom(result)
+    const dbMeta = readDbMeta(result)
 
     const chunks = []
     for (let i = 0; i < result.elements.length; i += this.options.loadChunkSize) {
@@ -200,7 +202,7 @@ class OverpassFrontend {
         chunk.forEach(
           (element) => {
             const ob = this.createOrUpdateOSMObject(element, {
-              osm3sMeta,
+              dbMeta,
               properties: OverpassFrontend.TAGS | OverpassFrontend.META | OverpassFrontend.MEMBERS
             })
 
@@ -222,13 +224,25 @@ class OverpassFrontend {
           return this.emit('error', err)
         }
 
-        this.meta = osm3sMeta
-        this.emit('load', osm3sMeta)
+        this.meta = dbMeta
+        this.emit('load', dbMeta)
 
         this.ready = true
         this._overpassProcess()
       }
     )
+  }
+
+  /**
+   * Query the Overpass API with Overpass QL
+   * @param {string} query - Query in Overpass QL syntax including 'out' statements.
+   * @param {object} [options] - Various options, see below
+   * @param {object} [options.featureCallback] - Will be called for each found element, disregarding the order in the final result (features already in the cache, will be returned almost immediately). This will be objects of type 'OverpassObject' (and derivatives).
+   * @param {function} callback - Will be called when all sub-requests are completed with (err, result). Format of the result will vary, depending on the format specifier. The default will be a JS Object, alternative: XML, JSON.
+   * @return {RequestQuery}
+   */
+  query (query, options, callback) {
+    return new RequestQuery(this, query, options, callback)
   }
 
   /**
@@ -488,9 +502,8 @@ class OverpassFrontend {
 
     this.errorCount = 0
 
-    const osm3sMeta = copyOsm3sMetaFrom(results)
-    this.meta = osm3sMeta
-    this.emit('load', osm3sMeta, context)
+    this.meta = readDbMeta(results)
+    this.emit('load', this.meta, context)
 
     let subRequestsIndex = 0
     let partIndex = 0
@@ -529,7 +542,7 @@ class OverpassFrontend {
         continue
       }
 
-      part.osm3sMeta = osm3sMeta
+      part.dbMeta = this.meta
       const ob = this.createOrUpdateOSMObject(el, part)
       delete context.todo[ob.id]
 
@@ -546,7 +559,7 @@ class OverpassFrontend {
 
       part.count++
       if (part.receiveObject) {
-        part.receiveObject(ob)
+        part.receiveObject(ob, subRequest, partIndex)
       }
       if (!request.aborted && !request.finished && part.featureCallback && (!part.checkFeatureCallback || part.checkFeatureCallback(ob, part))) {
         part.featureCallback(err, ob)
@@ -591,6 +604,7 @@ class OverpassFrontend {
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
    * @param {boolean|string} [options.sort=false] - If false, it will be called as soon as the features are availabe (e.g. immediately when cached).
    * @param {bit_array} [options.properties] Which properties of the features should be downloaded: OVERPASS_ID_ONLY, OVERPASS_BBOX, OVERPASS_TAGS, OVERPASS_GEOM, OVERPASS_META. Combine by binary OR: ``OVERPASS_ID | OVERPASS_BBOX``. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX
+   * @param {string} [options.boundsRecurseSelector] should the 'bounds' parameter be applied to the "input" (default) set or the "result" set? This is important for recurse statements: if you have a query like "relation;node(r);", the relation would be the input set, the node part would be the result set.
    * @param {number} [options.split=0] If more than 'split' elements would be returned, split into several smaller requests, with 'split' elements each. Default: 0 (do not split)
    * @param {boolean} [options.members=false] Query relation members of. Default: false
    * @param {function} [options.memberCallback] For every member, call this callback function. (Requires options.members=true)
@@ -609,6 +623,10 @@ class OverpassFrontend {
 
     if (!isGeoJSON(bounds)) {
       bounds = bbox
+    }
+
+    if (!options) {
+      options = {}
     }
 
     if (bbox.minlon > bbox.maxlon) {
@@ -661,7 +679,7 @@ class OverpassFrontend {
     const cacheDescriptors = new Filter(query).cacheDescriptors()
 
     cacheDescriptors.forEach(descriptor => {
-      this.bboxQueryCache.get(descriptor.id).clear()
+      this.bboxQueryCache.get(descriptor).clear()
     })
   }
 
@@ -764,9 +782,10 @@ class OverpassFrontend {
       create = false
 
       // no new information -> return
-      if (~ob.properties & options.properties === 0) {
-        return ob
-      }
+      // TODO: ignored, as filter might improve boundsPossibleMatch
+      // if (~ob.properties & options.properties === 0) {
+      //  return ob
+      // }
     } else if (el.type === 'relation') {
       ob = new OverpassRelation(id)
     } else if (el.type === 'way') {
@@ -814,6 +833,154 @@ class OverpassFrontend {
       .replace('*', '\\*')
       .replace('^', '\\^')
       .replace('$', '\\$')
+  }
+
+  /**
+   * Query the LokiDB for matching items. If the filter has operations that
+   * LokiDB does not support, the filter will be tested against matching items.
+   * @param {Filter} filter The filter to test agains
+   * @param {object} [options={}] Additional options
+   * @param {number} [options.properties] Items need at least these properties.
+   * @param {LokiDB} [db] Optional database (e.g. an already filtered chain)
+   * @param {object} [result] cache of already checked results
+   * @return {OverpassObject[]} list of items. If undecided items were found, a property 'undecidedItems' is set with a list of these items (if undecidedItems is an empty list, there were undecided items in the recursion).
+   */
+  queryLokiDB (filter, options = {}, db = null, result = {}) {
+    const undecidedItems = []
+    let undecidedRecurse = false
+
+    if (!db) {
+      db = this.db.chain()
+    }
+
+    const statement = filter.getStatement(options)
+    if (!statement) {
+      return []
+    }
+
+    if (statement.id in result) {
+      return result[statement.id].list
+    }
+
+    const recurse = statement.recurse()
+    if (recurse.length) {
+      let ids = {}
+
+      recurse.forEach(query => {
+        const list = this.queryLokiDB(filter, { statement: query.id }, db.branch(), result)
+        if (list.undecidedItems) {
+          undecidedRecurse = true
+        }
+        const queryIds = {}
+
+        list.forEach(ob => {
+          const item = this.cacheElements[ob.id]
+          let other
+
+          switch (query.type) {
+            case '>':
+              other = item.memberIds()
+              other.forEach(id => {
+                const m = this.cacheElements[id]
+                if (m.type === 'way') {
+                  other = other.concat(m.memberIds())
+                }
+              })
+              break
+            case '<':
+              other = item.memberOf.map(m => m.id)
+              other.forEach(id => {
+                const m = this.cacheElements[id]
+                if (m.type === 'way') {
+                  other = other.concat(m.memberOf.map(m => m.id))
+                }
+              })
+              break
+            case 'w':
+              other = item.type === 'way' ? item.memberIds() : []
+              break
+            case 'r':
+              other = item.type === 'relation' ? item.memberIds(query.role) : []
+              break
+            case 'bn':
+              other = item.type === 'node' ? item.memberOfIds(query.role) : []
+              break
+            case 'bw':
+              other = item.type === 'way' ? item.memberOfIds(query.role) : []
+              break
+            case 'br':
+              other = item.type === 'relation' ? item.memberOfIds(query.role) : []
+              break
+            case 'or':
+            case 'and':
+              other = [item.id]
+              break
+            default:
+              throw new Error('invalid recurse type', query)
+          }
+
+          if (other) {
+            other.forEach(id => {
+              queryIds[id] = true
+            })
+          }
+        })
+
+        Object.keys(queryIds).forEach(id => {
+          ids[id] = id in ids ? ids[id] + 1 : 1
+        })
+      })
+
+      if (recurse[0].type === 'or') {
+        ids = Object.keys(ids)
+      } else {
+        const count = recurse.length
+        ids = Object.entries(ids)
+          .filter(e => e[1] === count)
+          .map(e => e[0])
+      }
+
+      db.find({ id: { $in: ids } })
+    }
+
+    const lokiOptions = {
+      hasStretchLon180: this.hasStretchLon180
+    }
+
+    const query = statement.toLokijs(lokiOptions)
+    const needMatch = !!query.needMatch
+    delete query.needMatch
+
+    let list = db.find(query).data()
+
+    if (needMatch) {
+      list = list.filter(ob => {
+        const item = this.cacheElements[ob.id]
+        const r = statement.match(item)
+        if (r === null) {
+          undecidedItems.push(item)
+        }
+        return r
+      })
+    }
+
+    list = list
+      .map(ob => this.cacheElements[ob.id])
+      .filter(item => {
+        const r = !('properties' in options) || (options.properties & item.properties) === options.properties
+        if (!r) {
+          undecidedItems.push(item)
+        }
+        return r
+      })
+
+    result[statement.id] = { list }
+
+    if (undecidedItems.length || undecidedRecurse) {
+      list.undecidedItems = undecidedItems
+    }
+
+    return list
   }
 
   /**

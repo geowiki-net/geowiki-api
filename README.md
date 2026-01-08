@@ -11,7 +11,7 @@ npm install --save overpass-frontend
 git clone https://github.com/plepe/overpass-frontend
 cd overpass-frontend
 npm install
-npm start
+npm run demo
 ```
 
 Browse to http://localhost:8000/demo/

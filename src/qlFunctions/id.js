@@ -29,7 +29,7 @@ module.exports = class id extends qlFunction {
     }
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     descriptors.forEach(o => {
       let v = this.value
       if (o.ids) {
@@ -45,5 +45,9 @@ module.exports = class id extends qlFunction {
     if (other instanceof id) {
       return !other.value.filter(id => !this.value.includes(id)).length
     }
+  }
+
+  properties () {
+    return OverpassFrontend.ID_ONLY
   }
 }

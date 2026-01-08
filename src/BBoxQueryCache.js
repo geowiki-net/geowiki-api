@@ -9,7 +9,8 @@ class BBoxQueryCache {
     this.list = {}
   }
 
-  get (id) {
+  get (descriptor) {
+    const id = descriptor.id
     if (!(id in this.list)) {
       this.list[id] = new BBoxQueryCacheItem(this, id)
     }
@@ -35,72 +36,98 @@ class BBoxQueryCacheItem {
   /**
    * make another part of the map known
    */
-  add (bbox, cacheDescriptors = null) {
+  add (cacheDescriptor) {
     // ignore requests for IDs
-    if (cacheDescriptors && cacheDescriptors.ids) {
+    if (cacheDescriptor.ids) {
       return
     }
 
-    bbox = new BoundingBox(bbox).toGeoJSON()
-
-    if (cacheDescriptors && cacheDescriptors.bounds) {
-      bbox = turf.intersect(bbox, cacheDescriptors.bounds)
-    }
+    const bbox = cacheDescriptor.bounds ?? new BoundingBox().toGeoJSON()
 
     if (this.area === null) {
       this.area = bbox
     } else {
       this.area = turf.union(bbox, this.area)
     }
+
+    if (cacheDescriptor.recurse) {
+      if (!this.recurse) {
+        this.recurse = new BBoxQueryCache(this.main.overpass)
+      }
+
+      cacheDescriptor.recurse.forEach(cd => {
+        const cache = this.recurse.get(cd)
+        cache.add(cd)
+      })
+    }
   }
 
   /**
    * is the whole area known?
    */
-  check (bbox, cacheDescriptors = null) {
-    if (cacheDescriptors && cacheDescriptors.invalid) {
+  check (cacheDescriptor, _norek = false) {
+    if (cacheDescriptor.invalid) {
       return true
     }
 
-    if (cacheDescriptors && cacheDescriptors.ids) {
-      let types = [cacheDescriptors.id.match(/^(node|way|relation|nwr)/)[1]]
-      if (types[0] === 'nwr') {
-        types = ['node', 'way', 'relation']
-      }
+    if (cacheDescriptor && cacheDescriptor.ids) {
+      const type = this.filter.getStatement().type
+      const types = type === 'nwr' ? ['node', 'way', 'relation'] : [type]
 
-      return types.every(type =>
-        cacheDescriptors.ids.every(id =>
+      const result = types.every(type =>
+        cacheDescriptor.ids.every(id =>
           (type.substr(0, 1) + id) in this.main.overpass.cacheElements
         )
       )
-    }
 
-    bbox = new BoundingBox(bbox).toGeoJSON()
+      if (!result) {
+        return false
+      }
 
-    if (cacheDescriptors && cacheDescriptors.bounds) {
-      bbox = turf.intersect(bbox, cacheDescriptors.bounds)
-    }
-
-    if (this.area) {
-      const remaining = turf.difference(bbox, this.area)
-
-      if (!remaining) {
+      if (this.checkRecurses(cacheDescriptor)) {
         return true
       }
     }
 
+    const bbox = cacheDescriptor.bounds ?? new BoundingBox().toGeoJSON()
+
+    if (this.area) {
+      const remaining = turf.difference(bbox, this.area)
+
+      if (!remaining && this.checkRecurses(cacheDescriptor)) {
+        return true
+      }
+    }
+
+    if (_norek) {
+      return false
+    }
+
     // check if a superset matches
     return Object.values(this.main.list).some(cache => {
-      if (cache.id === this.id) { return false }
-
       if (cache.filter.isSupersetOf(this.filter)) {
-        if (cache.area) {
-          return !turf.difference(bbox, cache.area)
+        if (cache.check(cacheDescriptor, true)) {
+          return true
         }
       }
 
       return false
     })
+  }
+
+  checkRecurses (cacheDescriptor) {
+    if (cacheDescriptor.recurse) {
+      if (!this.recurse) {
+        return true
+      }
+
+      return cacheDescriptor.recurse.every(cd => {
+        const cache = this.recurse.get(cd)
+        return cache.check(cd)
+      })
+    }
+
+    return true
   }
 
   /**

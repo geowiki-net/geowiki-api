@@ -129,12 +129,20 @@ class OverpassRelation extends OverpassObject {
             data.lat = ob.geometry.lat
             data.lon = ob.geometry.lon
           }
+
+          if (data.lat === undefined) {
+            return undefined
+          }
         } else if (ob.type === 'way') {
           data.geometry = ob.geometry
+
+          if (!data.geometry || !data.geometry.length) {
+            return undefined
+          }
         }
 
         return data
-      })
+      }).filter(d => d)
     }]
 
     this.geometry = osmtogeojson({ elements })
@@ -240,25 +248,24 @@ class OverpassRelation extends OverpassObject {
 
   /**
    * Return list of member ids.
+   * @return {null|string} [role] only return members with the specified role (null -> all members)
    * @return {string[]}
    */
-  memberIds () {
-    if (this._memberIds) {
-      return this._memberIds
-    }
-
+  memberIds (role = null) {
     if (typeof this.data.members === 'undefined') {
       return null
     }
 
-    this._memberIds = []
+    const result = []
     for (let i = 0; i < this.data.members.length; i++) {
       const member = this.data.members[i]
 
-      this._memberIds.push(member.type.substr(0, 1) + member.ref)
+      if (role === null || member.role === role) {
+        result.push(member.type.substr(0, 1) + member.ref)
+      }
     }
 
-    return this._memberIds
+    return result
   }
 
   member_ids () { // eslint-disable-line
@@ -470,6 +477,109 @@ class OverpassRelation extends OverpassObject {
     }
 
     return 1
+  }
+
+  outJson (options) {
+    const result = super.outJson(options)
+
+    if ((options.bb || options.geom) && this.bounds) {
+      result.bounds = { ...this.bounds }
+    }
+
+    if (options.center && this.bounds) {
+      result.center = this.bounds.getCenter()
+    }
+
+    if ((!options.ids && !options.tags) || options.body || options.skel) {
+      result.members = this.members.map(member => {
+        return {
+          ref: member.ref,
+          type: member.type,
+          role: member.role
+        }
+      })
+    }
+
+    if (options.geom && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      this.members.forEach((member, i) => {
+        if (member.type === 'node') {
+          if (this.memberFeatures[i].geometry) {
+            result.members[i].lat = this.memberFeatures[i].geometry.lat
+            result.members[i].lon = this.memberFeatures[i].geometry.lon
+          }
+        } else if (member.type === 'way') {
+          if (this.memberFeatures[i].geometry && this.memberFeatures[i].geometry.length) {
+            result.members[i].geometry = this.memberFeatures[i].geometry
+          } else {
+            result.members[i].geometry = []
+          }
+        }
+      })
+    }
+
+    return result
+  }
+
+  _outXml (options, document, result) {
+    if ((options.bb || options.geom) && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('bounds')
+      node.setAttribute('minlat', this.bounds.minlat.toFixed(7))
+      node.setAttribute('minlon', this.bounds.minlon.toFixed(7))
+      node.setAttribute('maxlat', this.bounds.maxlat.toFixed(7))
+      node.setAttribute('maxlon', this.bounds.maxlon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if (options.center && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('center')
+      node.setAttribute('lat', this.center.lat.toFixed(7))
+      node.setAttribute('lon', this.center.lon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if ((!options.ids && !options.tags) || options.body || options.skel) {
+      this.members.forEach((member, i) => {
+        const blank = document.createTextNode('\n  ')
+        result.appendChild(blank)
+
+        const node = document.createElement('member')
+        node.setAttribute('type', member.type)
+        node.setAttribute('ref', member.ref)
+        node.setAttribute('role', member.role)
+
+        if (options.geom && this.geometry) {
+          if (member.type === 'node') {
+            if (this.memberFeatures[i].geometry) {
+              node.setAttribute('lat', this.memberFeatures[i].geometry.lat.toFixed(7))
+              node.setAttribute('lon', this.memberFeatures[i].geometry.lon.toFixed(7))
+            }
+          } else if (member.type === 'way' && this.memberFeatures[i].geometry) {
+            this.memberFeatures[i].geometry.forEach(g => {
+              const blank = document.createTextNode('\n    ')
+              node.appendChild(blank)
+
+              const nd = document.createElement('nd')
+              nd.setAttribute('lat', g.lat.toFixed(7))
+              nd.setAttribute('lon', g.lon.toFixed(7))
+              node.appendChild(nd)
+            })
+
+            if (this.memberFeatures[i].geometry.length) {
+              const blank = document.createTextNode('\n  ')
+              node.appendChild(blank)
+            }
+          }
+        }
+
+        result.appendChild(node)
+      })
+    }
   }
 }
 

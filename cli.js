@@ -35,5 +35,9 @@ function handleResult (err, result) {
     process.exit(1)
   }
 
-  fs.writeFileSync(1, JSON.stringify(result, null, '  ') + '\n')
+  if (typeof result === 'string') {
+    fs.writeFileSync(1, result)
+  } else {
+    fs.writeFileSync(1, JSON.stringify(result, null, '  ') + '\n')
+  }
 }

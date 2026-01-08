@@ -66,7 +66,13 @@ function handleRequest (request, response) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       })
-      response.end(JSON.stringify(result, null, '  '))
+
+      console.log(typeof result)
+      if (typeof result !== 'string') {
+        result = JSON.stringify(result, null, '  ')
+      }
+
+      response.end(result)
     }
   })
 }

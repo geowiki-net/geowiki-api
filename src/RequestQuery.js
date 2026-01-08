@@ -192,7 +192,7 @@ module.exports = class RequestQuery extends Request {
       xmlSerializer = new XMLSerializer()
     }
 
-    const xml = domParser.parseFromString('<xml>\n<osm/>\n</xml>', 'text/xml')
+    const xml = domParser.parseFromString('<?xml version="1.0" encoding="UTF-8"?>\n<osm/>', 'text/xml')
     const document = xml.ownerDocument
 
     const osm = document.getElementsByTagName('osm')[0]
@@ -262,9 +262,6 @@ module.exports = class RequestQuery extends Request {
         })
       }
     })
-
-    blank = document.createTextNode('\n')
-    osm.appendChild(blank)
 
     this.result = xmlSerializer.serializeToString(xml)
   }

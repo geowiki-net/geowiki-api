@@ -71,7 +71,10 @@
   "resolutions": {
     "martinez-polygon-clipping": "^0.5.0"
   },
-  "bin": "cli.js",
+  "bin": {
+    "geowiki-api": "cli.js",
+    "geowiki-api-server": "server.js"
+  },
   "scripts": {
     "test": "mocha --bail",
     "test1": "mocha --bail test/filter test/filterSets test/outStatements",

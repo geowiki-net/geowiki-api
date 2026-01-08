@@ -12,11 +12,11 @@ const defaultConfig = {
 
 const parser = new ArgumentParser({
   add_help: true,
-  description: 'Starts an overpass-frontend server'
+  description: 'Starts a geowiki-api server, either as proxy for a Overpass/Geowiki API server or from a OSM file'
 })
 
 parser.add_argument('--db', {
-  help: 'Override the default database (e.g. Overpass API URL)',
+  help: 'Override the default database (e.g. Overpass/Geowiki API URL or OSM file)',
   default: defaultConfig.db
 })
 

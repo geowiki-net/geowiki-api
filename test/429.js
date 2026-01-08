@@ -8,7 +8,7 @@ if (!conf.generator) {
 
 var assert = require('assert')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 
 let url = conf.url + (conf.url.match(/\?/) ? '&' : '?') + 'status=429'
 conf.timeGap429 = 10

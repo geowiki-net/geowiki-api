@@ -4,7 +4,7 @@ var conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 const Filter = require('../src/Filter')
 var BoundingBox = require('boundingbox')
 var overpassFrontend

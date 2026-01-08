@@ -6,7 +6,7 @@ const deepEqualCheck = require('deep-equal-check').default
 const conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 
 const httpLoad = require('../src/httpLoad')
-const OverpassFrontend = require('../src/OverpassFrontend')
+const OverpassFrontend = require('..')
 const overpassFrontend = new OverpassFrontend(conf.url)
 
 const queries = [

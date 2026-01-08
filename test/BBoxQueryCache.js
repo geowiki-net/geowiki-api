@@ -1,7 +1,7 @@
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var overpassFrontend = new OverpassFrontend()
 var BoundingBox = require('boundingbox')
 var Filter = require('../src/Filter')

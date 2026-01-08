@@ -9,7 +9,7 @@ if (!conf.generator) {
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var RequestGet = require('../src/RequestGet')
 var BoundingBox = require('boundingbox')
 var overpassFrontend = new OverpassFrontend(conf.url)

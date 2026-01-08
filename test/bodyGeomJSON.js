@@ -1,5 +1,5 @@
 var assert = require('assert')
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 
 let overpassFrontend
 

@@ -1,7 +1,7 @@
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 
 /* setup fake DOM on NodeJS */
 if (!global.window) {

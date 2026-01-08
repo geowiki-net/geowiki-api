@@ -1,14 +1,25 @@
 #!/usr/bin/env node
+const ArgumentParser = require('argparse').ArgumentParser
 const fs = require('fs')
 const OverpassFrontend = require('.')
 
 const defaultConfig = {
-  overpassURL: 'overpass-api.de/api/interpreter'
+  db: 'https://overpass-api.de/api/interpreter'
 }
 
-const config = { ...defaultConfig }
+const parser = new ArgumentParser({
+  add_help: true,
+  description: 'Starts an overpass-frontend server'
+})
 
-const overpassFrontend = new OverpassFrontend(config.overpassURL)
+parser.add_argument('--db', {
+  help: 'Override the default database (e.g. Overpass API URL)',
+  default: defaultConfig.db
+})
+
+const config = { ...parser.parse_args() }
+
+const overpassFrontend = new OverpassFrontend(config.db)
 
 const query = fs.readFileSync(0, 'utf-8')
 

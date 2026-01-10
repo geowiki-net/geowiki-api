@@ -7,6 +7,8 @@ const Filter = require('./Filter')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const compileRecurseReverse = require('./compileRecurseReverse')
 const compileRecurseFilter = require('./compileRecurseFilter')
+const getFormatter = require('./getFormatter')
+const OutOptions = require('./OutOptions')
 
 /**
  * A BBox request
@@ -22,13 +24,22 @@ class RequestBBox extends Request {
     this.type = 'BBoxQuery'
 
     if (typeof this.options.properties === 'undefined') {
-      this.options.properties = defines.DEFAULT
+      this.options.properties = this.outOptions ? defines.ID_ONLY : defines.DEFAULT
     }
     this.options.minEffort = this.options.minEffort || 256
 
     // make sure the request ends with ';'
     if (!this.query.match(/;\s*$/)) {
       this.query += ';'
+    }
+
+    this.output = getFormatter(this.options.out, this.overpass)
+    if (this.outOptions) {
+      const outOptions = new OutOptions(this.outOptions.split(' '))
+      this.outOptions = outOptions.outOptions()
+      this.options.properties |= outOptions.properties()
+    } else {
+      this.outOptions = { body: true }
     }
 
     if (!('noCacheQuery' in this.options) || !this.options.noCacheQuery) {
@@ -46,6 +57,7 @@ class RequestBBox extends Request {
 
       if (!boundsIsFullWorld(this.bounds)) {
         let boundsFilter
+        this.output.setBounds(this.bounds)
         if (this.bounds instanceof BoundingBox) {
           if (!this.bbox) {
             boundsFilter = '(' + this.bounds.toLatLonString() + ')'
@@ -290,13 +302,14 @@ class RequestBBox extends Request {
   }
 
   /**
-   * receive an object from OverpassFronted -> enter to cache, return to caller
+   * receive an object from OverpassFrontend -> enter to cache, return to caller
    * @param {OverpassObject} ob - Object which has been received
    * @param {Request#SubRequest} subRequest - sub request which is being handled right now
    * @param {int} partIndex - Which part of the subRequest is being received
    */
   receiveObject (ob, subRequest, partIndex) {
     super.receiveObject(ob, subRequest, partIndex)
+    this.output.pushFeature(ob, this.outOptions)
     this.doneFeatures[ob.id] = ob
 
     if (subRequest) {
@@ -355,6 +368,11 @@ class RequestBBox extends Request {
 
   mayFinish () {
     return !this.needLoad()
+  }
+
+  finish (err) {
+    this.result = this.output.finalize()
+    super.finish(err)
   }
 }
 

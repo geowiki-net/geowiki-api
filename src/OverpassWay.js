@@ -333,7 +333,7 @@ class OverpassWay extends OverpassObject {
       result.appendChild(node)
     }
 
-    if ((!options.ids && !options.tags) || options.body || options.skel) {
+    if (this.nodes && ((!options.ids && !options.tags) || options.body || options.skel)) {
       this.nodes.forEach((id, i) => {
         const blank = document.createTextNode('\n  ')
         result.appendChild(blank)

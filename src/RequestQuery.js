@@ -3,8 +3,7 @@ const Filter = require('./Filter')
 const async = require('async')
 const RequestBBox = require('./RequestBBox')
 const BoundingBox = require('boundingbox')
-const FormatterJson = require('./FormatterJson')
-const FormatterXml = require('./FormatterXml')
+const getFormatter = require('./getFormatter')
 
 /**
  * A query request
@@ -74,11 +73,7 @@ module.exports = class RequestQuery extends Request {
       const queryOptions = { ...this.options }
       queryOptions.properties = inputSet.properties
 
-      if (this.options.out === 'xml') {
-        this.output = new FormatterXml(this.overpass)
-      } else {
-        this.output = new FormatterJson(this.overpass)
-      }
+      this.output = getFormatter(this.options.out, this.overpass)
 
       if (this.options.bbox) {
         this.output.setBounds(this.options.bbox)

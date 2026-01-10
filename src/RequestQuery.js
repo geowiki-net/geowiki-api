@@ -1,13 +1,10 @@
-const DOMParser = require('@xmldom/xmldom').DOMParser
-const XMLSerializer = require('@xmldom/xmldom').XMLSerializer
 const Request = require('./Request')
 const Filter = require('./Filter')
 const async = require('async')
 const RequestBBox = require('./RequestBBox')
 const BoundingBox = require('boundingbox')
-const packageInfo = require('../version.json')
-
-let domParser, xmlSerializer
+const FormatterJson = require('./FormatterJson')
+const FormatterXml = require('./FormatterXml')
 
 /**
  * A query request
@@ -77,6 +74,16 @@ module.exports = class RequestQuery extends Request {
       const queryOptions = { ...this.options }
       queryOptions.properties = inputSet.properties
 
+      if (this.options.out === 'xml') {
+        this.output = new FormatterXml(this.overpass)
+      } else {
+        this.output = new FormatterJson(this.overpass)
+      }
+
+      if (this.options.bbox) {
+        this.output.setBounds(this.options.bbox)
+      }
+
       const data = {
         query: stmt.fullQuery(),
         bounds: new BoundingBox(queryOptions.bbox),
@@ -94,11 +101,7 @@ module.exports = class RequestQuery extends Request {
           this.requests.splice(this.requests.indexOf(request), 1)
 
           if (!this.requests.length) {
-            if (this.options.out === 'xml') {
-              this.buildResultXml()
-            } else {
-              this.buildResultJson()
-            }
+            this.buildResult()
             this.finish()
           }
         },
@@ -145,82 +148,7 @@ module.exports = class RequestQuery extends Request {
     return !this.requests.length
   }
 
-  buildResultJson () {
-    this.result = {
-      version: '0.6',
-      generator: packageInfo.name + ' ' + packageInfo.version,
-      ...this.overpass.meta,
-      elements: []
-    }
-
-    delete this.result.bounds
-    if (this.options.bbox) {
-      this.result.bounds = { ...this.options.bbox }
-    }
-
-    this.outStatements.forEach(stmt => {
-      const inputSet = this.inputSets[stmt.inputSet.id]
-      const outOptions = stmt.outOptions()
-      const count = stmt.count()
-
-      let features = inputSet.features
-      if (count) {
-        features = features.slice(0, count)
-      }
-      const elements = features.map(ob => ob.outJson(outOptions))
-
-      if (outOptions.count) {
-        this.result.elements.push({
-          type: 'count',
-          id: 0,
-          tags: countElements(elements)
-        })
-      } else {
-        this.result.elements = this.result.elements.concat(elements)
-      }
-    })
-  }
-
-  buildResultXml () {
-    if (!domParser) {
-      domParser = new DOMParser({
-        errorHandler: {
-          error: (err) => { throw new Error('Error parsing XML file: ' + err) },
-          fatalError: (err) => { throw new Error('Error parsing XML file: ' + err) }
-        }
-      })
-      xmlSerializer = new XMLSerializer()
-    }
-
-    const xml = domParser.parseFromString('<?xml version="1.0" encoding="UTF-8"?>\n<osm/>', 'text/xml')
-    const document = xml.ownerDocument
-
-    const osm = document.getElementsByTagName('osm')[0]
-    osm.setAttribute('version', '0.6')
-    osm.setAttribute('generator', packageInfo.name + ' ' + packageInfo.version)
-
-    Object.entries(this.overpass.meta).forEach(([k, v]) => {
-      if (k !== 'bounds') {
-        osm.setAttribute(k, v)
-      }
-    })
-
-    if (this.options.bbox) {
-      const blank = document.createTextNode('\n')
-      osm.appendChild(blank)
-
-      const bounds = new BoundingBox(this.options.bbox)
-      const node = document.createElement('bounds')
-      node.setAttribute('minlat', bounds.minlat.toFixed(7))
-      node.setAttribute('minlon', bounds.minlon.toFixed(7))
-      node.setAttribute('maxlat', bounds.maxlat.toFixed(7))
-      node.setAttribute('maxlon', bounds.maxlon.toFixed(7))
-      osm.appendChild(node)
-    }
-
-    let blank = document.createTextNode('\n')
-    osm.appendChild(blank)
-
+  buildResult () {
     this.outStatements.forEach(stmt => {
       const inputSet = this.inputSets[stmt.inputSet.id]
       const outOptions = stmt.outOptions()
@@ -232,38 +160,13 @@ module.exports = class RequestQuery extends Request {
       }
 
       if (outOptions.count) {
-        const element = document.createElement('count')
-        element.setAttribute('id', 0)
-
-        Object.entries(countElements(features)).forEach(([type, c]) => {
-          const blank = document.createTextNode('\n  ')
-          element.appendChild(blank)
-
-          const tag = document.createElement('tag')
-          tag.setAttribute('k', type)
-          tag.setAttribute('v', c)
-          element.appendChild(tag)
-        })
-
-        let blank = document.createTextNode('\n')
-        element.appendChild(blank)
-
-        osm.appendChild(element)
-
-        blank = document.createTextNode('\n')
-        osm.appendChild(blank)
+        this.output.pushCount(countElements(features))
       } else {
-        features.forEach(ob => {
-          const element = ob.outXml(outOptions, document)
-          osm.appendChild(element)
-
-          const blank = document.createTextNode('\n')
-          osm.appendChild(blank)
-        })
+        features.map(ob => this.output.pushFeature(ob, outOptions))
       }
     })
 
-    this.result = xmlSerializer.serializeToString(xml)
+    this.result = this.output.finalize()
   }
 }
 

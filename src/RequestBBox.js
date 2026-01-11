@@ -24,7 +24,7 @@ class RequestBBox extends Request {
     this.type = 'BBoxQuery'
 
     if (typeof this.options.properties === 'undefined') {
-      this.options.properties = this.outOptions ? defines.ID_ONLY : defines.DEFAULT
+      this.options.properties = this.options.outOptions ? defines.ID_ONLY : defines.DEFAULT
     }
     this.options.minEffort = this.options.minEffort || 256
 
@@ -34,8 +34,8 @@ class RequestBBox extends Request {
     }
 
     this.output = getFormatter(this.options.out, this.overpass)
-    if (this.outOptions) {
-      const outOptions = new OutOptions(this.outOptions.split(' '))
+    if (this.options.outOptions) {
+      const outOptions = new OutOptions(this.options.outOptions)
       this.outOptions = outOptions.outOptions()
       this.options.properties |= outOptions.properties()
     } else {

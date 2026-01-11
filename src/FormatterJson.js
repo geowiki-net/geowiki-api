@@ -30,6 +30,7 @@ module.exports = class FormatterJson {
   }
 
   finalize () {
+    this.result = { ...this.result, ...this.overpass.meta }
     return this.result
   }
 }

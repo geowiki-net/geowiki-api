@@ -1,5 +1,11 @@
 var fs = require('fs')
 var conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
+const osmjsonMeta = {
+  version: 0.6,
+  generator: conf.generator,
+  timestamp_osm_base: '',
+  copyright: "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+}
 
 if (!conf.generator) {
   console.error('Set correct "generator" string in test/conf.json!')
@@ -16,6 +22,14 @@ describe('Overpass BBoxQuery', function() {
   it('Simple queries - all nodes', function (done) {
     var finalCalled = 0
     var expected = [ 'n3037893169', 'n3037431649' ]
+    var expectedFinal = {
+      ...osmjsonMeta,
+      bounds: { maxlat: 48.19852, maxlon: 16.33853, minlat: 48.19848, minlon: 16.33846 },
+      elements: [
+        { type: 'node', id: 3037431649, lat: 48.1985078, lon: 16.3384644 },
+        { type: 'node', id: 3037893169, lat: 48.1984802, lon: 16.3384675, tags: { amenity: 'bench', backrest: 'yes', material: 'wood', source: 'survey' } }
+      ]
+    }
     var found = []
     var error = ''
 
@@ -36,7 +50,7 @@ describe('Overpass BBoxQuery', function() {
           error += 'Unexpected result ' + result.id + '\n'
         }
       },
-      function (err) {
+      function (err, result) {
         assert.equal(finalCalled++, 0, 'Final function called ' + finalCalled + ' times!')
         if (err) {
           return done(err)
@@ -53,6 +67,125 @@ describe('Overpass BBoxQuery', function() {
         }
 
         assert.equal(req.count, expected.length, 'Expected ' + expected.length + ' results')
+
+        assert.deepEqual(result, expectedFinal)
+
+        done()
+      }
+    )
+  })
+
+  it('Simple queries - all nodes (outOptions "ids")', function (done) {
+    overpassFrontend.clearCache()
+    var finalCalled = 0
+    var expected = [ 'n3037893169', 'n3037431649' ]
+    var expectedFinal = {
+      ...osmjsonMeta,
+      bounds: { maxlat: 48.19852, maxlon: 16.33853, minlat: 48.19848, minlon: 16.33846 },
+      elements: [
+        { type: 'node', id: 3037431649, lat: 48.1985078, lon: 16.3384644 },
+        { type: 'node', id: 3037893169, lat: 48.1984802, lon: 16.3384675, tags: { amenity: 'bench', backrest: 'yes', material: 'wood', source: 'survey' } }
+      ]
+    }
+    var found = []
+    var error = ''
+
+    var req = overpassFrontend.BBoxQuery(
+      "node",
+      {
+	"maxlat": 48.19852,
+	"maxlon": 16.33853,
+	"minlat": 48.19848,
+	"minlon": 16.33846
+      },
+      {
+        out: 'json',
+        outOptions: 'ids'
+      },
+      function (err, result) {
+        found.push(result.id)
+
+        if (expected.indexOf(result.id) === -1) {
+          error += 'Unexpected result ' + result.id + '\n'
+        }
+      },
+      function (err, result) {
+        assert.equal(finalCalled++, 0, 'Final function called ' + finalCalled + ' times!')
+        if (err) {
+          return done(err)
+        }
+
+        if (error) {
+          return done(error)
+        }
+
+        if (found.length !== expected.length) {
+          return done('Wrong count of objects returned:\n' +
+               'Expected: ' + expected.join(', ') + '\n' +
+               'Found: ' + found.join(', '))
+        }
+
+        assert.equal(req.count, expected.length, 'Expected ' + expected.length + ' results')
+
+        assert.deepEqual(result, expectedFinal)
+
+        done()
+      }
+    )
+  })
+
+  it('Simple queries - all nodes (outOptions "ids geom")', function (done) {
+    var finalCalled = 0
+    var expected = [ 'n3037893169', 'n3037431649' ]
+    var expectedFinal = {
+      ...osmjsonMeta,
+      bounds: { maxlat: 48.19852, maxlon: 16.33853, minlat: 48.19848, minlon: 16.33846 },
+      elements: [
+        { type: 'node', id: 3037431649, lat: 48.1985078, lon: 16.3384644 },
+        { type: 'node', id: 3037893169, lat: 48.1984802, lon: 16.3384675, tags: { amenity: 'bench', backrest: 'yes', material: 'wood', source: 'survey' } }
+      ]
+    }
+    var found = []
+    var error = ''
+
+    var req = overpassFrontend.BBoxQuery(
+      "node",
+      {
+	"maxlat": 48.19852,
+	"maxlon": 16.33853,
+	"minlat": 48.19848,
+	"minlon": 16.33846
+      },
+      {
+        out: 'json',
+        outOptions: 'ids geom'
+      },
+      function (err, result) {
+        found.push(result.id)
+
+        if (expected.indexOf(result.id) === -1) {
+          error += 'Unexpected result ' + result.id + '\n'
+        }
+      },
+      function (err, result) {
+        assert.equal(finalCalled++, 0, 'Final function called ' + finalCalled + ' times!')
+        if (err) {
+          return done(err)
+        }
+
+        if (error) {
+          return done(error)
+        }
+
+        if (found.length !== expected.length) {
+          return done('Wrong count of objects returned:\n' +
+               'Expected: ' + expected.join(', ') + '\n' +
+               'Found: ' + found.join(', '))
+        }
+
+        assert.equal(req.count, expected.length, 'Expected ' + expected.length + ' results')
+
+        assert.deepEqual(result, expectedFinal)
 
         done()
       }

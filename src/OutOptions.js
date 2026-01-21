@@ -19,6 +19,9 @@ const outOtherParams = {
 
 module.exports = class OutOptions {
   constructor (value) {
+    if (typeof value === 'string') {
+      value = value.split(' ')
+    }
     this.def = { out: value }
   }
 

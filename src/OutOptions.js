@@ -18,6 +18,9 @@ const outOtherParams = {
 }
 
 module.exports = class OutOptions {
+  /**
+   * @param {string|string[]} value A value, e.g. 'body tags geom'
+   */
   constructor (value) {
     if (typeof value === 'string') {
       value = value.split(' ')
@@ -25,6 +28,9 @@ module.exports = class OutOptions {
     this.def = { out: value }
   }
 
+  /**
+   * @returns {object} returns the selected options as hash array with true as value, e.g. {body: true, tags: true, geom: true}
+   */
   outOptions () {
     const result = {}
     let hasParams = false
@@ -54,6 +60,9 @@ module.exports = class OutOptions {
     return result
   }
 
+  /**
+   * @returns {Number} the required properties, e.g. 12 (GeowikiAPI.TAGS|GeowikiAPI.MEMBERS|GeowikiAPI.GEOM)
+   */
   properties () {
     let result = 0
     let hasParams = false

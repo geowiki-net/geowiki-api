@@ -299,7 +299,7 @@ class OverpassWay extends OverpassObject {
       }
     }
 
-    if ((!options.ids && !options.tags) || options.body || options.skel) {
+    if (this.nodes && ((!options.ids && !options.tags) || options.body || options.skel)) {
       result.nodes = this.nodes
     }
 

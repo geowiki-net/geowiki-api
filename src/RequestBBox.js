@@ -7,8 +7,6 @@ const Filter = require('./Filter')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const compileRecurseReverse = require('./compileRecurseReverse')
 const compileRecurseFilter = require('./compileRecurseFilter')
-const getFormatter = require('./getFormatter')
-const OutOptions = require('./OutOptions')
 
 /**
  * A BBox request
@@ -23,23 +21,11 @@ class RequestBBox extends Request {
     super(overpass, data)
     this.type = 'BBoxQuery'
 
-    if (typeof this.options.properties === 'undefined') {
-      this.options.properties = this.options.outOptions ? defines.ID_ONLY : defines.DEFAULT
-    }
     this.options.minEffort = this.options.minEffort || 256
 
     // make sure the request ends with ';'
     if (!this.query.match(/;\s*$/)) {
       this.query += ';'
-    }
-
-    this.output = getFormatter(this.options.out, this.overpass)
-    if (this.options.outOptions) {
-      const outOptions = new OutOptions(this.options.outOptions)
-      this.outOptions = outOptions.outOptions()
-      this.options.properties |= outOptions.properties()
-    } else {
-      this.outOptions = { body: true }
     }
 
     if (!('noCacheQuery' in this.options) || !this.options.noCacheQuery) {
@@ -309,7 +295,6 @@ class RequestBBox extends Request {
    */
   receiveObject (ob, subRequest, partIndex) {
     super.receiveObject(ob, subRequest, partIndex)
-    this.output.pushFeature(ob, this.outOptions)
     this.doneFeatures[ob.id] = ob
 
     if (subRequest) {
@@ -368,11 +353,6 @@ class RequestBBox extends Request {
 
   mayFinish () {
     return !this.needLoad()
-  }
-
-  finish (err) {
-    this.result = this.output.finalize()
-    super.finish(err)
   }
 }
 

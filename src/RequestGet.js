@@ -24,10 +24,6 @@ class RequestGet extends Request {
       this.ids = this.ids.concat()
     }
 
-    if (typeof this.options.properties === 'undefined') {
-      this.options.properties = defines.DEFAULT
-    }
-
     for (let i = 0; i < this.ids.length; i++) {
       if (this.ids[i] in this.overpass.cacheElements && this.overpass.cacheElements[this.ids[i]] === false) {
         delete this.overpass.cacheElements[this.ids[i]]

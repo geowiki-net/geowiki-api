@@ -3,7 +3,6 @@ const Filter = require('./Filter')
 const async = require('async')
 const RequestBBox = require('./RequestBBox')
 const BoundingBox = require('boundingbox')
-const getFormatter = require('./getFormatter')
 
 /**
  * A query request
@@ -32,13 +31,17 @@ module.exports = class RequestQuery extends Request {
       options.featureCallback = () => {}
     }
 
-    super(overpass, options)
-    this.type = 'query'
+    if (!options.options) {
+      options.options = {}
+    }
 
     if (options.query.match(/^s*\[/)) { // query starts with [ - indication for query options
       options.query = parseQueryOptions(options.query, options)
-      this.options = { ...this.options, ...options }
     }
+
+    super(overpass, options)
+    this.type = 'query'
+    this.options = { ...this.options, ...options }
 
     if (this.options.bbox) {
       const keys = ['minlat', 'minlon', 'maxlat', 'maxlon']
@@ -68,16 +71,14 @@ module.exports = class RequestQuery extends Request {
       this.inputSets[inputSet.id].properties |= stmt.properties()
     })
 
+    if (this.options.bbox) {
+      this.output.setBounds(this.options.bbox)
+    }
+
     async.each(this.inputSets, (inputSet, done) => {
       const stmt = inputSet.statements[0]
       const queryOptions = { ...this.options }
       queryOptions.properties = inputSet.properties
-
-      this.output = getFormatter(this.options.out, this.overpass)
-
-      if (this.options.bbox) {
-        this.output.setBounds(this.options.bbox)
-      }
 
       const data = {
         query: stmt.fullQuery(),
@@ -160,8 +161,6 @@ module.exports = class RequestQuery extends Request {
         features.map(ob => this.output.pushFeature(ob, outOptions))
       }
     })
-
-    this.result = this.output.finalize()
   }
 }
 
@@ -170,7 +169,7 @@ function parseQueryOptions (query, options) {
 
   if (m) {
     query = query.substr(m[0].length)
-    options[m[1].trim()] = m[2].trim()
+    options.options[m[1].trim()] = m[2].trim()
 
     query = parseQueryOptions(query, options)
   }

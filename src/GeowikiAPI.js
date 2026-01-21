@@ -1008,6 +1008,18 @@ class OverpassFrontend {
       callback(null, this.meta)
     })
   }
+
+  getOutputFormatter (format) {
+    if (!format) {
+      format = 'json'
+    }
+
+    if (format in OverpassFrontend.outputFormats) {
+      return new OverpassFrontend.outputFormats[format](this)
+    }
+
+    throw new Error('Formatter "' + format + '" unknown')
+  }
 }
 
 OverpassFrontend.fileFormats = [
@@ -1018,6 +1030,15 @@ OverpassFrontend.fileFormats = [
 
 OverpassFrontend.registerFileFormat = (format) => {
   OverpassFrontend.fileFormats.push(format)
+}
+
+OverpassFrontend.outputFormats = {
+  json: require('./FormatterJson'),
+  xml: require('./FormatterXml'),
+}
+
+OverpassFrontend.registerOutputFormat = (format, formatter) => {
+  OverpassFrontend.outputFormats[format] = formatter
 }
 
 for (const k in defines) {

@@ -1,7 +1,6 @@
 const ee = require('event-emitter')
 const defines = require('./defines')
 const SortedCallbacks = require('./SortedCallbacks')
-const getFormatter = require('./getFormatter')
 const OutOptions = require('./OutOptions')
 
 /**
@@ -46,7 +45,7 @@ class Request {
       this.options.properties = this.options.outOptions ? defines.ID_ONLY : defines.DEFAULT
     }
 
-    this.output = getFormatter(this.options.out, this.overpass)
+    this.output = this.overpass.getOutputFormatter(this.options.out)
     if (this.options.outOptions) {
       const outOptions = new OutOptions(this.options.outOptions)
       this.outOptions = outOptions.outOptions()

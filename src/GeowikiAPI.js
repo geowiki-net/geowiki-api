@@ -256,11 +256,16 @@ class OverpassFrontend {
    * @param {function} [options.memberCallback] For every member, call this callback function. (Requires options.members=true)
    * @param {bit_array} [options.memberProperties] Which properties should be loaded for the members. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX
    * @param {BoundingBox|GeoJSON} [options.memberBounds] - Only return members which intersect these bounds. Boundaries is a BoundingBox, or a Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
-   * @param {function} featureCallback Will be called for each object which is passed in parameter 'ids'. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null, 3. index of the item in parameter ids.
+   * @param {function} [featureCallback] Will be called for each object which is passed in parameter 'ids'. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null, 3. index of the item in parameter ids.
    * @param {function} finalCallback Will be called after the last feature. Will be passed: 1. err (if an error occured, otherwise null).
    * @return {RequestGet}
    */
   get (ids, options, featureCallback, finalCallback) {
+    if (!finalCallback) {
+      finalCallback = featureCallback
+      featureCallback = null
+    }
+
     const request = new RequestGet(this, {
       ids: ids,
       options: options,
@@ -613,11 +618,16 @@ class OverpassFrontend {
    * @param {number} [options.memberSplit=0] If more than 'memberSplit' member elements would be returned, split into smaller requests (see 'split'). 0 = do not split.
    * @param {string|Filter} [options.filter] Additional filter.
    * @param {boolean} [options.noCacheQuery=false] If true, the local cache will not be queried
-   * @param {function} featureCallback Will be called for each matching object. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null.
+   * @param {function} [featureCallback] Will be called for each matching object. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null.
    * @param {function} finalCallback Will be called after the last feature. Will be passed: 1. err (if an error occured, otherwise null).
    * @return {RequestBBox}
    */
   BBoxQuery (query, bounds, options, featureCallback, finalCallback) {
+    if (!finalCallback) {
+      finalCallback = featureCallback
+      featureCallback = null
+    }
+
     let request
     const bbox = new BoundingBox(bounds)
 

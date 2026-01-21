@@ -36,6 +36,10 @@ class SortedCallbacks {
       index: index
     }
 
+    if (!this.featureCallback) {
+      return
+    }
+
     if ((this.options.sort === null) ||
         (this.options.sort === 'index' && this.options.sortDir === 'asc' && index === this.lastIndex + 1)) {
       async.setImmediate(function () {
@@ -64,7 +68,7 @@ class SortedCallbacks {
     }
 
     async.setImmediate(function () {
-      if (this.options.sort !== null) {
+      if (this.featureCallback && this.options.sort !== null) {
         for (let i = this.lastIndex + 1; i < this.list.length; i++) {
           // if a request got aborted, the entry in list is missing
           if (this.list[i]) {

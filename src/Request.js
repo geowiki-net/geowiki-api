@@ -144,6 +144,10 @@ class Request {
   receiveObject (ob, subRequest, partIndex) {
     this.count++
     this.output.pushFeature(ob, this.outOptions)
+
+    if (this.options.each) {
+      this.options.each(this.output.formatFeature(ob, this.outOptions))
+    }
   }
 
   /**

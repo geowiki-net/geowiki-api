@@ -54,6 +54,11 @@ module.exports = class FormatterXml {
     this.osm.appendChild(blank)
   }
 
+  formatFeature (ob, outOptions) {
+    const element = ob.outXml(outOptions, this.document)
+    return xmlSerializer.serializeToString(element)
+  }
+
   pushCount (counts) {
     const element = this.document.createElement('count')
     element.setAttribute('id', 0)

@@ -21,6 +21,10 @@ module.exports = class FormatterJson {
     this.result.elements.push(ob.outJson(outOptions))
   }
 
+  formatFeature (ob, outOptions) {
+    return ob.outJson(outOptions)
+  }
+
   pushCount (counts) {
     this.result.elements.push({
       type: 'count',

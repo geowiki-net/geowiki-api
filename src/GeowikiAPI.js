@@ -249,6 +249,7 @@ class OverpassFrontend {
    * @param {string|string[]} ids - Id or array of Ids of OSM map features, e.g. [ 'n123', 'w2345', 'n123' ]. Illegal IDs will not produce an error but generate a 'null' object.
    * @param {object} options Various options, see below
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
+   * @param {function} [options.each] - A function which will be called for each found object, formatted as specified with 'out'.
    * @param {string|boolean} [options.sort=false] - When set to true or "index", the function featureCallback will be called in order of the "ids" array. When set to false or null, the featureCallback will be called as soon as the object is loaded (e.g. immediately, if it is cached). When set to "BBoxDiagonalLength", the objects are ordered by the length of the diagonal of the bounding box.
    * @param {"asc"|"desc"} [options.sortDir="asc"] Sort direction.
    * @param {BoundingBox|GeoJSON} [options.bounds] - Only return items which intersect these bounds. Boundaries is a BoundingBox, or a Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
@@ -606,6 +607,7 @@ class OverpassFrontend {
    * @param {BoundingBox|GeoJSON} bounds - Boundaries where to load objects, can be a BoundingBox object, Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
    * @param {object} options
    * @param {number} [options.limit=0] - Limit count of results. If 0, no limit will be used.
+   * @param {function} [options.each] - A function which will be called for each found object, formatted as specified with 'out'.
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
    * @param {boolean|string} [options.sort=false] - If false, it will be called as soon as the features are availabe (e.g. immediately when cached).
    * @param {bit_array} [options.properties] Which properties of the features should be downloaded: OVERPASS_ID_ONLY, OVERPASS_BBOX, OVERPASS_TAGS, OVERPASS_GEOM, OVERPASS_META. Combine by binary OR: ``OVERPASS_ID | OVERPASS_BBOX``. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX

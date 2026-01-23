@@ -17,6 +17,31 @@ npm run demo
 Browse to http://localhost:8000/demo/
 
 # EXAMPLES
+## Geowiki Query
+This interface is similar to the Overpass API interface.
+You can execute this example as: `node example-query.js`
+
+```js
+const GeowikiAPI = require('geowiki-api')
+
+// you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
+
+// request restaurants in the specified bounding box
+geowikiAPI.query(
+  '[out:json][bbox:48.19,16.33,48.20,16.34];nwr[amenity=restaurant];out;',
+  {
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+  },
+  function (err, result) {
+    if (err) { console.log(err) }
+    // console.log(result) // the final result (almost) as expected by Overpass API
+  }
+)
+```
+
+The advantage of using 'each' in comparison to 'result' of the final callback is, that 'each' is called immediately resp. progressively as soon as it is found (e.g. from cache or when requests are split in sub-requests).
+
 ## BBOX Query
 You can execute this example as: `node example-bbox.js`
 

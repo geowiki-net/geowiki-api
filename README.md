@@ -31,14 +31,14 @@ geowikiAPI.BBoxQuery(
   'nwr[amenity=restaurant]',
   { minlat: 48.19, maxlat: 48.20, minlon: 16.33, maxlon: 16.34 },
   {
-    properties: GeowikiAPI.ALL
+    out: 'json',
+    outOptions: 'geom meta',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+    }
   },
   function (err, result) {
-    console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    // console.log(result.GeoJSON()) // convert to GeoJSON
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```
@@ -52,22 +52,17 @@ const GeowikiAPI = require('geowiki-api')
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
 
-// request restaurants in the specified bounding box
+// request some popular items by ID
 geowikiAPI.get(
   ['n27365030', 'w5013364'],
   {
-    // only return tags of the items. See below under "'Properties' option" for an explanation. If impatient, use ALL.
-    properties: GeowikiAPI.TAGS
+    out: 'json',
+    outOptions: 'tags',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
   },
   function (err, result) {
-    if (result) {
-      console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    } else {
-      console.log('* empty result')
-    }
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```

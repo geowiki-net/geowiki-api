@@ -1,13 +1,13 @@
-const OverpassFrontend = require('overpass-frontend')
+const GeowikiAPI = require('geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
-const overpassFrontend = new OverpassFrontend('//overpass-api.de/api/interpreter')
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
 
 // request restaurants in the specified bounding box
-overpassFrontend.get(
+geowikiAPI.get(
   ['n27365030', 'w5013364'],
   {
-    properties: OverpassFrontend.TAGS
+    properties: GeowikiAPI.TAGS
   },
   function (err, result) {
     if (result) {

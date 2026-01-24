@@ -4,6 +4,7 @@ const XMLSerializer = require('@xmldom/xmldom').XMLSerializer
 const packageInfo = require('../version.json')
 
 let domParser, xmlSerializer
+const generator = packageInfo.name + ' ' + packageInfo.version
 
 module.exports = class FormatterXml {
   constructor (overpass) {
@@ -24,13 +25,9 @@ module.exports = class FormatterXml {
 
     this.osm = this.document.getElementsByTagName('osm')[0]
     this.osm.setAttribute('version', '0.6')
-    this.osm.setAttribute('generator', packageInfo.name + ' ' + packageInfo.version)
+    this.osm.setAttribute('generator', '')
 
-    Object.entries(this.overpass.meta || {}).forEach(([k, v]) => {
-      if (k !== 'bounds') {
-        this.osm.setAttribute(k, v)
-      }
-    })
+    this.updateMeta()
   }
 
   setBounds (bbox) {
@@ -83,6 +80,20 @@ module.exports = class FormatterXml {
   }
 
   finalize () {
+    this.updateMeta()
+
     return xmlSerializer.serializeToString(this.xml)
+  }
+
+  updateMeta () {
+    const meta = this.overpass.meta ?? {}
+
+    Object.entries(meta).forEach(([k, v]) => {
+      if (k !== 'bounds') {
+        this.osm.setAttribute(k, v)
+      }
+    })
+
+    this.osm.setAttribute('generator', (meta.generator ? meta.generator + ' via ' : '') + generator)
   }
 }

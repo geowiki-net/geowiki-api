@@ -1,12 +1,14 @@
 const packageInfo = require('../version.json')
 
+const generator = packageInfo.name + ' ' + packageInfo.version
+
 module.exports = class FormatterGeoJson {
   constructor (overpass) {
     this.overpass = overpass
 
     this.result = {
       type: 'FeatureCollection',
-      generator: packageInfo.name + ' ' + packageInfo.version,
+      generator: '',
       ...this.overpass.meta,
       features: []
     }
@@ -29,7 +31,14 @@ module.exports = class FormatterGeoJson {
   }
 
   finalize () {
-    this.result = { ...this.result, ...this.overpass.meta }
+    const meta = this.overpass.meta ?? {}
+
+    this.result = {
+      ...this.result,
+      ...meta,
+      generator: (meta.generator ? meta.generator + ' via ' : '') + generator
+    }
+
     return this.result
   }
 }

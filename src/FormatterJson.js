@@ -1,12 +1,14 @@
 const packageInfo = require('../version.json')
 
+const generator = packageInfo.name + ' ' + packageInfo.version
+
 module.exports = class FormatterJson {
   constructor (overpass) {
     this.overpass = overpass
 
     this.result = {
       version: '0.6',
-      generator: packageInfo.name + ' ' + packageInfo.version,
+      generator: '',
       ...this.overpass.meta,
       elements: []
     }
@@ -34,7 +36,14 @@ module.exports = class FormatterJson {
   }
 
   finalize () {
-    this.result = { ...this.result, ...this.overpass.meta }
+    const meta = this.overpass.meta ?? {}
+
+    this.result = {
+      ...this.result,
+      ...meta,
+      generator: (meta.generator ? meta.generator + ' via ' : '') + generator
+    }
+
     return this.result
   }
 }

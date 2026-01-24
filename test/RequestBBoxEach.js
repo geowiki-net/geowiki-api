@@ -1,9 +1,9 @@
 var fs = require('fs')
 var conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
-const packageInfo = require('../version')
+const packageInfo = require('../version.json')
 const osmjsonMeta = {
   version: 0.6,
-  generator: conf.generator, //packageInfo.name + ' ' + packageInfo.version
+  generator: conf.generator + ' via ' + packageInfo.name + ' ' + packageInfo.version,
   timestamp_osm_base: '',
   copyright: "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
 

@@ -92,6 +92,19 @@ geowikiAPI.get(
 )
 ```
 
+# SERVER
+How to run Geowiki API as server:
+
+```sh
+node server.js [--db file.osm]
+```
+
+This starts a server on port 8080 which answers requests similar to Overpass API, e.g.:
+
+```sh
+curl -XPOST -d"[out:json];node[place=continent];out;" http://localhost:8080
+```
+
 # DOCUMENTATION
 Find documentation in [doc](https://rawgit.com/geowiki-net/geowiki-api/master/doc/GeowikiAPI.html). You can re-generate the documentation with `npm run doc`.
 

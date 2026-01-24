@@ -17,17 +17,17 @@ const parser = new ArgumentParser({
 })
 
 parser.add_argument('--db', {
-  help: 'Override the default database (e.g. Overpass/Geowiki API URL or OSM file)',
+  help: 'Override the default database (e.g. Overpass/Geowiki API URL or OSM file; default: ' + defaultConfig.db + ').',
   default: defaultConfig.db
 })
 
 parser.add_argument('--port', '-p', {
-  help: 'Port to listen on',
+  help: 'Port to listen on (default: ' + defaultConfig.port + ').',
   default: defaultConfig.port
 })
 
 parser.add_argument('--ip', {
-  help: 'IP to listen on',
+  help: 'IP to listen on (default: all available IPs).',
   default: defaultConfig.ip
 })
 

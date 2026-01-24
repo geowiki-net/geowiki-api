@@ -40,6 +40,12 @@ const server = http.createServer(handleRequest)
 server.listen(config.port, config.ip)
 
 function handleRequest (request, response) {
+  const timeStamp = Date.now()
+  const logMsg = {
+    date: new Date().toISOString(),
+    ip: request.socket.remoteAddress,
+    method: request.method,
+  }
   let body = ''
 
   request.on('data', (data) => {
@@ -56,6 +62,8 @@ function handleRequest (request, response) {
       return handleResult(new Error('no query received'))
     }
 
+    logMsg.query = body
+
     try {
       overpassFrontend.query(body, handleResult)
     } catch (e) {
@@ -63,15 +71,22 @@ function handleRequest (request, response) {
     }
 
     function handleResult (err, result) {
+      logMsg.duration = Date.now() - timeStamp
+
       if (err) {
+        logMsg.status = 400
         response.writeHead(400, {
           'Content-Type': 'text/html; charset=utf-8',
           'Access-Control-Allow-Origin': '*'
         })
-        console.error('Error loading data from API', err)
+
+        logMsg.error = err.message
+
+        log(logMsg)
         return response.end(err.message)
       }
 
+      logMsg.status = 200
       response.writeHead(200, {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
@@ -81,7 +96,12 @@ function handleRequest (request, response) {
         result = JSON.stringify(result, null, '  ')
       }
 
+      log(logMsg)
       response.end(result)
     }
   })
+}
+
+function log (msg) {
+  console.log(JSON.stringify(msg))
 }

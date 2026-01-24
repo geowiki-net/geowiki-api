@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const ArgumentParser = require('argparse').ArgumentParser
 const http = require('http')
+const url = require('url')
 
 const OverpassFrontend = require('.')
 
@@ -46,6 +47,11 @@ function handleRequest (request, response) {
   })
 
   request.on('end', () => {
+    const reqUrl = url.parse(request.url, true)
+    if (!body && reqUrl.query.data) {
+      body = reqUrl.query.data
+    }
+
     try {
       overpassFrontend.query(body, handleResult)
     } catch (e) {

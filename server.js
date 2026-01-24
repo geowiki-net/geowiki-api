@@ -52,6 +52,10 @@ function handleRequest (request, response) {
       body = reqUrl.query.data
     }
 
+    if (!body) {
+      return handleResult(new Error('no query received'))
+    }
+
     try {
       overpassFrontend.query(body, handleResult)
     } catch (e) {

@@ -44,11 +44,8 @@ class OutStatement {
     return result
   }
 
-  /**
-   * Compile all (recursing) parts of a query
-   */
   toQuery (options = {}) {
-    return this.inputSet.toQuery(options) + 'nwr._' + this.inputSet.id + ';'
+    return 'nwr._' + this.inputSet.id + ';'
   }
 
   /**
@@ -132,6 +129,17 @@ class OutStatement {
     })
 
     return result
+  }
+
+  dependents () {
+    return this.inputSet.dependents().concat([ this.inputSet ])
+  }
+
+  /**
+   * Compile all (recursing) parts of a query
+   */
+  fullQuery (options) {
+    return this.dependents().map(s => s.toQuery(options)).join('') + this.toQuery(options)
   }
 }
 

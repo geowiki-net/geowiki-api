@@ -78,7 +78,7 @@ module.exports = class RequestQuery extends Request {
       queryOptions.properties = inputSet.properties
 
       const data = {
-        query: stmt.toQuery(),
+        query: stmt.fullQuery(),
         bounds: new BoundingBox(queryOptions.bbox),
         options: queryOptions,
         featureCallback: (err, ob) => {

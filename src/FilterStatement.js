@@ -37,4 +37,11 @@ module.exports = class FilterStatement {
    */
   conflate () {
   }
+
+  /**
+   * List of all dependents
+   */
+  dependents () {
+    return []
+  }
 }

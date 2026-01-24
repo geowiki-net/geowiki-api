@@ -50,6 +50,43 @@ describe('RequestQuery', function () {
     )
   })
 
+  it ('json: recurse down.', function (done) {
+    const expectedWays = [ 161610245, 171973475, 171973476, 171973482, 171973483, 171973487, 171973488, 86127673 ]
+    overpassFrontend.query('[out:json];relation[building](48.201,16.338,48.202,16.340)->.a;way(r.a:outer);out tags;',
+      (err, result) => {
+        if (err) {
+          assert.fail('Error: ' + err.message)
+        }
+
+        assert.equal(result.elements.length, expectedWays.length)
+        const resultingWays = result.elements.filter(el => el.type === 'way').map(el => el.id).sort()
+        assert.deepEqual(resultingWays, expectedWays)
+
+        done()
+      }
+    )
+  })
+
+  it ('json: recurse down and back.', function (done) {
+    const expectedWays = [ 161610245, 171973475, 171973476, 171973482, 171973483, 171973487, 171973488, 86127673 ]
+    const expectedRels = [ 1282647, 2164434, 2293450, 2293453, 2293457, 2293458, 2293459, 2293461 ]
+
+    overpassFrontend.query('[out:json];relation[building](48.201,16.338,48.202,16.340)->.a;way(r.a:outer);out tags;relation(bw);out ids;',
+      (err, result) => {
+        if (err) {
+          assert.fail('Error: ' + err.message)
+        }
+
+        assert.equal(result.elements.length, expectedWays.length + expectedRels.length)
+        const resultingWays = result.elements.filter(el => el.type === 'way').map(el => el.id).sort()
+        const resultingRels = result.elements.filter(el => el.type === 'relation').map(el => el.id).sort()
+        assert.deepEqual(resultingWays, expectedWays)
+        assert.deepEqual(resultingRels, expectedRels)
+        done()
+      }
+    )
+  })
+
   it ('xml: out count', function (done) {
     overpassFrontend.query('[out:xml];nwr[amenity=place_of_worship];out ids;out count;',
       (err, result) => {

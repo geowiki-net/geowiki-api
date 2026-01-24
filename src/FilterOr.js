@@ -234,6 +234,10 @@ class FilterOr extends FilterStatement {
     // try to conflate again
     this.conflate()
   }
+
+  dependents () {
+    return this.parts.map(i => i.dependents().concat([i])).flat()
+  }
 }
 
 filterPart.register('or', FilterOr)

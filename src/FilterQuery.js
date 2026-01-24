@@ -828,6 +828,27 @@ class FilterQuery extends FilterStatement {
     // try to conflate again
     this.conflate()
   }
+
+  dependents () {
+    if (!this.inputSets) {
+      return []
+    }
+
+    const result = []
+    Object.values(this.inputSets).forEach(i => {
+      i.set.dependents().forEach(d => {
+        if (!result.includes(d)) {
+          result.push(d)
+        }
+      })
+
+      if (!result.includes(i.set)) {
+        result.push(i.set)
+      }
+    })
+
+    return result
+  }
 }
 
 filterPart.register('default', FilterQuery)

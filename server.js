@@ -77,7 +77,6 @@ function handleRequest (request, response) {
         'Access-Control-Allow-Origin': '*'
       })
 
-      console.log(typeof result)
       if (typeof result !== 'string') {
         result = JSON.stringify(result, null, '  ')
       }

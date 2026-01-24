@@ -21,9 +21,6 @@ class RequestBBox extends Request {
     super(overpass, data)
     this.type = 'BBoxQuery'
 
-    if (typeof this.options.properties === 'undefined') {
-      this.options.properties = defines.DEFAULT
-    }
     this.options.minEffort = this.options.minEffort || 256
 
     // make sure the request ends with ';'
@@ -46,6 +43,7 @@ class RequestBBox extends Request {
 
       if (!boundsIsFullWorld(this.bounds)) {
         let boundsFilter
+        this.output.setBounds(this.bounds)
         if (this.bounds instanceof BoundingBox) {
           if (!this.bbox) {
             boundsFilter = '(' + this.bounds.toLatLonString() + ')'
@@ -290,7 +288,7 @@ class RequestBBox extends Request {
   }
 
   /**
-   * receive an object from OverpassFronted -> enter to cache, return to caller
+   * receive an object from OverpassFrontend -> enter to cache, return to caller
    * @param {OverpassObject} ob - Object which has been received
    * @param {Request#SubRequest} subRequest - sub request which is being handled right now
    * @param {int} partIndex - Which part of the subRequest is being received

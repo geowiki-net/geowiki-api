@@ -249,6 +249,7 @@ class OverpassFrontend {
    * @param {string|string[]} ids - Id or array of Ids of OSM map features, e.g. [ 'n123', 'w2345', 'n123' ]. Illegal IDs will not produce an error but generate a 'null' object.
    * @param {object} options Various options, see below
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
+   * @param {function} [options.each] - A function which will be called for each found object, formatted as specified with 'out'.
    * @param {string|boolean} [options.sort=false] - When set to true or "index", the function featureCallback will be called in order of the "ids" array. When set to false or null, the featureCallback will be called as soon as the object is loaded (e.g. immediately, if it is cached). When set to "BBoxDiagonalLength", the objects are ordered by the length of the diagonal of the bounding box.
    * @param {"asc"|"desc"} [options.sortDir="asc"] Sort direction.
    * @param {BoundingBox|GeoJSON} [options.bounds] - Only return items which intersect these bounds. Boundaries is a BoundingBox, or a Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
@@ -256,11 +257,16 @@ class OverpassFrontend {
    * @param {function} [options.memberCallback] For every member, call this callback function. (Requires options.members=true)
    * @param {bit_array} [options.memberProperties] Which properties should be loaded for the members. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX
    * @param {BoundingBox|GeoJSON} [options.memberBounds] - Only return members which intersect these bounds. Boundaries is a BoundingBox, or a Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
-   * @param {function} featureCallback Will be called for each object which is passed in parameter 'ids'. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null, 3. index of the item in parameter ids.
+   * @param {function} [featureCallback] Will be called for each object which is passed in parameter 'ids'. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null, 3. index of the item in parameter ids.
    * @param {function} finalCallback Will be called after the last feature. Will be passed: 1. err (if an error occured, otherwise null).
    * @return {RequestGet}
    */
   get (ids, options, featureCallback, finalCallback) {
+    if (!finalCallback) {
+      finalCallback = featureCallback
+      featureCallback = null
+    }
+
     const request = new RequestGet(this, {
       ids: ids,
       options: options,
@@ -601,6 +607,7 @@ class OverpassFrontend {
    * @param {BoundingBox|GeoJSON} bounds - Boundaries where to load objects, can be a BoundingBox object, Leaflet Bounds object (e.g. from map.getBounds()) or a GeoJSON Polygon/Multipolygon.
    * @param {object} options
    * @param {number} [options.limit=0] - Limit count of results. If 0, no limit will be used.
+   * @param {function} [options.each] - A function which will be called for each found object, formatted as specified with 'out'.
    * @param {number} [options.priority=0] - Priority for loading these objects. The lower the sooner they will be requested.
    * @param {boolean|string} [options.sort=false] - If false, it will be called as soon as the features are availabe (e.g. immediately when cached).
    * @param {bit_array} [options.properties] Which properties of the features should be downloaded: OVERPASS_ID_ONLY, OVERPASS_BBOX, OVERPASS_TAGS, OVERPASS_GEOM, OVERPASS_META. Combine by binary OR: ``OVERPASS_ID | OVERPASS_BBOX``. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX
@@ -613,11 +620,16 @@ class OverpassFrontend {
    * @param {number} [options.memberSplit=0] If more than 'memberSplit' member elements would be returned, split into smaller requests (see 'split'). 0 = do not split.
    * @param {string|Filter} [options.filter] Additional filter.
    * @param {boolean} [options.noCacheQuery=false] If true, the local cache will not be queried
-   * @param {function} featureCallback Will be called for each matching object. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null.
+   * @param {function} [featureCallback] Will be called for each matching object. Will be passed: 1. err (if an error occured, otherwise null), 2. the object or null.
    * @param {function} finalCallback Will be called after the last feature. Will be passed: 1. err (if an error occured, otherwise null).
    * @return {RequestBBox}
    */
   BBoxQuery (query, bounds, options, featureCallback, finalCallback) {
+    if (!finalCallback) {
+      finalCallback = featureCallback
+      featureCallback = null
+    }
+
     let request
     const bbox = new BoundingBox(bounds)
 
@@ -996,6 +1008,18 @@ class OverpassFrontend {
       callback(null, this.meta)
     })
   }
+
+  getOutputFormatter (format) {
+    if (!format) {
+      format = 'json'
+    }
+
+    if (format in OverpassFrontend.outputFormats) {
+      return new OverpassFrontend.outputFormats[format](this)
+    }
+
+    throw new Error('Formatter "' + format + '" unknown')
+  }
 }
 
 OverpassFrontend.fileFormats = [
@@ -1006,6 +1030,15 @@ OverpassFrontend.fileFormats = [
 
 OverpassFrontend.registerFileFormat = (format) => {
   OverpassFrontend.fileFormats.push(format)
+}
+
+OverpassFrontend.outputFormats = {
+  json: require('./FormatterJson'),
+  xml: require('./FormatterXml'),
+}
+
+OverpassFrontend.registerOutputFormat = (format, formatter) => {
+  OverpassFrontend.outputFormats[format] = formatter
 }
 
 for (const k in defines) {

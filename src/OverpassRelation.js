@@ -490,7 +490,7 @@ class OverpassRelation extends OverpassObject {
       result.center = this.bounds.getCenter()
     }
 
-    if ((!options.ids && !options.tags) || options.body || options.skel) {
+    if (this.members && ((!options.ids && !options.tags) || options.body || options.skel)) {
       result.members = this.members.map(member => {
         return {
           ref: member.ref,
@@ -543,7 +543,7 @@ class OverpassRelation extends OverpassObject {
       result.appendChild(node)
     }
 
-    if ((!options.ids && !options.tags) || options.body || options.skel) {
+    if (this.members && ((!options.ids && !options.tags) || options.body || options.skel)) {
       this.members.forEach((member, i) => {
         const blank = document.createTextNode('\n  ')
         result.appendChild(blank)

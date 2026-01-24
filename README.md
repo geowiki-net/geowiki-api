@@ -17,6 +17,31 @@ npm run demo
 Browse to http://localhost:8000/demo/
 
 # EXAMPLES
+## Geowiki Query
+This interface is similar to the Overpass API interface.
+You can execute this example as: `node example-query.js`
+
+```js
+const GeowikiAPI = require('geowiki-api')
+
+// you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
+
+// request restaurants in the specified bounding box
+geowikiAPI.query(
+  '[out:json][bbox:48.19,16.33,48.20,16.34];nwr[amenity=restaurant];out;',
+  {
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+  },
+  function (err, result) {
+    if (err) { console.log(err) }
+    // console.log(result) // the final result (almost) as expected by Overpass API
+  }
+)
+```
+
+The advantage of using 'each' in comparison to 'result' of the final callback is, that 'each' is called immediately resp. progressively as soon as it is found (e.g. from cache or when requests are split in sub-requests).
+
 ## BBOX Query
 You can execute this example as: `node example-bbox.js`
 
@@ -31,14 +56,14 @@ geowikiAPI.BBoxQuery(
   'nwr[amenity=restaurant]',
   { minlat: 48.19, maxlat: 48.20, minlon: 16.33, maxlon: 16.34 },
   {
-    properties: GeowikiAPI.ALL
+    out: 'json',
+    outOptions: 'geom meta',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+    }
   },
   function (err, result) {
-    console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    // console.log(result.GeoJSON()) // convert to GeoJSON
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```
@@ -52,22 +77,17 @@ const GeowikiAPI = require('geowiki-api')
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
 
-// request restaurants in the specified bounding box
+// request some popular items by ID
 geowikiAPI.get(
   ['n27365030', 'w5013364'],
   {
-    // only return tags of the items. See below under "'Properties' option" for an explanation. If impatient, use ALL.
-    properties: GeowikiAPI.TAGS
+    out: 'json',
+    outOptions: 'tags',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
   },
   function (err, result) {
-    if (result) {
-      console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    } else {
-      console.log('* empty result')
-    }
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```

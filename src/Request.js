@@ -1,5 +1,7 @@
 const ee = require('event-emitter')
+const defines = require('./defines')
 const SortedCallbacks = require('./SortedCallbacks')
+const OutOptions = require('./OutOptions')
 
 /**
  * A compiled query
@@ -38,6 +40,19 @@ class Request {
     this.count = 0
     this.callCount = 0
     this.timestampPreprocess = 0
+
+    if (typeof this.options.properties === 'undefined') {
+      this.options.properties = this.options.outOptions ? defines.ID_ONLY : defines.DEFAULT
+    }
+
+    this.output = this.overpass.getOutputFormatter(this.options.out)
+    if (this.options.outOptions) {
+      const outOptions = new OutOptions(this.options.outOptions)
+      this.outOptions = outOptions.outOptions()
+      this.options.properties |= outOptions.properties()
+    } else {
+      this.outOptions = { body: true }
+    }
   }
 
   /**
@@ -65,6 +80,8 @@ class Request {
    * @param {Error|null} err - null if no error occured
    */
   finish (err) {
+    this.result = this.output.finalize()
+
     if (!this.aborted) {
       this.finalCallback(err, this.result)
     }
@@ -125,6 +142,11 @@ class Request {
    */
   receiveObject (ob, subRequest, partIndex) {
     this.count++
+    this.output.pushFeature(ob, this.outOptions)
+
+    if (this.options.each) {
+      this.options.each(this.output.formatFeature(ob, this.outOptions))
+    }
   }
 
   /**

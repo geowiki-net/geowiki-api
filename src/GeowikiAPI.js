@@ -1035,6 +1035,7 @@ OverpassFrontend.registerFileFormat = (format) => {
 OverpassFrontend.outputFormats = {
   json: require('./FormatterJson'),
   xml: require('./FormatterXml'),
+  object: require('./FormatterObject'),
 }
 
 OverpassFrontend.registerOutputFormat = (format, formatter) => {

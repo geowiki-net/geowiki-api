@@ -65,7 +65,7 @@ class OutStatement {
   }
 
   dependents () {
-    return this.inputSet.dependents().concat([ this.inputSet ])
+    return this.inputSet.dependents().concat([this.inputSet])
   }
 
   /**

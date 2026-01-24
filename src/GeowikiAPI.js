@@ -1036,7 +1036,7 @@ OverpassFrontend.outputFormats = {
   json: require('./FormatterJson'),
   xml: require('./FormatterXml'),
   object: require('./FormatterObject'),
-  geojson: require('./FormatterGeoJson'),
+  geojson: require('./FormatterGeoJson')
 }
 
 OverpassFrontend.registerOutputFormat = (format, formatter) => {

@@ -43,7 +43,7 @@ function handleRequest (request, response) {
   const logMsg = {
     date: new Date().toISOString(),
     ip: request.socket.remoteAddress,
-    method: request.method,
+    method: request.method
   }
   let body = ''
 

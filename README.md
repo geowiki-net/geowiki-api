@@ -228,6 +228,7 @@ The following output formats are defined:
 
 * json: output will use the OSM JSON format (using the API, the output will not be stringified)
 * xml: output will use the OSM XML format (stringified)
+* geojson: format result directly as GeoJSON (see [example-geojson.js](./example-geojson.js) how to use this)
 * object: elements are instances of the [OverpassObject](./doc/OverpassObject.html) class resp. its derivatives.
 
 Using `GeowikiAPI.registerOutputFormat()` you can add additional output formats.

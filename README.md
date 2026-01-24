@@ -223,6 +223,14 @@ The following properties are defined:
 | ALL      | All of the above. |
 | DEFAULT  | ID_ONLY, TAGS, MEMBERS and BBOX. |
 
+## Output Formats
+The following output formats are defined:
+
+* json: output will use the OSM JSON format (using the API, the output will not be stringified)
+* xml: output will use the OSM XML format (stringified)
+
+Using `GeowikiAPI.registerOutputFormat()` you can add additional output formats.
+
 # DEVELOPMENT
 
 To run unit tests, you need to have a local Overpass API server installed.

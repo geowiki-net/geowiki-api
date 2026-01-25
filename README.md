@@ -1,9 +1,11 @@
 # Geowiki API
 A JavaScript (NodeJS/Browser) library to easily access data from OpenStreetMap via Overpass API or from an OSM File. The objects can directly be used with LeafletJS or exported to GeoJSON. Data will be cached in the browser memory (persistent caching in LocalStorage or so may be added in the future).
 
+GeowikiAPI was called OverpassFrontend (overpass-frontend) until 2026. You will still find this name in the source code.
+
 # INSTALLATION
 ```sh
-npm install --save geowiki-api
+npm install --save @geowiki-net/geowiki-api
 ```
 
 ## Demo
@@ -22,7 +24,7 @@ This interface is similar to the Overpass API interface.
 You can execute this example as: `node example-query.js`
 
 ```js
-const GeowikiAPI = require('geowiki-api')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
@@ -46,7 +48,7 @@ The advantage of using 'each' in comparison to 'result' of the final callback is
 You can execute this example as: `node example-bbox.js`
 
 ```js
-const GeowikiAPI = require('geowiki-api')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
@@ -72,7 +74,7 @@ geowikiAPI.BBoxQuery(
 You can execute this example as: `node example-by-id.js`
 
 ```js
-const GeowikiAPI = require('geowiki-api')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
@@ -304,7 +306,7 @@ npm run lint
 Currently, the following file formats are supported: OSMXML, OSMJSON and GeoJSON. To add support to an additional file format, do this:
 
 ```
-import GeowikiAPI from 'geowiki-api'
+import GeowikiAPI from '@geowiki-net/geowiki-api'
 GeowikiAPI.registerFileFormat({
   // unique id
   id: 'myFileFormat',

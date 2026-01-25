@@ -1,5 +1,5 @@
 const fs = require('fs')
-const GeowikiAPI = require('geowiki-api')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
 const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')

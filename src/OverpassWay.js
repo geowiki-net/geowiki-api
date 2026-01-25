@@ -137,7 +137,7 @@ class OverpassWay extends OverpassObject {
     return this.memberIds()
   }
 
-  GeoJSON (options = {meta: true, geom: true}) {
+  GeoJSON (options = { meta: true, geom: true }) {
     const result = super.GeoJSON(options)
 
     if (options.bb && this.bounds) {

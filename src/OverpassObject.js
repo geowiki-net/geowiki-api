@@ -169,35 +169,45 @@ class OverpassObject {
    * GeoJSON representation of this object
    * @return {object}
    */
-  GeoJSON () {
-    return {
+  GeoJSON (options = {meta: true, geom: true}) {
+    const result = {
       type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      geometry: null,
-      properties: this.GeoJSONProperties()
+      geometry: null
     }
+
+    if (!options.noids) {
+      result.id = this.type + '/' + this.osm_id
+    }
+
+    result.properties = this.GeoJSONProperties(options)
+
+    return result
   }
 
-  GeoJSONProperties () {
+  GeoJSONProperties (options) {
     const ret = {}
     let k
 
-    ret['@id'] = this.type + '/' + this.osm_id
+    if (!options.noids) {
+      ret['@id'] = this.type + '/' + this.osm_id
+    }
 
-    if (this.tags) {
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags) {
       for (k in this.tags) {
         ret[k] = this.tags[k]
       }
     }
 
-    if (this.meta) {
+    if (options.meta && this.meta) {
       for (k in this.meta) {
         ret['@' + k] = this.meta[k]
       }
     }
 
-    for (k in this.dbMeta) {
-      ret['@meta:' + k] = this.dbMeta[k]
+    if (options.meta) {
+      for (k in this.dbMeta) {
+        ret['@meta:' + k] = this.dbMeta[k]
+      }
     }
 
     return ret
@@ -220,7 +230,7 @@ class OverpassObject {
           return callback(err)
         }
 
-        callback(null, this.GeoJSON(options))
+        callback(null, this.GeoJSON())
       }
     )
   }

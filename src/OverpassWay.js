@@ -137,14 +137,24 @@ class OverpassWay extends OverpassObject {
     return this.memberIds()
   }
 
-  GeoJSON () {
-    const result = {
-      type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      properties: this.GeoJSONProperties()
+  GeoJSON (options = {meta: true, geom: true}) {
+    const result = super.GeoJSON(options)
+
+    if (options.bb && this.bounds) {
+      result.bbox = [ this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat ]
     }
 
-    if (this.geometry) {
+    if (options.center && this.bounds) {
+      result.geometry = {
+        type: 'Point',
+        coordinates: [
+          parseFloat(this.center.lon.toFixed(7)),
+          parseFloat(this.center.lat.toFixed(7))
+        ]
+      }
+    }
+
+    if (options.geom && this.geometry) {
       const coordinates = this.geometry
         .filter(point => point) // discard non-loaded points
         .map(point => [point.lon, point.lat])

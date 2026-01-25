@@ -9,14 +9,12 @@ module.exports = class FormatterGeoJson {
     this.result = {
       type: 'FeatureCollection',
       generator: '',
-      ...this.overpass.meta,
       features: []
     }
-    delete this.result.bounds
   }
 
   setBounds (bounds) {
-    this.result.bounds = { ...bounds }
+    this.result.bbox = [ bounds.minlon, bounds.minlat, bounds.maxlon, bounds.maxlat ]
   }
 
   pushFeature (ob, outOptions) {
@@ -31,15 +29,15 @@ module.exports = class FormatterGeoJson {
   }
 
   finalize () {
-    const meta = this.overpass.meta ?? {}
+    const meta = { ...this.overpass.meta ?? {} }
+    delete meta.bounds
+    delete meta.version
 
     this.result = {
       ...this.result,
       ...meta,
       generator: (meta.generator ? meta.generator + ' via ' : '') + generator
     }
-
-    delete this.result.version
 
     return this.result
   }

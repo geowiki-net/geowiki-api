@@ -336,14 +336,24 @@ class OverpassRelation extends OverpassObject {
     return feature
   }
 
-  GeoJSON () {
-    const ret = {
-      type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      properties: this.GeoJSONProperties()
+  GeoJSON (options = {meta: true, geom: true}) {
+    const ret = super.GeoJSON(options)
+
+    if (options.bb && this.bounds) {
+      result.bbox = [ this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat ]
     }
 
-    if (this.members) {
+    if (options.center && this.bounds) {
+      result.geometry = {
+        type: 'Point',
+        coordinates: [
+          parseFloat(this.center.lon.toFixed(7)),
+          parseFloat(this.center.lat.toFixed(7))
+        ]
+      }
+    }
+
+    if (options.geom && this.members) {
       if (this.geometry.features.length === 1) {
         ret.geometry = this.geometry.features[0].geometry
       } else {
@@ -355,6 +365,8 @@ class OverpassRelation extends OverpassObject {
             .filter(member => member.type !== 'GeometryCollection' || member.geometries.length)
         }
       }
+    } else if (options.geom && this.geometry) {
+      // TODO
     }
 
     return ret

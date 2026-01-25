@@ -14,7 +14,7 @@ module.exports = class FormatterGeoJson {
   }
 
   setBounds (bounds) {
-    this.result.bbox = [ bounds.minlon, bounds.minlat, bounds.maxlon, bounds.maxlat ]
+    this.result.bbox = [bounds.minlon, bounds.minlat, bounds.maxlon, bounds.maxlat]
   }
 
   pushFeature (ob, outOptions) {

@@ -336,15 +336,15 @@ class OverpassRelation extends OverpassObject {
     return feature
   }
 
-  GeoJSON (options = {meta: true, geom: true}) {
+  GeoJSON (options = { meta: true, geom: true }) {
     const ret = super.GeoJSON(options)
 
     if (options.bb && this.bounds) {
-      result.bbox = [ this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat ]
+      ret.bbox = [this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat]
     }
 
     if (options.center && this.bounds) {
-      result.geometry = {
+      ret.geometry = {
         type: 'Point',
         coordinates: [
           parseFloat(this.center.lon.toFixed(7)),

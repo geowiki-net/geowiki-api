@@ -141,7 +141,7 @@ class OverpassWay extends OverpassObject {
     const result = super.GeoJSON(options)
 
     if (options.bb && this.bounds) {
-      result.bbox = [ this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat ]
+      result.bbox = [this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat]
     }
 
     if (options.center && this.bounds) {

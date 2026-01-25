@@ -24,7 +24,7 @@ const turf = require('./turf')
  * @property {Point} center Centroid of the bounding box.
  */
 class OverpassNode extends OverpassObject {
-  GeoJSON (options = {meta: true, geom: true}) {
+  GeoJSON (options = { meta: true, geom: true }) {
     const result = super.GeoJSON(options)
 
     if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {

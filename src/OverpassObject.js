@@ -169,7 +169,7 @@ class OverpassObject {
    * GeoJSON representation of this object
    * @return {object}
    */
-  GeoJSON (options = {meta: true, geom: true}) {
+  GeoJSON (options = { meta: true, geom: true }) {
     const result = {
       type: 'Feature',
       geometry: null

@@ -173,6 +173,12 @@ class OverpassWay extends OverpassObject {
       }
     }
 
+    if (this.members && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      result.properties['@members'] = this.nodes.map(m => {
+        return { type: 'node', ref: m }
+      })
+    }
+
     return result
   }
 

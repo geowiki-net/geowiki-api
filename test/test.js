@@ -366,7 +366,13 @@ describe('Overpass get', function() {
 	      "@timestamp": "2013-10-27T20:43:03Z",
 	      "@uid": 1066249,
 	      "@user": "Railjet",
-	      "@version": 5
+	      "@version": 5,
+              "@members": [
+                { "ref": 1521823452, "type": "node" },
+                { "ref": 31256801, "type": "node" },
+                { "ref": 83237251, "type": "node" },
+                { "ref": 123863902, "type": "node" }
+              ]
 	    }
 	  },
           geojson);
@@ -447,7 +453,12 @@ describe('Overpass get', function() {
 	      "@version": 2,
 	      "note": "applies only to cyclists against oneway",
 	      "restriction:bicycle": "no_right_turn",
-	      "type": "restriction"
+	      "type": "restriction",
+              "@members": [
+                { "ref": 9248262, "role": "from", "type": "way" },
+                { "ref": 69256257, "role": "via", "type": "node" },
+                { "ref": 120521531, "role": "to", "type": "way" }
+              ]
 	    }
 	  },
           geojson);

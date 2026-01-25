@@ -106,7 +106,14 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
               "maxlon": 16.3384938,
               "minlat": 48.1266093,
               "minlon": 16.3358277
-            }
+            },
+            "@members": [
+              { "ref": 871028478, "type": "node" },
+              { "ref": 5749476858, "type": "node" },
+              { "ref": 5749476859, "type": "node" },
+              { "ref": 871028491, "type": "node" }
+            ]
+
           },
           "geometry": {
             "type": "LineString",
@@ -248,7 +255,22 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
               "maxlon": 16.3384938,
               "minlat": 48.1266093,
               "minlon": 16.3358277
-            }
+            },
+            "@members": [
+              { "type": "way", "ref": 771273977, "role": "outer" },
+              { "type": "way", "ref": 771273963, "role": "inner" },
+              { "type": "way", "ref": 771273957, "role": "inner" },
+              { "type": "way", "ref": 771273965, "role": "inner" },
+              { "type": "way", "ref": 771273967, "role": "inner" },
+              { "type": "way", "ref": 771273966, "role": "inner" },
+              { "type": "way", "ref": 771273968, "role": "inner" },
+              { "type": "way", "ref": 771273962, "role": "inner" },
+              { "type": "way", "ref": 771273961, "role": "inner" },
+              { "type": "way", "ref": 771273960, "role": "inner" },
+              { "type": "way", "ref": 771273959, "role": "inner" },
+              { "type": "way", "ref": 771273958, "role": "inner" },
+              { "type": "way", "ref": 826600085, "role": "inner" }
+            ]
           },
           "geometry": {
             "type": "Polygon",

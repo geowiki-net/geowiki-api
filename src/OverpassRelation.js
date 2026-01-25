@@ -369,6 +369,12 @@ class OverpassRelation extends OverpassObject {
       // TODO
     }
 
+    if (this.members && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      ret.properties['@members'] = this.members.map(m => {
+        return { type: m.type, ref: m.ref, role: m.role }
+      })
+    }
+
     return ret
   }
 

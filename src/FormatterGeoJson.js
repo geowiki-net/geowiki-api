@@ -39,6 +39,8 @@ module.exports = class FormatterGeoJson {
       generator: (meta.generator ? meta.generator + ' via ' : '') + generator
     }
 
+    delete this.result.version
+
     return this.result
   }
 }

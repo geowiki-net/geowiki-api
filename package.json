@@ -1,7 +1,7 @@
 {
   "name": "@geowiki-net/geowiki-api",
   "description": "A JavaScript (NodeJS/Browser) library to easily access data from OpenStreetMap via Overpass API or from an OSM File. The objects can directly be used with LeafletJS or exported to GeoJSON. Data will be cached in the browser memory.",
-  "version": "3.3.2",
+  "version": "4.0.0-beta.0",
   "main": "src/GeowikiAPI.js",
   "directories": {
     "test": "test"
@@ -85,13 +85,12 @@
     "watch-test": "watchify -t brfs --debug test/*.js -o dist/test.js -v",
     "prepublish": "npm run lint && npm run build && npm run doc",
     "preversion": "npm run lint && npm run test",
-    "version": "rm -r doc/ && npm run doc && npm run build && npm run build-test && git add -A doc/ dist/",
+    "version": "node update-version.js ; npm run doc",
     "prepare": "require-self",
     "lint": "eslint --fix src/*.js src/qlFunctions/*.js src/evaluator/* index.js server.js",
     "demo": "http-server ./ -p 8000",
     "start": "node server.js",
-    "doc": "jsdoc -d doc/ src/*.js",
-    "version": "node update-version.js ; npm run doc"
+    "doc": "jsdoc -d doc/ src/*.js"
   },
   "repository": {
     "type": "git",

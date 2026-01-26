@@ -758,6 +758,33 @@
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>meta</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Database meta information (copyright, attribution, license)</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -793,7 +820,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line95">line 95</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line97">line 97</a>
     </li></ul></dd>
     
 
@@ -849,7 +876,7 @@
     
 
     
-    <h4 class="name" id="BBoxQuery"><span class="type-signature"></span>BBoxQuery<span class="signature">(query, bounds, options, featureCallback, finalCallback)</span><span class="type-signature"> &rarr; {<a href="RequestBBox.html">RequestBBox</a>}</span></h4>
+    <h4 class="name" id="BBoxQuery"><span class="type-signature"></span>BBoxQuery<span class="signature">(query, bounds, options, featureCallback<span class="signature-attributes">opt</span>, finalCallback)</span><span class="type-signature"> &rarr; {<a href="RequestBBox.html">RequestBBox</a>}</span></h4>
     
 
     
@@ -877,6 +904,8 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -901,6 +930,14 @@
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -928,6 +965,14 @@
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
@@ -950,6 +995,14 @@
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -1017,6 +1070,43 @@
             
 
             <td class="description last">Limit count of results. If 0, no limit will be used.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>each</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">A function which will be called for each found object, formatted as specified with 'out'.</td>
         </tr>
 
     
@@ -1135,6 +1225,43 @@
             
 
             <td class="description last">Which properties of the features should be downloaded: OVERPASS_ID_ONLY, OVERPASS_BBOX, OVERPASS_TAGS, OVERPASS_GEOM, OVERPASS_META. Combine by binary OR: ``OVERPASS_ID | OVERPASS_BBOX``. Default: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.BBOX</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>boundsRecurseSelector</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">should the 'bounds' parameter be applied to the "input" (default) set or the "result" set? This is important for recurse statements: if you have a query like "relation;node(r);", the relation would be the input set, the node part would be the result set.</td>
         </tr>
 
     
@@ -1471,6 +1598,16 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
@@ -1493,6 +1630,14 @@
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -1538,7 +1683,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line606">line 606</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line627">line 627</a>
     </li></ul></dd>
     
 
@@ -1644,7 +1789,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line139">line 139</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line141">line 141</a>
     </li></ul></dd>
     
 
@@ -1680,7 +1825,7 @@
     
 
     
-    <h4 class="name" id="get"><span class="type-signature"></span>get<span class="signature">(ids, options, featureCallback, finalCallback)</span><span class="type-signature"> &rarr; {<a href="RequestGet.html">RequestGet</a>}</span></h4>
+    <h4 class="name" id="get"><span class="type-signature"></span>get<span class="signature">(ids, options, featureCallback<span class="signature-attributes">opt</span>, finalCallback)</span><span class="type-signature"> &rarr; {<a href="RequestGet.html">RequestGet</a>}</span></h4>
     
 
     
@@ -1707,6 +1852,8 @@
 
         <th>Type</th>
 
+        
+        <th>Attributes</th>
         
 
         
@@ -1736,6 +1883,14 @@
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
@@ -1758,6 +1913,14 @@
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -1825,6 +1988,43 @@
             
 
             <td class="description last">Priority for loading these objects. The lower the sooner they will be requested.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>each</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">A function which will be called for each found object, formatted as specified with 'out'.</td>
         </tr>
 
     
@@ -2128,6 +2328,16 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
@@ -2150,6 +2360,14 @@
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -2195,7 +2413,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line249">line 249</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line264">line 264</a>
     </li></ul></dd>
     
 
@@ -2434,7 +2652,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line271">line 271</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line291">line 291</a>
     </li></ul></dd>
     
 
@@ -2550,7 +2768,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line823">line 823</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line1002">line 1002</a>
     </li></ul></dd>
     
 
@@ -2575,6 +2793,646 @@
 
 
 
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="query"><span class="type-signature"></span>query<span class="signature">(query, options<span class="signature-attributes">opt</span>, callback)</span><span class="type-signature"> &rarr; {RequestQuery}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Query the Overpass API with Overpass QL
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>query</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Query in Overpass QL syntax including 'out' statements.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Various options, see below
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>featureCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Will be called for each found element, disregarding the order in the final result (features already in the cache, will be returned almost immediately). This will be objects of type 'OverpassObject' (and derivatives).</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Will be called when all sub-requests are completed with (err, result). Format of the result will vary, depending on the format specifier. The default will be a JS Object, alternative: XML, JSON.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line244">line 244</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">RequestQuery</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="queryLokiDB"><span class="type-signature"></span>queryLokiDB<span class="signature">(filter, options<span class="signature-attributes">opt</span>, db<span class="signature-attributes">opt</span>, result<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Array.&lt;<a href="OverpassObject.html">OverpassObject</a>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Query the LokiDB for matching items. If the filter has operations that
+LokiDB does not support, the filter will be tested against matching items.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>filter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Filter.html">Filter</a></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">The filter to test agains</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    {}
+                
+                </td>
+            
+
+            <td class="description last">Additional options
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>properties</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Items need at least these properties.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>db</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">LokiDB</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Optional database (e.g. an already filtered chain)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>result</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">cache of already checked results</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line860">line 860</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    list of items. If undecided items were found, a property 'undecidedItems' is set with a list of these items (if undecidedItems is an empty list, there were undecided items in the recursion).
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;<a href="OverpassObject.html">OverpassObject</a>></span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2832,7 +3690,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line297">line 297</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line317">line 317</a>
     </li></ul></dd>
     
 
@@ -3059,7 +3917,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line48">line 48</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line49">line 49</a>
     </li></ul></dd>
     
 
@@ -3231,7 +4089,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line27">line 27</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line28">line 28</a>
     </li></ul></dd>
     
 
@@ -3313,7 +4171,7 @@
 
         <tr>
             
-                <td class="name"><code>osm3sMeta</code></td>
+                <td class="name"><code>dbMeta</code></td>
             
 
             <td class="type">
@@ -3596,7 +4454,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line57">line 57</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line58">line 58</a>
     </li></ul></dd>
     
 
@@ -3756,7 +4614,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line41">line 41</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line42">line 42</a>
     </li></ul></dd>
     
 
@@ -3916,7 +4774,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line34">line 34</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line35">line 35</a>
     </li></ul></dd>
     
 
@@ -4059,7 +4917,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="OverpassFrontend.js.html">OverpassFrontend.js</a>, <a href="OverpassFrontend.js.html#line69">line 69</a>
+        <a href="GeowikiAPI.js.html">GeowikiAPI.js</a>, <a href="GeowikiAPI.js.html#line70">line 70</a>
     </li></ul></dd>
     
 
@@ -4101,13 +4959,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Filter.html">Filter</a></li><li><a href="OverpassFrontend.html">OverpassFrontend</a></li><li><a href="OverpassNode.html">OverpassNode</a></li><li><a href="OverpassObject.html">OverpassObject</a></li><li><a href="OverpassRelation.html">OverpassRelation</a></li><li><a href="OverpassWay.html">OverpassWay</a></li><li><a href="Request.html">Request</a></li><li><a href="RequestBBox.html">RequestBBox</a></li><li><a href="RequestGet.html">RequestGet</a></li><li><a href="RequestMulti.html">RequestMulti</a></li></ul><h3>Events</h3><ul><li><a href="OverpassFrontend.html#event:error">error</a></li><li><a href="OverpassFrontend.html#event:load">load</a></li><li><a href="OverpassFrontend.html#event:reject">reject</a></li><li><a href="OverpassFrontend.html#event:start">start</a></li><li><a href="OverpassFrontend.html#event:update">update</a></li><li><a href="Request.html#event:abort">abort</a></li><li><a href="Request.html#event:finish">finish</a></li><li><a href="Request.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="Request.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestBBox.html#event:abort">abort</a></li><li><a href="RequestBBox.html#event:finish">finish</a></li><li><a href="RequestBBox.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestBBox.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestGet.html#event:abort">abort</a></li><li><a href="RequestGet.html#event:finish">finish</a></li><li><a href="RequestGet.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestGet.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestMulti.html#event:abort">abort</a></li><li><a href="RequestMulti.html#event:finish">finish</a></li><li><a href="RequestMulti.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestMulti.html#event:subrequest-finished">subrequest-finished</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Filter.html">Filter</a></li><li><a href="OverpassFrontend.html">OverpassFrontend</a></li><li><a href="OverpassNode.html">OverpassNode</a></li><li><a href="OverpassObject.html">OverpassObject</a></li><li><a href="OverpassRelation.html">OverpassRelation</a></li><li><a href="OverpassWay.html">OverpassWay</a></li><li><a href="Request.html">Request</a></li><li><a href="RequestBBox.html">RequestBBox</a></li><li><a href="RequestGet.html">RequestGet</a></li><li><a href="RequestMulti.html">RequestMulti</a></li><li><a href="module.exports.html">exports</a></li><li><a href="module.exports_module.exports.html">exports</a></li></ul><h3>Events</h3><ul><li><a href="OverpassFrontend.html#event:error">error</a></li><li><a href="OverpassFrontend.html#event:load">load</a></li><li><a href="OverpassFrontend.html#event:reject">reject</a></li><li><a href="OverpassFrontend.html#event:start">start</a></li><li><a href="OverpassFrontend.html#event:update">update</a></li><li><a href="Request.html#event:abort">abort</a></li><li><a href="Request.html#event:finish">finish</a></li><li><a href="Request.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="Request.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestBBox.html#event:abort">abort</a></li><li><a href="RequestBBox.html#event:finish">finish</a></li><li><a href="RequestBBox.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestBBox.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestGet.html#event:abort">abort</a></li><li><a href="RequestGet.html#event:finish">finish</a></li><li><a href="RequestGet.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestGet.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestMulti.html#event:abort">abort</a></li><li><a href="RequestMulti.html#event:finish">finish</a></li><li><a href="RequestMulti.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestMulti.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="module.exports.html#event:abort">abort</a></li><li><a href="module.exports.html#event:finish">finish</a></li><li><a href="module.exports.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="module.exports.html#event:subrequest-finished">subrequest-finished</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Jan 14 2025 17:07:02 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Jan 26 2026 09:24:45 GMT+0100 (Mitteleuropäische Normalzeit)
 </footer>
 
 <script> prettyPrint(); </script>

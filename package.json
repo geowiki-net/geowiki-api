@@ -65,7 +65,6 @@
     "leaflet": "^1.9.2",
     "minify": "^9.1.0",
     "mocha": "^11.0.1",
-    "require-self": "^0.2.3",
     "watchify": "^4.0.0"
   },
   "resolutions": {
@@ -86,7 +85,6 @@
     "prepublish": "npm run lint && npm run build && npm run doc",
     "preversion": "npm run lint && npm run test",
     "version": "node update-version.js ; npm run doc",
-    "prepare": "require-self",
     "lint": "eslint --fix src/*.js src/qlFunctions/*.js src/evaluator/* index.js server.js",
     "demo": "http-server ./ -p 8000",
     "start": "node server.js",

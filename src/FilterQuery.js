@@ -59,7 +59,7 @@ class FilterQuery extends FilterStatement {
           this.inputSets[part.inputSet].recurse = part.recurse
         }
 
-        if (part.role) {
+        if (part.role !== undefined) {
           this.inputSets[part.inputSet].role = part.role
         }
       } else if (part.outputSet) {
@@ -458,7 +458,7 @@ class FilterQuery extends FilterStatement {
           r.setId = setId
           r.properties |= ['r', 'w'].includes(inputSet.recurse) ? OverpassFrontend.MEMBERS : 0
           r.recurseType = inputSet.recurse
-          if (inputSet.role) {
+          if (inputSet.role !== undefined) {
             r.role = inputSet.role
           }
         })
@@ -662,7 +662,7 @@ class FilterQuery extends FilterStatement {
                 filters: d.filters
               }
 
-              if (set.role) {
+              if (set.role !== undefined) {
                 t.role = set.role
               }
 

@@ -2577,6 +2577,71 @@ describe("Filter sets with relations, compile", function () {
       }
     ])
   })
+  it ('relation[building];way(r:"");', function () {
+    var f = new Filter('relation[building];way(r:"")')
+
+    assert.deepEqual(f.def, [
+      [
+        {"type":"relation"},
+        {"key":"building","op":"has_key"}
+      ],
+      [
+        {"type":"way"},
+        {"recurse":"r","inputSet": "_","role":""}
+      ]
+    ])
+    assert.equal(f.toString(), 'relation["building"];way(r:"");')
+    assert.equal(f.toQl(), 'relation["building"];way(r:"");')
+    assert.equal(f.toQl({ setsUseStatementIds: true }), 'relation["building"]->._1;way(r._1:"")->._2;')
+    assert.equal(f.toQuery(), 'way(r._1:"")->._2;')
+    assert.equal(f.toQuery({ statement: 1 }), 'relation["building"]->._1;')
+    assert.deepEqual(f.recurse(), [
+      { id: 1, properties: 5, role: '', type: 'r' }
+    ])
+    assert.deepEqual(f.recurse({ statement: 2 }), [
+      { id: 1, properties: 5, role: '', type: 'r' }
+    ])
+    assert.deepEqual(f.recurse({ statement: 1 }), [])
+    assert.deepEqual(f.getScript(), [
+      { id: 1, properties: 1, recurse: [] },
+      { id: 2, properties: 0, recurse: [
+        { id: 1, properties: 5, role: '', type: 'r' }
+      ]},
+    ])
+    assert.deepEqual(f.compileQuery(), {
+      query: 'way(r:"");',
+      loki: {
+        type: { $eq: 'way' }
+      },
+      recurse: [
+        {
+          type: 'r',
+          inputSet: '_',
+          query: 'relation["building"];',
+          loki: {
+            type: { $eq: 'relation' },
+            "tags.building": { $exists: true }
+          }
+        }
+      ]
+    })
+    assert.deepEqual(f.toLokijs(), {
+      type: { $eq: 'way' }
+    })
+    assert.deepEqual(f.derefSets(), [
+      { type: "way", filters: [], recurse: [
+        { recurseType: "r", role: "", type: "relation", filters: [ { "key": "building", "op": "has_key" } ] }
+      ] }
+    ])
+    var r = f.cacheDescriptors()
+    assert.deepEqual(r, [
+      { id: 'relation["building"](properties:5)->._1;way(r._1:"")(properties:0)',
+        recurse: [
+          { id: 'relation["building"](properties:5)->._1;way(r._1:"")(properties:0)->._1;relation["building"](bw._1:"")(properties:5)' }
+        ]
+      }
+    ])
+  })
   it ('way[highway];(node(w)[highway];);', function () {
     var f = new Filter('way[highway];(node(w)[highway];);')
 

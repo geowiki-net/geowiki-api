@@ -230,6 +230,10 @@ class OverpassFrontend {
    * @return {RequestQuery}
    */
   query (query, options, callback) {
+    if (!options.cache) {
+      options.cache = this.cache
+    }
+
     return new RequestQuery(this, query, options, callback)
   }
 
@@ -253,6 +257,10 @@ class OverpassFrontend {
     if (!finalCallback) {
       finalCallback = featureCallback
       featureCallback = null
+    }
+
+    if (!options.cache) {
+      options.cache = this.cache
     }
 
     const request = new RequestGet(this, {
@@ -285,11 +293,15 @@ class OverpassFrontend {
       options.properties = defines.DEFAULT
     }
 
-    if (!(id in this.cache.elements)) {
+    if (!options.cache) {
+      options.cache = this.cache
+    }
+
+    if (!(id in options.cache.elements)) {
       return false
     }
 
-    const ob = this.cache.elements[id]
+    const ob = options.cache.elements[id]
 
     if (ob.missingObject) {
       return null
@@ -324,9 +336,9 @@ class OverpassFrontend {
     // e.g. call featureCallback for elements which were received in the
     // meantime
     this.requests.forEach((request, i) => {
-      if (request && request.timestampPreprocess < this.cache.timestamp) {
+      if (request && request.timestampPreprocess < request.cache.timestamp) {
         request.preprocess()
-        request.timestampPreprocess = this.cache.timestamp
+        request.timestampPreprocess = request.cache.timestamp
 
         if (request.finished) {
           this.requests[i] = null
@@ -540,13 +552,13 @@ class OverpassFrontend {
       const ob = this.createOrUpdateOSMObject(el, part)
       delete context.todo[ob.id]
 
-      const members = this.cache.elements[ob.id].memberIds()
+      const members = request.cache.elements[ob.id].memberIds()
       if (members) {
         for (let j = 0; j < members.length; j++) {
-          if (!(members[j] in this.cache.elementsMemberOf)) {
-            this.cache.elementsMemberOf[members[j]] = [this.cache.elements[ob.id]]
+          if (!(members[j] in request.cache.elementsMemberOf)) {
+            request.cache.elementsMemberOf[members[j]] = [request.cache.elements[ob.id]]
           } else {
-            this.cache.elementsMemberOf[members[j]].push(this.cache.elements[ob.id])
+            request.cache.elementsMemberOf[members[j]].push(request.cache.elements[ob.id])
           }
         }
       }
@@ -565,23 +577,23 @@ class OverpassFrontend {
     }
 
     for (const id in context.todo) {
-      if (!(id in this.cache.elements)) {
+      if (!(id in request.cache.elements)) {
         const ob = new OverpassObject()
         ob.id = id
         ob.type = { n: 'node', w: 'way', r: 'relation' }[id.substr(0, 1)]
         ob.osm_id = id.substr(1)
         ob.properties = OverpassFrontend.ALL
         ob.missingObject = true
-        this.cache.elements[id] = ob
-        this.cache.db.insert(ob.dbInsert())
+        request.cache.elements[id] = ob
+        request.cache.db.insert(ob.dbInsert())
       } else {
-        const ob = this.cache.elements[id]
+        const ob = request.cache.elements[id]
         ob.missingObject = true
-        this.cache.db.update(ob.dbInsert())
+        request.cache.db.update(ob.dbInsert())
       }
     }
 
-    this.cache.updateTimestamp()
+    request.cache.updateTimestamp()
 
     this.pendingNotifies()
 
@@ -627,6 +639,10 @@ class OverpassFrontend {
 
     if (!options) {
       options = {}
+    }
+
+    if (!options.cache) {
+      options.cache = this.cache
     }
 
     if (bbox.minlon > bbox.maxlon) {

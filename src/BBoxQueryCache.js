@@ -76,7 +76,7 @@ class BBoxQueryCacheItem {
 
       const result = types.every(type =>
         cacheDescriptor.ids.every(id =>
-          (type.substr(0, 1) + id) in this.main.overpass.cacheElements
+          (type.substr(0, 1) + id) in this.main.overpass.cache.elements
         )
       )
 

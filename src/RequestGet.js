@@ -25,8 +25,8 @@ class RequestGet extends Request {
     }
 
     for (let i = 0; i < this.ids.length; i++) {
-      if (this.ids[i] in this.overpass.cacheElements && this.overpass.cacheElements[this.ids[i]] === false) {
-        delete this.overpass.cacheElements[this.ids[i]]
+      if (this.ids[i] in this.overpass.cache.elements && this.overpass.cache.elements[this.ids[i]] === false) {
+        delete this.overpass.cache.elements[this.ids[i]]
       }
     }
 
@@ -97,8 +97,8 @@ class RequestGet extends Request {
         continue
       }
 
-      if (id in this.overpass.cacheElements) {
-        const ob = this.overpass.cacheElements[id]
+      if (id in this.overpass.cache.elements) {
+        const ob = this.overpass.cache.elements[id]
         let ready = true
 
         // Feature does not exists!
@@ -182,8 +182,8 @@ class RequestGet extends Request {
       if (this.options.bounds) {
         // check if we already know the bounds of the element; if yes, don't try
         // to load object if it does not intersect bounds
-        if (id in this.overpass.cacheElements && (this.overpass.cacheElements[id].properties & defines.BBOX)) {
-          if (!this.overpass.cacheElements[id].intersects(this.options.bounds)) {
+        if (id in this.overpass.cache.elements && (this.overpass.cache.elements[id].properties & defines.BBOX)) {
+          if (!this.overpass.cache.elements[id].intersects(this.options.bounds)) {
             continue
           }
         }

@@ -111,10 +111,10 @@ class RequestBBox extends Request {
 
       const id = items[i].id
 
-      if (!(id in this.overpass.cacheElements)) {
+      if (!(id in this.overpass.cache.elements)) {
         continue
       }
-      const ob = this.overpass.cacheElements[id]
+      const ob = this.overpass.cache.elements[id]
 
       if (id in this.doneFeatures) {
         continue

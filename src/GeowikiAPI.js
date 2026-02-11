@@ -2,12 +2,10 @@ const ee = require('event-emitter')
 const async = require('async')
 const weightSort = require('weight-sort')
 const BoundingBox = require('boundingbox')
-const LokiJS = require('lokijs')
 
 const httpLoad = require('./httpLoad')
 const removeNullEntries = require('./removeNullEntries')
 
-const BBoxQueryCache = require('./BBoxQueryCache')
 const OverpassObject = require('./OverpassObject')
 const OverpassNode = require('./OverpassNode')
 const OverpassWay = require('./OverpassWay')
@@ -19,11 +17,11 @@ const RequestQuery = require('./RequestQuery')
 const defines = require('./defines')
 const loadFile = require('./loadFile')
 const readDbMeta = require('./readDbMeta')
-const timestamp = require('./timestamp')
 const Filter = require('./Filter')
 const isGeoJSON = require('./isGeoJSON')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const isFileURL = require('./isFileURL')
+const Cache = require('./Cache')
 
 /**
  * An error occured
@@ -112,10 +110,7 @@ class OverpassFrontend {
       this.options[k] = options[k]
     }
 
-    const db = new LokiJS()
-    this.db = db.addCollection('osm', { unique: ['id'] })
-    this.bboxQueryCache = new BBoxQueryCache(this)
-
+    this.cache = new Cache()
     this.clearCache()
 
     this.requests = []
@@ -143,14 +138,7 @@ class OverpassFrontend {
       return
     }
 
-    this.cacheElements = {}
-    this.cacheElementsMemberOf = {}
-    this.cacheTimestamp = timestamp()
-    this.db.clear()
-    this.bboxQueryCache.clear()
-
-    // Set default properties
-    this.hasStretchLon180 = false
+    this.cache.clear()
   }
 
   _loadFile () {
@@ -297,11 +285,11 @@ class OverpassFrontend {
       options.properties = defines.DEFAULT
     }
 
-    if (!(id in this.cacheElements)) {
+    if (!(id in this.cache.elements)) {
       return false
     }
 
-    const ob = this.cacheElements[id]
+    const ob = this.cache.elements[id]
 
     if (ob.missingObject) {
       return null
@@ -336,9 +324,9 @@ class OverpassFrontend {
     // e.g. call featureCallback for elements which were received in the
     // meantime
     this.requests.forEach((request, i) => {
-      if (request && request.timestampPreprocess < this.cacheTimestamp) {
+      if (request && request.timestampPreprocess < this.cache.timestamp) {
         request.preprocess()
-        request.timestampPreprocess = this.cacheTimestamp
+        request.timestampPreprocess = this.cache.timestamp
 
         if (request.finished) {
           this.requests[i] = null
@@ -552,13 +540,13 @@ class OverpassFrontend {
       const ob = this.createOrUpdateOSMObject(el, part)
       delete context.todo[ob.id]
 
-      const members = this.cacheElements[ob.id].memberIds()
+      const members = this.cache.elements[ob.id].memberIds()
       if (members) {
         for (let j = 0; j < members.length; j++) {
-          if (!(members[j] in this.cacheElementsMemberOf)) {
-            this.cacheElementsMemberOf[members[j]] = [this.cacheElements[ob.id]]
+          if (!(members[j] in this.cache.elementsMemberOf)) {
+            this.cache.elementsMemberOf[members[j]] = [this.cache.elements[ob.id]]
           } else {
-            this.cacheElementsMemberOf[members[j]].push(this.cacheElements[ob.id])
+            this.cache.elementsMemberOf[members[j]].push(this.cache.elements[ob.id])
           }
         }
       }
@@ -577,23 +565,23 @@ class OverpassFrontend {
     }
 
     for (const id in context.todo) {
-      if (!(id in this.cacheElements)) {
+      if (!(id in this.cache.elements)) {
         const ob = new OverpassObject()
         ob.id = id
         ob.type = { n: 'node', w: 'way', r: 'relation' }[id.substr(0, 1)]
         ob.osm_id = id.substr(1)
         ob.properties = OverpassFrontend.ALL
         ob.missingObject = true
-        this.cacheElements[id] = ob
-        this.db.insert(ob.dbInsert())
+        this.cache.elements[id] = ob
+        this.cache.db.insert(ob.dbInsert())
       } else {
-        const ob = this.cacheElements[id]
+        const ob = this.cache.elements[id]
         ob.missingObject = true
-        this.db.update(ob.dbInsert())
+        this.cache.db.update(ob.dbInsert())
       }
     }
 
-    this.cacheTimestamp = timestamp()
+    this.cache.updateTimestamp()
 
     this.pendingNotifies()
 
@@ -691,7 +679,7 @@ class OverpassFrontend {
     const cacheDescriptors = new Filter(query).cacheDescriptors()
 
     cacheDescriptors.forEach(descriptor => {
-      this.bboxQueryCache.get(descriptor).clear()
+      this.cache.bboxQueryCache.get(descriptor).clear()
     })
   }
 
@@ -737,21 +725,21 @@ class OverpassFrontend {
     }
 
     for (let i = 0; i < ids.length; i++) {
-      if (ids[i] in this.cacheElements) {
-        const ob = this.cacheElements[ids[i]]
+      if (ids[i] in this.cache.elements) {
+        const ob = this.cache.elements[ids[i]]
 
         // remove all memberOf references
         if (ob.members) {
           ob.members.forEach(member => {
-            const memberOb = this.cacheElements[member.id]
+            const memberOb = this.cache.elements[member.id]
             memberOb.memberOf = memberOb.memberOf
               .filter(memberOf => memberOf.id !== ob.id)
           })
         }
 
-        const lokiOb = this.cacheElements[ids[i]].dbData
-        delete this.cacheElements[ids[i]]
-        this.db.remove(lokiOb)
+        const lokiOb = this.cache.elements[ids[i]].dbData
+        delete this.cache.elements[ids[i]]
+        this.cache.db.remove(lokiOb)
       }
     }
   }
@@ -761,7 +749,7 @@ class OverpassFrontend {
     this.pendingNotifyMemberUpdate = {}
 
     for (const k in todo) {
-      const ob = this.cacheElements[k]
+      const ob = this.cache.elements[k]
       ob.notifyMemberUpdate(todo[k])
 
       this.pendingUpdateEmit[ob.id] = ob
@@ -776,7 +764,7 @@ class OverpassFrontend {
 
     todo.forEach(ob => {
       ob.emit('update', ob)
-      this.db.update(ob.dbInsert())
+      this.cache.db.update(ob.dbInsert())
     })
   }
 
@@ -785,12 +773,12 @@ class OverpassFrontend {
     let ob = null
     let create = true
 
-    if (id in this.cacheElements && !this.cacheElements[id]) {
+    if (id in this.cache.elements && !this.cache.elements[id]) {
       console.log('why can this be null?', id)
     }
 
-    if (id in this.cacheElements && this.cacheElements[id]) {
-      ob = this.cacheElements[id]
+    if (id in this.cache.elements && this.cache.elements[id]) {
+      ob = this.cache.elements[id]
       create = false
 
       // no new information -> return
@@ -821,12 +809,12 @@ class OverpassFrontend {
     this.pendingUpdateEmit[ob.id] = ob
 
     if (create) {
-      this.db.insert(ob.dbInsert())
+      this.cache.db.insert(ob.dbInsert())
     } else {
-      this.db.update(ob.dbInsert())
+      this.cache.db.update(ob.dbInsert())
     }
 
-    this.cacheElements[id] = ob
+    this.cache.elements[id] = ob
     return ob
   }
 
@@ -862,7 +850,7 @@ class OverpassFrontend {
     let undecidedRecurse = false
 
     if (!db) {
-      db = this.db.chain()
+      db = this.cache.db.chain()
     }
 
     const statement = filter.getStatement(options)
@@ -886,14 +874,14 @@ class OverpassFrontend {
         const queryIds = {}
 
         list.forEach(ob => {
-          const item = this.cacheElements[ob.id]
+          const item = this.cache.elements[ob.id]
           let other
 
           switch (query.type) {
             case '>':
               other = item.memberIds()
               other.forEach(id => {
-                const m = this.cacheElements[id]
+                const m = this.cache.elements[id]
                 if (m.type === 'way') {
                   other = other.concat(m.memberIds())
                 }
@@ -902,7 +890,7 @@ class OverpassFrontend {
             case '<':
               other = item.memberOf.map(m => m.id)
               other.forEach(id => {
-                const m = this.cacheElements[id]
+                const m = this.cache.elements[id]
                 if (m.type === 'way') {
                   other = other.concat(m.memberOf.map(m => m.id))
                 }
@@ -967,7 +955,7 @@ class OverpassFrontend {
 
     if (needMatch) {
       list = list.filter(ob => {
-        const item = this.cacheElements[ob.id]
+        const item = this.cache.elements[ob.id]
         const r = statement.match(item)
         if (r === null) {
           undecidedItems.push(item)
@@ -977,7 +965,7 @@ class OverpassFrontend {
     }
 
     list = list
-      .map(ob => this.cacheElements[ob.id])
+      .map(ob => this.cache.elements[ob.id])
       .filter(item => {
         const r = !('properties' in options) || (options.properties & item.properties) === options.properties
         if (!r) {

@@ -84,7 +84,7 @@ class OverpassWay extends OverpassObject {
     if (this.members && (this.properties & OverpassFrontend.GEOM) === 0) {
       this.geometry = this.members.map(
         member => {
-          const node = this.overpass.cacheElements[member.id]
+          const node = this.overpass.cache.elements[member.id]
           return node ? node.geometry : null
         }
       ).filter(geom => geom)
@@ -196,7 +196,7 @@ class OverpassWay extends OverpassObject {
         if (this.members) {
           async.each(this.members,
             (member, done) => {
-              const memberOb = this.overpass.cacheElements[member.id]
+              const memberOb = this.overpass.cache.elements[member.id]
 
               const nd = parentNode.ownerDocument.createElement('nd')
               nd.setAttribute('ref', memberOb.osm_id)
@@ -231,7 +231,7 @@ class OverpassWay extends OverpassObject {
 
           async.each(this.members,
             (member, done) => {
-              const memberOb = this.overpass.cacheElements[member.id]
+              const memberOb = this.overpass.cache.elements[member.id]
 
               result.nodes.push(memberOb.osm_id)
 

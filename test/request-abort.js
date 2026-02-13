@@ -143,4 +143,61 @@ describe('Abort request', function() {
     assert.deepEqual(overpassFrontend.requests, [], 'request list should be empty')
     return true
   })
+
+  it('abort() should abort a "BBoxQuery" request, even after the server was queried', function (done) {
+    var finalCalled = 0
+    overpassFrontend.clearBBoxQuery('node[natural=tree];')
+    var req = overpassFrontend.BBoxQuery(
+      'node[natural=tree];',
+      {
+        minlon: 16.339,
+        minlat: 48.199,
+        maxlon: 16.340,
+        maxlat: 48.200
+      },
+      {
+        properties: OverpassFrontend.ID_ONLY
+      },
+      function(err, result, index) {
+        assert.fail('Should not call feature_callback, as request gets aborted.')
+      },
+      function(err) {
+        done('finalCallback should not be called')
+      }
+    )
+
+    req.on('abort', () => {
+      done()
+    })
+
+    req.on('subrequest-compile', () => req.abort())
+  })
+
+  it('After an aborted request, a "BBoxQuery" request with the same parameters should return the expected results.', function (done) {
+    var finalCalled = 0
+    var gotResults = 0
+    overpassFrontend.clearBBoxQuery('node[natural=tree];')
+    var req = overpassFrontend.BBoxQuery(
+      'node[natural=tree];',
+      {
+        minlon: 16.339,
+        minlat: 48.199,
+        maxlon: 16.340,
+        maxlat: 48.200
+      },
+      {
+        properties: OverpassFrontend.ID_ONLY
+      },
+      function(err, result, index) {
+        gotResults++
+      },
+      function(err) {
+        if (gotResults === 0) {
+          assert.fail('Query should have received results')
+        }
+
+        done()
+      }
+    )
+  })
 })

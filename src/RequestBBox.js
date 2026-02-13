@@ -81,6 +81,7 @@ class RequestBBox extends Request {
       })
 
       this.doneFeaturesSets = {}
+      this.doneFeaturesSetsTimestamp = 0
       this.undecidedItems = null
     }
 
@@ -97,6 +98,10 @@ class RequestBBox extends Request {
   preprocess () {
     let items = []
     this.undecidedItems = null
+
+    if (this.doneFeaturesSetsTimestamp < this.overpass.cacheTimestamp) {
+      this.doneFeaturesSets = {}
+    }
 
     if (this.lokiQuery) {
       items = this.overpass.queryLokiDB(this.lokiQuery, { properties: this.options.properties }, null, this.doneFeaturesSets)
@@ -129,6 +134,8 @@ class RequestBBox extends Request {
     if (this.options.limit && this.count >= this.options.limit) {
       this.loadFinish = true
     }
+
+    this.doneFeaturesTimestamp = this.overpass.cacheTimestamp
   }
 
   /**

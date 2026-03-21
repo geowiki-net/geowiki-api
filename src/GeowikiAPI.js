@@ -139,7 +139,7 @@ class OverpassFrontend {
    * clear all caches
    */
   clearCache () {
-    if (this.options.isFile) {
+    if (this.options.isFile && this.cacheElements) {
       return
     }
 

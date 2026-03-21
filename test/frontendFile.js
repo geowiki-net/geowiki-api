@@ -343,4 +343,14 @@ describe('Overpass BBoxQuery with members', function() {
       )
     })
   })
+
+  describe('load with {isFile:true}', function() {
+    it ('load', function (done) {
+      this.timeout(20000)
+      overpassFrontend = new OverpassFrontend('test/small.osm.bz2', { isFile: true })
+      overpassFrontend.once('load', () => {
+        done()
+      })
+    })
+  })
 })

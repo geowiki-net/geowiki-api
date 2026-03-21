@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: FilterQuery.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: FilterQuery.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const filterPart = require('./filterPart')
+const compileFilter = require('./compileFilter')
+const qlFunction = require('./qlFunctions/qlFunction')
+const OverpassFrontend = require('./defines')
+const cacheMerge = require('./cacheMerge')
+const strsearch2regexp = require('strsearch2regexp')
+const FilterStatement = require('./FilterStatement')
+const qlQuoteString = require('./qlQuoteString')
+const andTypes = require('./andTypes')
+const turf = require('./turf')
+
+const reverseRecurse = {
+  r: [['bn', 'node'], ['bw', 'way'], ['br', 'relation']],
+  w: 'bn',
+  bn: [['r', 'relation'], ['w', 'way']],
+  bw: 'r',
+  br: 'r'
+}
+
+class FilterQuery extends FilterStatement {
+  constructor (def, filter) {
+    super(def, filter)
+    this.filter = filter
+
+    if (!Array.isArray(def)) {
+      def = [def]
+    }
+
+    this.inputSets = {}
+    this.outputSet = '_'
+    this.type = 'nwr'
+    this.filters = []
+
+    let hasType = false
+    let hasOutputSet = false
+    def.forEach(part => {
+      if (part.type) {
+        if (hasType) {
+          throw new Error('Filter: only one type query allowed!')
+        }
+
+        this.type = part.type === 'rel' ? 'relation' : part.type
+        hasType = true
+      } else if (part.inputSet || part.recurse) {
+        if (!part.inputSet &amp;&amp; part.recurse) {
+          part.inputSet = '_'
+        }
+
+        if (!(part.inputSet in filter.sets)) {
+          console.log('input set ' + part.inputSet + ' not defined')
+          this.noResult = true
+        }
+
+        this.inputSets[part.inputSet] = {
+          set: filter.sets[part.inputSet]
+        }
+
+        if (part.recurse) {
+          this.inputSets[part.inputSet].recurse = part.recurse
+        }
+
+        if (part.role !== undefined) {
+          this.inputSets[part.inputSet].role = part.role
+        }
+      } else if (part.outputSet) {
+        if (hasOutputSet) {
+          throw new Error('Filter: only one output set allowed!')
+        }
+
+        this.outputSet = part.outputSet
+        hasOutputSet = true
+      } else {
+        this.filters.push(part)
+      }
+    })
+
+    if (!Object.keys(this.inputSets).length) {
+      this.inputSets = null
+    }
+
+    filter.sets[this.outputSet] = this
+  }
+
+  toLokijs (options = {}) {
+    let query = {}
+    let orQueries = []
+
+    if (this.type !== 'nwr') {
+      query.type = { $eq: this.type }
+    }
+
+    this.filters.forEach(filter => {
+      let k, v
+      if (filter.keyRegexp) {
+        k = 'needMatch'
+        v = true
+        // can't query for key regexp, skip
+      } else if (filter instanceof qlFunction) {
+        const d = filter.compileLokiJS(options)
+        if (d.needMatch) {
+          query.needMatch = true
+        }
+        delete d.needMatch
+        if (Object.keys(d).length) {
+          if (query.$and) {
+            query.$and.push(d)
+          } else {
+            query.$and = [d]
+          }
+        }
+      } else if (filter.op === '=') {
+        k = 'tags.' + filter.key
+        v = { $eq: filter.value }
+      } else if (filter.op === '!=') {
+        k = 'tags.' + filter.key
+        v = { $ne: filter.value }
+      } else if (filter.op === 'has_key') {
+        k = 'tags.' + filter.key
+        v = { $exists: true }
+      } else if (filter.op === 'not_exists') {
+        k = 'tags.' + filter.key
+        v = { $exists: false }
+      } else if (filter.op === 'has') {
+        k = 'tags.' + filter.key
+        v = { $regex: '^(.*;|)' + filter.value + '(|;.*)$' }
+      } else if ((filter.op === '~') || (filter.op === '~i')) {
+        k = 'tags.' + filter.key
+        v = { $regex: new RegExp(filter.value, (filter.op === '~i' ? 'i' : '')) }
+      } else if ((filter.op === '!~') || (filter.op === '!~i')) {
+        k = 'tags.' + filter.key
+        v = { $not: { $regex: new RegExp(filter.value, (filter.op === '!~i' ? 'i' : '')) } }
+      } else if (filter.op === 'strsearch') {
+        k = 'tags.' + filter.key
+        v = { $regex: new RegExp(strsearch2regexp(filter.value), 'i') }
+      } else {
+        console.log('unknown filter', filter)
+      }
+
+      if (k &amp;&amp; v) {
+        if (k === 'needMatch') {
+          query.needMatch = true
+        } else if (k in query) {
+          if (!('$and' in query[k])) {
+            query[k] = { $and: [query[k]] }
+          }
+          query[k].$and.push(v)
+        } else {
+          query[k] = v
+        }
+      }
+    })
+
+    orQueries = orQueries.filter(q => Object.keys(q).length)
+    if (orQueries.length === 1) {
+      query.$or = orQueries[0]
+    } else if (orQueries.length > 1) {
+      query.$and = orQueries.map(q => { return { $or: q } })
+    }
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter } } : null)
+    if (inputSets) {
+      const normalInputSets = Object.entries(inputSets)
+        .filter(s => !s[1].recurse)
+
+      if (normalInputSets.length) {
+        let needMatch = query.needMatch
+        delete query.needMatch
+
+        query = {
+          $and: normalInputSets
+            .map(([inputsSetKey, inputSet]) => {
+              const r = inputSet &amp;&amp; inputSet.set ? inputSet.set.toLokijs(options) : { $not: true }
+              if (r.needMatch) {
+                needMatch = true
+                delete r.needMatch
+              }
+
+              return r
+            })
+            .concat(query)
+            .filter(v => Object.values(v).length)
+        }
+
+        if (query.$and.length === 0) {
+          delete query.$and
+        }
+
+        if (needMatch) {
+          query.needMatch = true
+        }
+      }
+    }
+
+    return query
+  }
+
+  toQl (options = {}) {
+    let result = ''
+
+    result += this.type
+
+    if (this.inputSets) {
+      result += Object.entries(this.inputSets).map(([s, inputSet]) => {
+        if (options.setsUseStatementIds) {
+          s = '_' + (inputSet.set ? inputSet.set.id : 'missing')
+        }
+
+        if (inputSet.recurse) {
+          return '(' + inputSet.recurse + (s === '_' ? '' : '.' + s) + ('role' in inputSet ? ':' + qlQuoteString(inputSet.role) : '') + ')'
+        } else {
+          return '.' + s
+        }
+      }).join('')
+    } else if (this.filter.baseFilter) {
+      result += '._base'
+    }
+    if (options.inputSet) {
+      result += options.inputSet
+    }
+
+    result += this.filters.map(part => compileFilter(part, options)).join('')
+
+    if (options.setsUseStatementIds) {
+      result += '->._' + this.id
+    } else if (this.outputSet !== '_') {
+      result += '->.' + this.outputSet
+    }
+
+    if (options.outputSet) {
+      if (options.setsUseStatementIds || this.outputSet !== '_') {
+        result = '(' + result + ';)->' + options.outputSet
+      } else {
+        result += '->' + options.outputSet
+      }
+    }
+
+    return result + ';'
+  }
+
+  properties () {
+    let properties = 0
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter } } : null)
+
+    if (inputSets) {
+      Object.values(inputSets).forEach(inputSet => {
+        if (inputSet.recurse) {
+          properties |= ['bn', 'bw', 'br'].includes(inputSet.recurse) ? OverpassFrontend.MEMBERS : 0
+        } else if (inputSet.set) {
+          properties |= inputSet.set.properties()
+        }
+      })
+    }
+
+    this.filters.forEach(part => {
+      if (part.op) {
+        properties |= OverpassFrontend.TAGS
+      } else if (part instanceof qlFunction) {
+        properties |= part.properties()
+      } else {
+        throw new Error('properties(): invalid entry')
+      }
+    })
+
+    return properties
+  }
+
+  recurse () {
+    let result = []
+
+    if (this.inputSets) {
+      const recursingInputSets = Object.entries(this.inputSets)
+        .filter(s => s[1].recurse)
+      const normalInputSets = Object.entries(this.inputSets)
+        .filter(s => !s[1].recurse)
+
+      if (recursingInputSets.length) {
+        result = recursingInputSets.map(s => {
+          const p = s[1].set ? s[1].set.properties() : 0
+
+          const r = {
+            type: s[1].recurse,
+            properties: p | (['r', 'w'].includes(s[1].recurse) ? OverpassFrontend.MEMBERS : 0),
+            id: s[1].set ? s[1].set.id : null
+          }
+
+          if ('role' in s[1]) {
+            r.role = s[1].role
+          }
+
+          return r
+        })
+      }
+
+      if (normalInputSets.length) {
+        normalInputSets.forEach(s => {
+          if (s[1].set) {
+            const q = s[1].set.recurse()
+            result = result.concat(q)
+          }
+        })
+      }
+    } else if (this.filter.baseFilter) {
+      const q = this.filter.baseFilter.recurse()
+      result = result.concat(q)
+    }
+
+    return result
+  }
+
+  /**
+   * Compile all (recursing) parts of a query
+   */
+  toQuery (options = {}) {
+    let result = ''
+
+    if (this.inputSets) {
+      const normalInputSets = Object.entries(this.inputSets)
+        .filter(s => !s[1].recurse)
+
+      if (normalInputSets.length) {
+        normalInputSets.forEach(s => {
+          if (s[1].set) {
+            const q = s[1].set.toQuery()
+            result += q
+          } else {
+            result = null
+          }
+        })
+      }
+    } else if (this.filter.baseFilter) {
+      const q = this.filter.baseFilter.toQuery({ outputSet: '._base' })
+      result += q
+    }
+
+    if (result === null) {
+      return result
+    }
+
+    result += this.toQl({ ...options, setsUseStatementIds: true })
+    return result
+  }
+
+  /**
+   * return a list of all input sets which are needed before this statement
+   * @returns {FilterStatement}
+   */
+  requiredInputSets () {
+    if (!this.inputSets) {
+      return []
+    }
+
+    return Object.values(this.inputSets).map(s => s.set)
+  }
+
+  /**
+   * Compile all (recursing) parts of a query
+   */
+  compileQuery (options = {}) {
+    const result = {
+      query: ''
+    }
+
+    if (this.inputSets) {
+      const recursingInputSets = Object.entries(this.inputSets)
+        .filter(s => s[1].recurse)
+      const normalInputSets = Object.entries(this.inputSets)
+        .filter(s => !s[1].recurse)
+
+      if (recursingInputSets.length) {
+        result.recurse = recursingInputSets.map(s => {
+          if (!s[1].set) {
+            return null
+          }
+
+          const r = s[1].set.compileQuery({ set: s[0] })
+
+          r.inputSet = s[0]
+          r.type = s[1].recurse
+
+          return r
+        })
+      }
+
+      if (normalInputSets.length) {
+        normalInputSets.forEach(s => {
+          if (s[1].set) {
+            const q = s[1].set.compileQuery()
+            result.query += q.query
+
+            if (q.recurse) {
+              result.recurse = (result.recurse ?? []).concat(q.recurse)
+            }
+          } else {
+            result.query = null
+          }
+        })
+      }
+    } else if (this.filter.baseFilter) {
+      const q = this.filter.baseFilter.compileQuery({ outputSet: '._base' })
+      result.query += q.query
+
+      if (q.recurse) {
+        result.recurse = (result.recurse ?? []).concat(q.recurse)
+      }
+    }
+
+    if (result.query === null) {
+      return result
+    }
+
+    result.query += this.toQl(options)
+    result.loki = this.toLokijs(options)
+    delete result.loki.recurse
+
+    return result
+  }
+
+  toString (options = {}) {
+    return this.toQl(options)
+  }
+
+  /**
+   * return query and queries this depends upon as string.
+   * @return {string}
+   */
+  fullString () {
+    let result = ''
+
+    if (this.inputSets) {
+      result += Object.values(this.inputSets).map(s => s.set.fullString()).join('')
+    } else if (this.filter.baseFilter) {
+      result += this.filter.baseFilter.toQl({ outputSet: '._base' })
+    }
+
+    result += this.toQl()
+
+    return result
+  }
+
+  _caches (options) {
+    let descriptors = [{ filters: '', filtersRec: '', properties: 0 }]
+
+    if (this.inputSets) {
+      const recursingInputSets = Object.values(this.inputSets)
+        .filter(s => s.recurse)
+
+      recursingInputSets.forEach(inputSet => {
+        if (!inputSet.set) {
+          descriptors = []
+          return
+        }
+
+        const setId = '._' + inputSet.set.id
+
+        const recurse = inputSet.set._caches(options)
+        recurse.forEach(r => {
+          r.setId = setId
+          r.properties |= ['r', 'w'].includes(inputSet.recurse) ? OverpassFrontend.MEMBERS : 0
+          r.recurseType = inputSet.recurse
+          if (inputSet.role !== undefined) {
+            r.role = inputSet.role
+          }
+        })
+
+        const _descriptors = descriptors
+        descriptors = []
+        _descriptors.forEach(o => {
+          recurse.forEach(r => {
+            r.filtersFwd = (r.filtersFwd ?? '') + (o.filtersFwd ?? '') + '(' + inputSet.recurse + setId + ('role' in inputSet ? ':' + qlQuoteString(inputSet.role) : '') + ')'
+            const revRec = reverseRecurse[inputSet.recurse]
+            if (Array.isArray(revRec)) {
+              revRec.forEach(([revRec, recType]) => {
+                if (!andTypes(this.type, recType)) {
+                  return
+                }
+
+                const r1 = { ...r }
+                r1.filtersRec = (r.filtersRec ?? '') + '(' + revRec + setId + ('role' in inputSet ? ':' + qlQuoteString(inputSet.role) : '') + ')'
+
+                descriptors.push({
+                  filters: o.filters,
+                  properties: ['bn', 'bw', 'br'].includes(inputSet.recurse) ? OverpassFrontend.MEMBERS : 0,
+                  recurse: o.recurse ? o.recurse.concat([r1]) : [r1]
+                })
+              })
+            } else {
+              r.filtersRec = (r.filtersRec ?? '') + '(' + revRec + setId + ('role' in inputSet ? ':' + qlQuoteString(inputSet.role) : '') + ')'
+
+              descriptors.push({
+                filters: o.filters,
+                properties: ['bn', 'bw', 'br'].includes(inputSet.recurse) ? OverpassFrontend.MEMBERS : 0,
+                recurse: o.recurse ? o.recurse.concat([r]) : [r]
+              })
+            }
+          })
+        })
+      })
+    }
+
+    if (this.type !== 'nwr') {
+      descriptors.forEach(o => {
+        o.type = this.type
+      })
+    }
+
+    this.filters.forEach(part => {
+      if (part.op) {
+        descriptors = descriptors.map(o => {
+          o.filters += compileFilter(part)
+          o.properties |= OverpassFrontend.TAGS
+          return o
+        })
+      } else if (part instanceof qlFunction) {
+        part.cacheDescriptors(descriptors, options)
+      } else {
+        throw new Error('caches(): invalid entry')
+      }
+    })
+
+    if (this.inputSets) {
+      const normalInputSets = Object.values(this.inputSets)
+        .filter(s => !s.recurse)
+
+      normalInputSets.reverse().forEach(inputSet => {
+        if (!inputSet || !inputSet.set) {
+          descriptors = []
+          return
+        }
+
+        const set = inputSet.set
+        const result = []
+        set._caches(options).forEach(a => {
+          descriptors.forEach(b => {
+            const r = cacheMerge(a, b)
+            if (r) {
+              result.push(r)
+            }
+          })
+        })
+
+        descriptors = result
+      })
+    } else if (this.filter.baseFilter) {
+      const result = []
+      this.filter.baseFilter._caches(options).forEach(a => {
+        descriptors.forEach(b => {
+          const r = cacheMerge(a, b)
+          if (r) {
+            result.push(r)
+          }
+        })
+      })
+
+      descriptors = result
+    }
+
+    return descriptors
+  }
+
+  match (ob) {
+    let result = true
+
+    if (this.inputSets) {
+      const sets = Object.values(this.inputSets)
+        .filter(s => !s.recurse) // match only inputSets which are on the same item
+        .filter(s => s.set)
+
+      for (let i = 0; i &lt; sets.length; i++) {
+        const r = sets[i].set.match(ob)
+        if (r === false) { return false }
+        if (r === null) { result = null }
+      }
+    } else if (this.filter.baseFilter) {
+      result = this.filter.baseFilter.match(ob)
+      if (result === false) { return false }
+    }
+
+    if (this.type !== 'nwr' &amp;&amp; ob.type !== this.type) {
+      return false
+    }
+
+    const results = this.filters.map(part => {
+      if (part.keyRegexp) {
+        let regex
+        if (part.value) {
+          regex = new RegExp(part.value, part.op.match(/i$/) ? 'i' : '')
+        }
+
+        const keyRegex = new RegExp(part.key, part.keyRegexp === 'i' ? 'i' : '')
+
+        for (const k in ob.tags) {
+          if (k.match(keyRegex)) {
+            if (regex) {
+              if (ob.tags[k].match(regex)) {
+                return true
+              }
+            } else {
+              return true
+            }
+          }
+        }
+        return false
+      }
+
+      if (part instanceof qlFunction) {
+        return part.test(ob)
+      }
+
+      switch (part.op) {
+        case 'has_key':
+          return ob.tags &amp;&amp; (part.key in ob.tags)
+        case 'not_exists':
+          return ob.tags &amp;&amp; (!(part.key in ob.tags))
+        case '=':
+          return ob.tags &amp;&amp; (part.key in ob.tags) &amp;&amp; (ob.tags[part.key] === part.value)
+        case '!=':
+          return ob.tags &amp;&amp; (!(part.key in ob.tags) || (ob.tags[part.key] !== part.value))
+        case '~':
+          return ob.tags &amp;&amp; (part.key in ob.tags) &amp;&amp; !!ob.tags[part.key].match(part.value)
+        case '!~':
+          return ob.tags &amp;&amp; (!(part.key in ob.tags) || !ob.tags[part.key].match(part.value))
+        case '~i':
+          return ob.tags &amp;&amp; (part.key in ob.tags) &amp;&amp; !!ob.tags[part.key].match(new RegExp(part.value, 'i'))
+        case '!~i':
+          return ob.tags &amp;&amp; (!(part.key in ob.tags) || !ob.tags[part.key].match(new RegExp(part.value, 'i')))
+        case 'has':
+          return ob.tags &amp;&amp; (part.key in ob.tags) &amp;&amp; ob.tags[part.key].split(/;/).indexOf(part.value) !== -1
+        case 'strsearch':
+          return ob.tags &amp;&amp; (part.key in ob.tags) &amp;&amp; !!ob.tags[part.key].match(new RegExp(strsearch2regexp(part.value), 'i'))
+        default:
+          console.log('match: unknown operator in filter', part)
+          return false
+      }
+    })
+
+    return results.includes(false) ? false : results.includes(null) ? null : result
+  }
+
+  derefSets () {
+    let result = [{
+      type: 'nwr',
+      filters: []
+    }]
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.values(inputSets).forEach(set => {
+        if (!set.set) {
+          result = []
+          return
+        }
+
+        const deref = set.set.derefSets()
+
+        if (set.recurse) {
+          result = result.map(r => {
+            return deref.map(d => {
+              const t = {
+                recurseType: set.recurse,
+                type: d.type,
+                filters: d.filters
+              }
+
+              if (set.role !== undefined) {
+                t.role = set.role
+              }
+
+              if (d.recurse) {
+                t.recurse = d.recurse
+              }
+
+              const s = {
+                type: r.type,
+                filters: r.filters,
+                recurse: (r.recurse ?? []).concat([t])
+              }
+
+              return s
+            })
+          }).flat()
+
+          return
+        }
+
+        result = result.map(r => {
+          return deref.map(d => {
+            const e = {
+              type: andTypes(r.type, d.type),
+              filters: [...r.filters, ...d.filters]
+            }
+
+            if (r.recurse || d.recurse) {
+              e.recurse = [...(r.recurse ?? []), ...(d.recurse ?? [])]
+            }
+
+            return e
+          })
+        }).flat().filter(d => d.type)
+      })
+
+      result = result.map(r => {
+        r.type = andTypes(r.type, this.type)
+        r.filters = [...r.filters, ...this.filters]
+        return r
+      }).filter(d => d.type)
+    } else {
+      result = [{
+        type: this.type,
+        filters: this.filters
+      }]
+    }
+
+    return result
+  }
+
+  possibleBounds (ob) {
+    let bounds = null
+
+    if (this.match(ob) === false) {
+      return null
+    }
+
+    if (this.inputSets) {
+      Object.values(this.inputSets)
+        .filter(s => !s.recurse) // check only inputSets which are on the same item
+        .filter(s => s.set)
+        .forEach(s => {
+          const b = s.set.possibleBounds(ob)
+          if (b) {
+            if (bounds) {
+              bounds = turf.difference(b, bounds)
+            } else {
+              bounds = b
+            }
+          }
+        })
+    } else if (this.filter.baseFilter) {
+      const b = this.filter.baseFilter.possibleBounds(ob)
+      if (b) {
+        if (bounds) {
+          bounds = turf.difference(b, bounds)
+        } else {
+          bounds = b
+        }
+      }
+    }
+
+    this.filters.forEach(filter => {
+      if (filter instanceof qlFunction) {
+        const b = filter.possibleBounds(ob)
+        if (b) {
+          if (bounds) {
+            bounds = turf.difference(b, bounds)
+          } else {
+            bounds = b
+          }
+        }
+      }
+    })
+
+    return bounds
+  }
+
+  mergeable (statement) {
+    // only other FilterQuery can be merged
+    return statement instanceof FilterQuery
+  }
+
+  merge (statement) {
+    // merge type
+    this.type = andTypes(this.type, statement.type)
+
+    // merge filters
+    this.filters = this.filters.concat(statement.filters)
+
+    // merge inputSets
+    if (!this.inputSets) {
+      this.inputSets = {}
+    }
+
+    Object.entries(statement.inputSets ?? {}).forEach(([iId, i]) => {
+      // one nameclash, rename to avoid overwritting inputSets
+      if (this.inputSets[iId]) {
+        iId = '_' + i.set.id
+        i.set.outputSet = iId
+      }
+
+      this.inputSets[iId] = i
+    })
+  }
+
+  conflate () {
+    // list which statements from inputSets can be merged or not
+    const toMerge = []
+    const notMerge = {}
+
+    const inputSets = this.inputSets ?? (this.filter.baseFilter ? { _base: { set: this.filter.baseFilter.getStatement() } } : {})
+    if (inputSets) {
+      Object.entries(inputSets).forEach(([inputSetId, inputSet]) => {
+        if (inputSet.recurse || !this.mergeable(inputSet.set)) {
+          notMerge[inputSetId] = inputSet
+        } else {
+          toMerge[inputSetId] = inputSet
+        }
+      })
+    }
+
+    // conflate all statements which can not be merged
+    Object.values(notMerge).forEach(inputSet => inputSet.set.conflate())
+
+    // no statements can be conflated -> return
+    if (!Object.keys(toMerge).length) {
+      return
+    }
+
+    // for each statement, merge and remove
+    Object.entries(toMerge).forEach(([inputSetId, inputSet]) => {
+      this.merge(inputSet.set)
+
+      if (this.inputSets[inputSetId].set === inputSet.set) {
+        delete (this.inputSets[inputSetId])
+      }
+
+      this.filter._removeStatement(inputSet.set)
+    })
+
+    // try to conflate again
+    this.conflate()
+  }
+
+  dependents () {
+    if (!this.inputSets) {
+      return []
+    }
+
+    const result = []
+    Object.values(this.inputSets).forEach(i => {
+      i.set.dependents().forEach(d => {
+        if (!result.includes(d)) {
+          result.push(d)
+        }
+      })
+
+      if (!result.includes(i.set)) {
+        result.push(i.set)
+      }
+    })
+
+    return result
+  }
+}
+
+filterPart.register('default', FilterQuery)
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Filter.html">Filter</a></li><li><a href="OverpassFrontend.html">OverpassFrontend</a></li><li><a href="OverpassNode.html">OverpassNode</a></li><li><a href="OverpassObject.html">OverpassObject</a></li><li><a href="OverpassRelation.html">OverpassRelation</a></li><li><a href="OverpassWay.html">OverpassWay</a></li><li><a href="Request.html">Request</a></li><li><a href="RequestBBox.html">RequestBBox</a></li><li><a href="RequestGet.html">RequestGet</a></li><li><a href="RequestMulti.html">RequestMulti</a></li><li><a href="module.exports.html">exports</a></li><li><a href="module.exports_module.exports.html">exports</a></li></ul><h3>Events</h3><ul><li><a href="OverpassFrontend.html#event:error">error</a></li><li><a href="OverpassFrontend.html#event:load">load</a></li><li><a href="OverpassFrontend.html#event:reject">reject</a></li><li><a href="OverpassFrontend.html#event:start">start</a></li><li><a href="OverpassFrontend.html#event:update">update</a></li><li><a href="Request.html#event:abort">abort</a></li><li><a href="Request.html#event:finish">finish</a></li><li><a href="Request.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="Request.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestBBox.html#event:abort">abort</a></li><li><a href="RequestBBox.html#event:finish">finish</a></li><li><a href="RequestBBox.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestBBox.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestGet.html#event:abort">abort</a></li><li><a href="RequestGet.html#event:finish">finish</a></li><li><a href="RequestGet.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestGet.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestMulti.html#event:abort">abort</a></li><li><a href="RequestMulti.html#event:finish">finish</a></li><li><a href="RequestMulti.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestMulti.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="module.exports.html#event:abort">abort</a></li><li><a href="module.exports.html#event:finish">finish</a></li><li><a href="module.exports.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="module.exports.html#event:subrequest-finished">subrequest-finished</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sat Mar 21 2026 07:53:51 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

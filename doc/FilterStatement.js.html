@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+    <title>JSDoc: Source: FilterStatement.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,32 +17,65 @@
 
 <div id="main">
 
-    <h1 class="page-title">Home</h1>
+    <h1 class="page-title">Source: FilterStatement.js</h1>
 
     
 
 
 
     
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>module.exports = class FilterStatement {
+  constructor (def, filter) {
+    this.id = filter.createStatementId()
+    filter.statements[this.id] = this
+  }
 
+  derefSets () {
+    return []
+  }
 
-    <h3> </h3>
+  properties () {
+    return 0
+  }
 
+  possibleBounds (ob) {
+    return null
+  }
 
+  /**
+   * Check if this statement and the given statement are mergeable. If yes, the
+   * 'merge()' function will do the actual merging.
+   * @param {FilterStatement} statement The statement to merge with.
+   */
+  mergeable (statement) {
+    return false
+  }
 
+  /**
+   * Merge this statement with the given statement.
+   * @param {FilterStatement} statement The statement to merge with.
+   */
+  merge (statement) {
+  }
 
+  /**
+   * Conflate this statement with nearby statements if possible.
+   */
+  conflate () {
+  }
 
-
-
-
-
-
-    
-
-
-
-
-
+  /**
+   * List of all dependents
+   */
+  dependents () {
+    return []
+  }
+}
+</code></pre>
+        </article>
+    </section>
 
 
 

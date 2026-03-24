@@ -36,4 +36,8 @@ module.exports = class FormatterObject {
     this.result = { ...this.result, ...this.overpass.meta }
     return this.result
   }
+
+  httpHeaders () {
+    return {}
+  }
 }

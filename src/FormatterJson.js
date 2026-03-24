@@ -16,6 +16,12 @@ module.exports = class FormatterJson {
     delete this.result.bounds
   }
 
+  httpHeaders () {
+    return {
+      'Content-Type': 'application/json'
+    }
+  }
+
   setBounds (bounds) {
     this.result.bounds = { ...bounds }
   }

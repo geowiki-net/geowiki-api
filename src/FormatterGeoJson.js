@@ -41,4 +41,10 @@ module.exports = class FormatterGeoJson {
 
     return this.result
   }
+
+  httpHeaders () {
+    return {
+      'Content-Type': 'application/geo+json'
+    }
+  }
 }

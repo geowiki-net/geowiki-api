@@ -85,6 +85,12 @@ module.exports = class FormatterXml {
     return xmlSerializer.serializeToString(this.xml)
   }
 
+  httpHeaders () {
+    return {
+      'Content-Type': 'application/osm3s+xml'
+    }
+  }
+
   updateMeta () {
     const meta = this.overpass.meta ?? {}
 

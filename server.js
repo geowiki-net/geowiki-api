@@ -73,8 +73,9 @@ function handleRequest (request, response) {
 
     logMsg.query = body
 
+    let overpassRequest
     try {
-      overpassFrontend.query(body, handleResult)
+      overpassRequest = overpassFrontend.query(body, handleResult)
     } catch (e) {
       handleResult(e)
     }
@@ -95,11 +96,12 @@ function handleRequest (request, response) {
         return response.end(err.message)
       }
 
+      const outputFormatter = overpassRequest.output
+
       logMsg.status = 200
-      response.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      })
+      const httpHeaders = outputFormatter.httpHeaders()
+      httpHeaders['Access-Control-Allow-Origin'] = '*'
+      response.writeHead(200, httpHeaders)
 
       if (typeof result !== 'string') {
         result = JSON.stringify(result, null, '  ')

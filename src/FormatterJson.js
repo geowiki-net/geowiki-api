@@ -9,6 +9,7 @@ module.exports = class FormatterJson {
     this.result = {
       version: '0.6',
       generator: '',
+      osm3s: {}, // Overpass Turbo requires this for detecting valid result
       ...this.overpass.meta,
       elements: []
     }

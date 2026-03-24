@@ -57,6 +57,16 @@ function handleRequest (request, response) {
       body = reqUrl.searchParams.get('data')
     }
 
+    if (request.headers['content-type']) {
+      const contentType = request.headers['content-type'].split(';')[0].toLowerCase()
+      if (contentType === 'application/x-www-form-urlencoded') {
+        const query = new URLSearchParams(body)
+        if (query.has('data')) {
+          body = query.get('data')
+        }
+      }
+    }
+
     if (!body) {
       return handleResult(new Error('no query received'))
     }

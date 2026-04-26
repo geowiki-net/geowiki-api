@@ -61,7 +61,7 @@
     "eslint-plugin-standard": "^5.0.0",
     "http-server": "^14.1.1",
     "jsdoc": "^4.0.2",
-    "jsdom": "^17.0.0",
+    "jsdom": "^29.0.2",
     "leaflet": "^1.9.2",
     "minify": "^9.1.0",
     "mocha": "^11.0.1",

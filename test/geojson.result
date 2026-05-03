@@ -1,135 +1,138 @@
-[
-  {
-    "type": "node",
-    "lon": 0,
-    "lat": 0,
-    "tags": {
-      "name": "point"
+{
+  "version": 0.6,
+  "elements": [
+    {
+      "type": "node",
+      "lon": 0,
+      "lat": 0,
+      "tags": {
+        "name": "point"
+      },
+      "id": -1
     },
-    "id": -1
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": 40,
-        "lat": -20
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": 40,
+          "lat": -20
+        },
+        {
+          "lon": 80,
+          "lat": 20
+        }
+      ],
+      "tags": {
+        "name": "line"
       },
-      {
-        "lon": 80,
-        "lat": 20
-      }
-    ],
-    "tags": {
-      "name": "line"
+      "id": -1
     },
-    "id": -1
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": 40,
-        "lat": 20
-      },
-      {
-        "lon": 80,
-        "lat": -20
-      }
-    ],
-    "id": -2
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": -50,
-        "lat": -10
-      },
-      {
-        "lon": -30,
-        "lat": -10
-      },
-      {
-        "lon": -40,
-        "lat": 10
-      },
-      {
-        "lon": -50,
-        "lat": -10
-      }
-    ],
-    "tags": {
-      "name": "polygon"
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": 40,
+          "lat": 20
+        },
+        {
+          "lon": 80,
+          "lat": -20
+        }
+      ],
+      "id": -2
     },
-    "id": -3
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": -10,
-        "lat": -75
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -50,
+          "lat": -10
+        },
+        {
+          "lon": -30,
+          "lat": -10
+        },
+        {
+          "lon": -40,
+          "lat": 10
+        },
+        {
+          "lon": -50,
+          "lat": -10
+        }
+      ],
+      "tags": {
+        "name": "polygon"
       },
-      {
-        "lon": -10,
-        "lat": 75
-      }
-    ],
-    "tags": {
-      "name": "multilinestring"
+      "id": -3
     },
-    "id": -4
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": 10,
-        "lat": -75
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -10,
+          "lat": -75
+        },
+        {
+          "lon": -10,
+          "lat": 75
+        }
+      ],
+      "tags": {
+        "name": "multilinestring"
       },
-      {
-        "lon": 10,
-        "lat": 75
-      }
-    ],
-    "tags": {
-      "name": "multilinestring"
+      "id": -4
     },
-    "id": -5
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": -75,
-        "lat": -10
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": 10,
+          "lat": -75
+        },
+        {
+          "lon": 10,
+          "lat": 75
+        }
+      ],
+      "tags": {
+        "name": "multilinestring"
       },
-      {
-        "lon": 75,
-        "lat": -10
-      }
-    ],
-    "tags": {
-      "name": "multilinestring"
+      "id": -5
     },
-    "id": -6
-  },
-  {
-    "type": "way",
-    "geometry": [
-      {
-        "lon": -75,
-        "lat": 10
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -75,
+          "lat": -10
+        },
+        {
+          "lon": 75,
+          "lat": -10
+        }
+      ],
+      "tags": {
+        "name": "multilinestring"
       },
-      {
-        "lon": 75,
-        "lat": 10
-      }
-    ],
-    "tags": {
-      "name": "multilinestring"
+      "id": -6
     },
-    "id": -7
-  }
-]
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -75,
+          "lat": 10
+        },
+        {
+          "lon": 75,
+          "lat": 10
+        }
+      ],
+      "tags": {
+        "name": "multilinestring"
+      },
+      "id": -7
+    }
+  ]
+}

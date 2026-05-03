@@ -146,4 +146,19 @@ describe('RequestQuery', function () {
       }
     )
   })
+
+  it ('json: query without any "out" statements', function (done) {
+    overpassFrontend.query('[out:json];nwr[amenity=place_of_worship];',
+      (err, result) => {
+        if (err) {
+          assert.fail('Error: ' + err.message)
+        }
+
+        const el = result.elements[result.elements.length - 1]
+        assert.deepEqual(result.elements, [])
+        done()
+      }
+    )
+  })
+
 })

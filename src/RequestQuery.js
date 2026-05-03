@@ -121,6 +121,10 @@ module.exports = class RequestQuery extends Request {
         return
       }
 
+      if (!this.requests.length) {
+        this.finish()
+      }
+
       this.overpass._next()
     })
   }

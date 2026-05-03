@@ -1,0 +1,153 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 0, 0 ]
+      },
+      "properties": {
+        "name": "point"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [ 40, -20 ],
+          [ 80, 20 ]
+        ]
+      },
+      "properties": {
+        "name": "line"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [ 40, 20 ],
+          [ 80, -20 ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [ -50, -10 ],
+            [ -30, -10 ],
+            [ -40, 10 ],
+            [ -50, -10 ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "polygon"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [ -10, -75 ],
+            [ -10, 75 ]
+          ],
+          [
+            [ 10, -75 ],
+            [ 10, 75 ]
+          ],
+          [
+            [ -75, -10 ],
+            [ 75, -10 ]
+          ],
+          [
+            [ -75, 10 ],
+            [ 75, 10 ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "multilinestring"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [ -50, 60 ],
+              [ -30, 60 ],
+              [ -30, 80 ],
+              [ -50, 80 ],
+              [ -50, 60 ]
+            ]
+          ],
+          [
+            [
+              [ -20, 60 ],
+              [ 0, 60 ],
+              [ 0, 80 ],
+              [ -20, 80 ],
+              [ -20, 60 ]
+            ]
+          ],
+          [
+            [
+              [ 10, 60 ],
+              [ 30, 60 ],
+              [ 30, 80 ],
+              [ 10, 80 ],
+              [ 10, 60 ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "multipolygon"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "LineString",
+            "coordinates": [
+              [ -50, -50 ],
+              [ 0, -50 ]
+            ]
+          },
+          {
+            "type": "Point",
+            "coordinates": [ 40, -50 ]
+          },
+          {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [ 10, -60 ],
+                [ 30, -60 ],
+                [ 20, -40 ],
+                [ 10, -60 ]
+              ]
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "name": "geometrycollection"
+      }
+    }
+  ]
+}

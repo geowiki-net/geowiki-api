@@ -33,13 +33,15 @@ function geojson2elements (data, elements, options) {
         })
       }
       break
+    case 'MultiPoint':
     case 'MultiLineString':
+    case 'MultiPolygon':
       data.geometry.coordinates.forEach(coords => {
         const feature = {
           type: 'Feature',
           properties: data.properties,
           geometry: {
-            type: 'LineString',
+            type: data.geometry.type.substr(5),
             coordinates: coords
           }
         }
@@ -72,6 +74,17 @@ function geojson2elements (data, elements, options) {
         data.properties = { ...data.properties, type: 'multipolygon' }
       }
       break
+    case 'GeometryCollection':
+      data.geometry.geometries.forEach(geom => {
+        const feature = {
+          type: 'Feature',
+          properties: data.properties,
+          geometry: geom
+        }
+
+        geojson2elements(feature, elements, options)
+      })
+      return
     default:
       console.log('Unknown geometry type ' + data.geometry.type)
       return

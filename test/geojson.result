@@ -11,6 +11,24 @@
       "id": -1
     },
     {
+      "type": "node",
+      "lon": 0,
+      "lat": 0,
+      "tags": {
+        "name": "multipoint"
+      },
+      "id": -2
+    },
+    {
+      "type": "node",
+      "lon": 5,
+      "lat": 5,
+      "tags": {
+        "name": "multipoint"
+      },
+      "id": -3
+    },
+    {
       "type": "way",
       "geometry": [
         {
@@ -133,6 +151,144 @@
         "name": "multilinestring"
       },
       "id": -7
+    },
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -50,
+          "lat": 60
+        },
+        {
+          "lon": -30,
+          "lat": 60
+        },
+        {
+          "lon": -30,
+          "lat": 80
+        },
+        {
+          "lon": -50,
+          "lat": 80
+        },
+        {
+          "lon": -50,
+          "lat": 60
+        }
+      ],
+      "tags": {
+        "name": "multipolygon"
+      },
+      "id": -8
+    },
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -20,
+          "lat": 60
+        },
+        {
+          "lon": 0,
+          "lat": 60
+        },
+        {
+          "lon": 0,
+          "lat": 80
+        },
+        {
+          "lon": -20,
+          "lat": 80
+        },
+        {
+          "lon": -20,
+          "lat": 60
+        }
+      ],
+      "tags": {
+        "name": "multipolygon"
+      },
+      "id": -9
+    },
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": 10,
+          "lat": 60
+        },
+        {
+          "lon": 30,
+          "lat": 60
+        },
+        {
+          "lon": 30,
+          "lat": 80
+        },
+        {
+          "lon": 10,
+          "lat": 80
+        },
+        {
+          "lon": 10,
+          "lat": 60
+        }
+      ],
+      "tags": {
+        "name": "multipolygon"
+      },
+      "id": -10
+    },
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": -50,
+          "lat": -50
+        },
+        {
+          "lon": 0,
+          "lat": -50
+        }
+      ],
+      "tags": {
+        "name": "geometrycollection"
+      },
+      "id": -11
+    },
+    {
+      "type": "node",
+      "lon": 40,
+      "lat": -50,
+      "tags": {
+        "name": "geometrycollection"
+      },
+      "id": -4
+    },
+    {
+      "type": "way",
+      "geometry": [
+        {
+          "lon": 10,
+          "lat": -60
+        },
+        {
+          "lon": 30,
+          "lat": -60
+        },
+        {
+          "lon": 20,
+          "lat": -40
+        },
+        {
+          "lon": 10,
+          "lat": -60
+        }
+      ],
+      "tags": {
+        "name": "geometrycollection"
+      },
+      "id": -12
     }
   ]
 }

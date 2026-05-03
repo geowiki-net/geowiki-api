@@ -33,6 +33,20 @@ function geojson2elements (data, elements, options) {
         })
       }
       break
+    case 'MultiLineString':
+      data.geometry.coordinates.forEach(coords => {
+        const feature = {
+          type: 'Feature',
+          properties: data.properties,
+          geometry: {
+            type: 'LineString',
+            coordinates: coords
+          }
+        }
+
+        geojson2elements(feature, elements, options)
+      })
+      return
     case 'Polygon':
       if (data.geometry.coordinates.length === 1) {
         element = {

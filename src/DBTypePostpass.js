@@ -65,7 +65,9 @@ module.exports = class DBTypePostpass {
 
   compileStmtQuery (stmt) {
     const filters = stmt.filters.map(filter => {
-      if (filter.op) {
+      if (filter.fun === 'id') {
+        return 'osm_id = ANY(\'{' + filter.value.join(',') + '}\')'
+      } else if (filter.op) {
         return this.compileOp(filter)
       } else {
         throw new Error("Don't know how to compile filter: " + JSON.stringify(filter))

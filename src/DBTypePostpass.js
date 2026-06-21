@@ -51,7 +51,9 @@ module.exports = class DBTypePostpass {
       table += " left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
     }
 
-    return 'SELECT ' + fields.join(', ') + ' FROM ' + table + ' WHERE ' + this.compileStmtQuery(stmt)
+    const where = this.compileStmtQuery(stmt)
+
+    return 'SELECT ' + fields.join(', ') + ' FROM ' + table + (where ? ' WHERE ' + where : '')
   }
 
   compileStmtQuery (stmt) {

@@ -12,7 +12,7 @@ const queryList = {
   },
   'node': {
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM postpass_point t",
-    'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM postpass_point t"
+    'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, '{}'::bigint[] as \"nodes\", '{}'::jsonb as \"members\" FROM postpass_point t"
   },
   'way': {
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t",
@@ -45,6 +45,10 @@ const queryList = {
   'way[highway](4583259)': {
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t WHERE t.tags?'highway' AND osm_id = ANY('{4583259}')",
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id WHERE t.tags?'highway' AND osm_id = ANY('{4583259}')"
+  },
+  '(node[place=continent];way(4583259);)': {
+    'tags': "(SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM postpass_point t WHERE t.tags->>'place'='continent') UNION (SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t WHERE osm_id = ANY('{4583259}'))",
+    'tags-members': "(SELECT t.osm_id, t.osm_type, t.geom, t.tags, '{}'::bigint[] as \"nodes\", '{}'::jsonb as \"members\" FROM postpass_point t WHERE t.tags->>'place'='continent') UNION (SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id WHERE osm_id = ANY('{4583259}'))"
   }
 }
 

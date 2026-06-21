@@ -46,16 +46,21 @@ module.exports = class DBTypePostpass {
 
   compileFilterQuery (stmt, options) {
     // postpass queries always require geom
-    let fields = ['t.osm_id', 't.osm_type', 't.geom']
+    const fields = ['t.osm_id', 't.osm_type', 't.geom']
     let table = tables[stmt.type] + ' t'
 
     if (options.properties & defines.TAGS) {
       fields.push('t.tags')
     }
-    if ((options.properties & defines.MEMBERS) && stmt.type !== 'node') {
-      fields.push('w.nodes')
-      fields.push('r.members')
-      table += " left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
+    if (options.properties & defines.MEMBERS) {
+      if (stmt.type === 'node') {
+        fields.push('\'{}\'::bigint[] as "nodes"')
+        fields.push('\'{}\'::jsonb as "members"')
+      } else {
+        fields.push('w.nodes')
+        fields.push('r.members')
+        table += " left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
+      }
     }
 
     const where = this.compileStmtQuery(stmt)

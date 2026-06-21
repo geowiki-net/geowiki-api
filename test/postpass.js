@@ -13,14 +13,17 @@ const queryList = {
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM postpass_pointlinepolygon t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
   },
   'node': {
+    'bboxquery': false,
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM postpass_point t",
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, '{}'::bigint[] as \"nodes\", '{}'::jsonb as \"members\" FROM postpass_point t"
   },
   'way': {
+    'bboxquery': false,
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t",
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W') t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
   },
   'relation': {
+    'bboxquery': false,
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_pointlinepolygon WHERE osm_type='R') t",
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM (SELECT osm_id, osm_type, tags, geom FROM postpass_pointlinepolygon WHERE osm_type='R') t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
   },

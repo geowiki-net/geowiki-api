@@ -14,7 +14,11 @@ module.exports = class DBTypePostpass {
   compile (query, options) {
     const stmt = query.getStatement()
 
-    const result = this.compileStmt(stmt, options)
+    let result = this.compileStmt(stmt, options)
+    if (options.bounds) {
+      result = 'SELECT * FROM (' + result + ') WHERE geom && st_setsrid(st_makebox2d(st_makepoint(' + options.bounds.minlon + ',' + options.bounds.minlat + '), st_makepoint(' + options.bounds.maxlon + ',' + options.bounds.maxlat + ')), 4326)'
+    }
+
     return result
   }
 

@@ -192,6 +192,19 @@ class RequestBBox extends Request {
       }
     }
 
+    if (this.overpass.database) {
+      let result = this.overpass.database.compile(this.filterQuery, {
+        properties: this.options.properties
+      })
+
+      if (this.bounds) {
+        result = 'SELECT * FROM (' + result + ') WHERE geom && st_setsrid(st_makebox2d(st_makepoint(' + this.bounds.minlon + ',' + this.bounds.minlat + '), st_makepoint(' + this.bounds.maxlon + ',' + this.bounds.maxlat + ')), 4326)'
+      }
+
+      console.log(result)
+      return result
+    }
+
     const efforts = this.minMaxEffort()
     let effortAvailable = Math.max(context.maxEffort, efforts.minEffort)
     if (efforts.maxEffort) {

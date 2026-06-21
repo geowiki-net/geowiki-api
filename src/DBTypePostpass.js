@@ -5,6 +5,13 @@ const postOp = {
   '~': '~',
 }
 
+const tables = {
+  nwr: 'postpass_pointlinepolygon',
+  node: 'postpass_point',
+  way: "(SELECT osm_id, osm_type, tags, geom FROM postpass_line WHERE osm_type='W' UNION SELECT osm_id, osm_type, tags, geom FROM postpass_polygon WHERE osm_type='W')",
+  relation: "(SELECT osm_id, osm_type, tags, geom FROM postpass_pointlinepolygon WHERE osm_type='R')"
+}
+
 module.exports = class DBTypePostpass {
   constructor (url, options) {
     this.url = url
@@ -40,12 +47,12 @@ module.exports = class DBTypePostpass {
   compileFilterQuery (stmt, options) {
     // postpass queries always require geom
     let fields = ['t.osm_id', 't.osm_type', 't.geom']
-    let table = 'postpass_pointlinepolygon t'
+    let table = tables[stmt.type] + ' t'
 
     if (options.properties & defines.TAGS) {
       fields.push('t.tags')
     }
-    if (options.properties & defines.MEMBERS) {
+    if ((options.properties & defines.MEMBERS) && stmt.type !== 'node') {
       fields.push('w.nodes')
       fields.push('r.members')
       table += " left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"

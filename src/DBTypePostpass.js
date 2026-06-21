@@ -67,6 +67,8 @@ module.exports = class DBTypePostpass {
     const filters = stmt.filters.map(filter => {
       if (filter.op) {
         return this.compileOp(filter)
+      } else {
+        throw new Error("Don't know how to compile filter: " + JSON.stringify(filter))
       }
     }).join(' AND ')
 

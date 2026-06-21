@@ -4,9 +4,11 @@ const BoundingBox = require('boundingbox')
 const defines = require('../src/defines')
 const Filter = require('../src/Filter')
 const DBTypePostpass = require('../src/DBTypePostpass')
+const GeowikiAPI = require('..')
 
 const queryList = {
   'nwr': {
+    'bboxquery': false,
     'tags': "SELECT t.osm_id, t.osm_type, t.geom, t.tags FROM postpass_pointlinepolygon t",
     'tags-members': "SELECT t.osm_id, t.osm_type, t.geom, t.tags, w.nodes, r.members FROM postpass_pointlinepolygon t left join planet_osm_ways w on t.osm_type = 'W' and t.osm_id = w.id left join planet_osm_rels r on t.osm_type = 'R' and t.osm_id = r.id"
   },
@@ -54,9 +56,13 @@ const queryList = {
 
 describe('DBTypePostpass', function () {
   let db
+  let geowiki
 
   it('initialize', function () {
     db = new DBTypePostpass('', {})
+    geowiki = new GeowikiAPI('', {
+      dbType: 'postpass'
+    })
   })
 
   describe('compile filter with tags, without bounds', function () {
@@ -109,6 +115,25 @@ describe('DBTypePostpass', function () {
         })
 
         assert.equal(result, 'SELECT * FROM (' + def['tags-members'] + ') WHERE geom && st_setsrid(st_makebox2d(st_makepoint(1,1), st_makepoint(2,2)), 4326)')
+      })
+    })
+  })
+
+  describe('BBoxQuery', function () {
+    Object.entries(queryList).forEach(([query, def]) => {
+      it(query, function (done) {
+        geowiki.BBoxQuery(
+          query,
+          { minlat: 48.19, maxlat: 48.20, minlon: 16.33, maxlon: 16.34 },
+          {
+            out: 'json',
+            outOptions: 'tags'
+          },
+          (err, result) => {
+            //console.log(JSON.stringify(result, null, '  '))
+            done(err)
+          }
+        )
       })
     })
   })

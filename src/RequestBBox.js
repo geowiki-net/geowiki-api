@@ -193,13 +193,31 @@ class RequestBBox extends Request {
     }
 
     if (this.overpass.database) {
-      const result = this.overpass.database.compile(this.filterQuery, {
+      const resultSetId = context.requests.length
+      const query = this.overpass.database.compile(this.filterQuery, {
         properties: this.options.properties,
-        bounds: this.bounds
+        bounds: this.bounds,
+        resultSetId
       })
 
-      console.log(result)
-      return result
+      //context.query += (context.query ? ' UNION ' : '') + query
+      const subRequest = {
+        query,
+        request: this,
+        parts: [
+          {
+            filter: this.lokiQuery,
+            statementId: resultSetId,
+            properties: this.options.properties,
+            receiveObject: this.receiveObject.bind(this),
+            checkFeatureCallback: this.checkFeatureCallback.bind(this),
+            featureCallback: this.featureCallback
+          }
+        ],
+        effort: 0
+      }
+
+      return subRequest
     }
 
     const efforts = this.minMaxEffort()

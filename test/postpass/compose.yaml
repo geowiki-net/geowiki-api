@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres
+    image: postgis/postgis:17-master
     restart: always
     # set shared memory limit when using docker compose
     shm_size: 128mb
@@ -11,10 +11,23 @@ services:
     #    target: /dev/shm
     #    tmpfs:
     #      size: 134217728 # 128*2^20 bytes = 128Mb
-    ports:
-    - '5432:5432'
     environment:
-      POSTGRES_PASSWORD: example
+      POSTGRES_USER: osm
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: osm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 30s
+      retries: 10
+
+  init-db:
+    build:
+      context: ./init-db
+    image: debian:trixie
+    depends_on:
+      db:
+        condition: service_healthy
  
   postpass:
     build: .
@@ -22,4 +35,7 @@ services:
       - "8001:8081"
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
+        restart: true
+      init-db:
+        condition: service_completed_successfully

@@ -192,7 +192,7 @@ class RequestBBox extends Request {
       }
     }
 
-    if (this.overpass.database) {
+    if (this.overpass.database.type !== 'OverpassAPI') {
       const resultSetId = context.requests.length
       const query = this.overpass.database.compile(this.filterQuery, {
         properties: this.options.properties,

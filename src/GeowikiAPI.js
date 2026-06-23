@@ -25,7 +25,10 @@ const isGeoJSON = require('./isGeoJSON')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const isFileURL = require('./isFileURL')
 
-const DBTypePostpass = require('./DBTypePostpass')
+const dbTypes = {
+  overpassapi: require('./DBTypeOverpassAPI'),
+  postpass: require('./DBTypePostpass'),
+}
 
 /**
  * An error occured
@@ -127,16 +130,16 @@ class OverpassFrontend {
     this.pendingNotifyMemberUpdate = {}
     this.pendingUpdateEmit = {}
 
-    if (this.options.dbType) {
-      this.database = new DBTypePostpass(this.url, this.options)
-      this.ready = true
-    } else if (this.options.isFile ?? isFileURL(this.url)) {
+    if (this.options.isFile ?? isFileURL(this.url)) {
       this.options.isFile = true
       this.ready = false
       global.setTimeout(() => this._loadFile(), 0)
     } else {
       this.options.isFile = false
       this.ready = true
+
+      const DBTypeClass = dbTypes[(this.options.dbType ?? 'overpassapi').toLowerCase()]
+      this.database = new DBTypeClass(this.url, this.options)
     }
   }
 

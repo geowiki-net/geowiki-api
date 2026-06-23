@@ -25,10 +25,6 @@ const isGeoJSON = require('./isGeoJSON')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const isFileURL = require('./isFileURL')
 
-const dbTypes = {
-  overpassapi: require('./DBTypeOverpassAPI'),
-}
-
 /**
  * An error occured
  * @event OverpassFrontend#error
@@ -137,7 +133,7 @@ class OverpassFrontend {
       this.options.isFile = false
       this.ready = true
 
-      const DBTypeClass = dbTypes[(this.options.dbType ?? 'overpassapi').toLowerCase()]
+      const DBTypeClass = OverpassFrontend.dbTypes[this.options.dbType ?? 'OverpassAPI']
       this.database = new DBTypeClass(this.url, this.options)
     }
   }
@@ -1048,6 +1044,14 @@ OverpassFrontend.outputFormats = {
 
 OverpassFrontend.registerOutputFormat = (format, formatter) => {
   OverpassFrontend.outputFormats[format] = formatter
+}
+
+OverpassFrontend.dbTypes = {
+  OverpassAPI: require('./DBTypeOverpassAPI')
+}
+
+OverpassFrontend.registerDBType = (type, _class) => {
+  OverpassFrontend.dbTypes[type] = _class
 }
 
 for (const k in defines) {

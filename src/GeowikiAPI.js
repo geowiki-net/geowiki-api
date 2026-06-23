@@ -27,7 +27,6 @@ const isFileURL = require('./isFileURL')
 
 const dbTypes = {
   overpassapi: require('./DBTypeOverpassAPI'),
-  postpass: require('./DBTypePostpass'),
 }
 
 /**

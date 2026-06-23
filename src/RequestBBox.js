@@ -200,7 +200,6 @@ class RequestBBox extends Request {
         resultSetId
       })
 
-      //context.query += (context.query ? ' UNION ' : '') + query
       const subRequest = {
         query,
         request: this,

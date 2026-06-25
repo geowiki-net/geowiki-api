@@ -4,7 +4,6 @@ const weightSort = require('weight-sort')
 const BoundingBox = require('boundingbox')
 const LokiJS = require('lokijs')
 
-const httpLoad = require('./httpLoad')
 const removeNullEntries = require('./removeNullEntries')
 
 const BBoxQueryCache = require('./BBoxQueryCache')
@@ -442,15 +441,16 @@ class OverpassFrontend {
       context.queryOptions += '[bbox:' + context.bbox.toLatLonString() + ']'
     }
 
-    const query = context.queryOptions + ';\n' + context.query
+    //const query = context.queryOptions + ';\n' + context.query
 
     setTimeout(function () {
-      httpLoad(
-        this.url,
-        null,
-        query,
-        this._handleResult.bind(this, context)
-      )
+      this.database.execute(context, (err, result) => this._handleResult(context, err, result))
+//      httpLoad(
+//        this.url,
+//        null,
+//        query,
+//        this._handleResult.bind(this, context)
+//      )
 
       this.emit('start', {}, context)
     }.bind(this), this.options.timeGap)
@@ -523,6 +523,7 @@ class OverpassFrontend {
       part.count = 0
     }
 
+    console.log('length', results.elements.length)
     for (let i = 0; i < results.elements.length; i++) {
       const el = results.elements[i]
 

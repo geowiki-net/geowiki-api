@@ -434,22 +434,8 @@ class OverpassFrontend {
       return this._next()
     }
 
-    context.queryOptions = '[out:json]'
-    if (context.bbox && !boundsIsFullWorld(context.bbox)) {
-      context.queryOptions += '[bbox:' + context.bbox.toLatLonString() + ']'
-    }
-
-    //const query = context.queryOptions + ';\n' + context.query
-
     setTimeout(function () {
       this.database.execute(context, (err, result) => this._handleResult(context, err, result))
-//      httpLoad(
-//        this.url,
-//        null,
-//        query,
-//        this._handleResult.bind(this, context)
-//      )
-
       this.emit('start', {}, context)
     }.bind(this), this.options.timeGap)
   }

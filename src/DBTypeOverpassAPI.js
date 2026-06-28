@@ -42,4 +42,8 @@ module.exports = class DBTypeOverpassAPI {
 
     return query
   }
+
+  mergeQueries (queries) {
+    return queries.join('\nout count;\n')
+  }
 }

@@ -373,7 +373,7 @@ class OverpassFrontend {
       todo: {},
       requests: [],
       subRequests: [],
-      query: '',
+      query: [],
       minPriority: this.requests[0].priority,
       minEffort: 0,
       maxEffort: 0
@@ -420,17 +420,15 @@ class OverpassFrontend {
 
       context.subRequests.push(subRequest)
 
-      if (context.query !== '') {
-        context.query += '\nout count;\n'
-      }
-
       effortAvailable -= subRequest.effort
-      context.query += subRequest.query
+      context.query.push(subRequest.query)
 
       if (effortAvailable <= 0) {
         break
       }
     }
+
+    context.query = this.database.mergeQueries(context.query)
 
     if (context.query === '') {
       return this._next()

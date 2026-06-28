@@ -38,9 +38,6 @@ module.exports = class DBTypeOverpassAPI {
       query += '(' + resultSet + '; - .done;)->' + resultSet + ';\n'
     }
 
-    if (!('split' in this.options)) {
-      this.options.effortSplit = Math.ceil(options.effortAvailable / this.overpass.options.effortBBoxFeature)
-    }
     query += resultSet + ' out ' + overpassOutOptions(this.options) + ';\n'
 
     return query

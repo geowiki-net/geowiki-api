@@ -1,4 +1,5 @@
 const overpassOutOptions = require('./overpassOutOptions')
+const boundsIsFullWorld = require('./boundsIsFullWorld')
 const httpLoad = require('./httpLoad')
 const Filter = require('./Filter')
 

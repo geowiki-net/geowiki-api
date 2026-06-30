@@ -21,7 +21,6 @@ const readDbMeta = require('./readDbMeta')
 const timestamp = require('./timestamp')
 const Filter = require('./Filter')
 const isGeoJSON = require('./isGeoJSON')
-const boundsIsFullWorld = require('./boundsIsFullWorld')
 const isFileURL = require('./isFileURL')
 
 /**

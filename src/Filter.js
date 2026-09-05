@@ -397,6 +397,7 @@ class Filter {
     this.baseFilter = null
     this.def = check(def)
     this.statements = {}
+    this.sets = {}
 
     if (typeof def === 'string') {
       this.script = this.convertToFilterScript(this.def)
@@ -414,6 +415,15 @@ class Filter {
 
       this.script = this.convertToFilterScript(def)
     }
+  }
+
+  /**
+   * add additional filters to the filter
+   * @param {string|object} query
+   */
+  add (def) {
+    def = check(def)
+    this.script = this.script.concat(this.convertToFilterScript(def))
   }
 
   /**
@@ -612,7 +622,6 @@ class Filter {
   }
 
   convertToFilterScript (def) {
-    this.sets = {}
     const r = def.map(d => filterPart.get(d, this))
 
     return r

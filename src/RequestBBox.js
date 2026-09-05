@@ -21,6 +21,7 @@ class RequestBBox extends Request {
     super(overpass, data)
     this.type = 'BBoxQuery'
 
+    console.log(this.query)
     this.options.minEffort = this.options.minEffort || 256
 
     // make sure the request ends with ';'
@@ -71,7 +72,10 @@ class RequestBBox extends Request {
       }
 
       this.lokiQuery = new Filter(this.lokiQuery) // TODO: get rid of this statement
+      console.log('A', this.lokiQuery.toQl({ setsUseStatementIds: true }))
       this.lokiQuery.conflate()
+      this.lokiQuery = new Filter(this.lokiQuery)
+      console.log('B', this.lokiQuery.toQl({ setsUseStatementIds: true }))
 
       this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
         return {
@@ -80,6 +84,7 @@ class RequestBBox extends Request {
         }
       })
 
+      console.log('END :', this.lokiQuery.toQl())
       this.doneFeaturesSets = {}
       this.doneFeaturesSetsTimestamp = 0
       this.undecidedItems = null
@@ -96,6 +101,7 @@ class RequestBBox extends Request {
    * check if there are any map features which can be returned right now
    */
   preprocess () {
+    console.log('PREP:', this.lokiQuery.toQl())
     let items = []
     this.undecidedItems = null
 
@@ -200,6 +206,7 @@ class RequestBBox extends Request {
 
     let resultSetId = null
     if (this.lokiQuery) {
+      console.log('ORIG:', this.lokiQuery.toQl())
       this.options.properties |= this.lokiQuery.properties()
       resultSetId = this.lokiQuery.getStatement().id
     }
@@ -264,6 +271,8 @@ class RequestBBox extends Request {
       })
     })
 
+    let oldFilter = this.lokiQuery
+    let revFilter
     Object.entries(reverseParts).forEach(([rid, from]) => {
       const options = { properties: defines.ID_ONLY }
       from.forEach(e => {
@@ -274,15 +283,23 @@ class RequestBBox extends Request {
         from.map(e => 'nwr._' + rid + '._rev' + e.id + '_' + rid + ';')
           .join('') + ');\n' +
         'out ' + overpassOutOptions(options) + ';'
+      console.log('OLD1:', oldFilter.toQl())
+      revFilter = new Filter(oldFilter)
+      revFilter.add(revquery)
 
-      const statementId = this.lokiQuery.getStatement().id
+      console.log('OLD2:', oldFilter.toQl())
+      console.log('NEW :', revFilter.toQl())
+      console.log('FROM:', revFilter.toQl({ from: oldFilter }))
+
       subRequest.parts.push({
         query: revquery,
         statementId: rid,
-        filter: new Filter(filter + compileRecurseFilter(script, statementId, rid) + 'nwr._rev' + statementId + '_' + rid),
+        filter: revFilter.toQl({ from: oldFilter }),
         properties: options.properties,
         receiveObject: this.receiveRevObject.bind(this)
       })
+
+      oldFilter = revFilter
     })
 
     return subRequest

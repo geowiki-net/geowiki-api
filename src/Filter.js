@@ -374,6 +374,20 @@ class Filter {
     return this._statementId
   }
 
+  registerStatementId (stmt, id) {
+    if (id in this.statements) {
+      console.log('Statement ID ' + id + ' already in use')
+      return this.createStatementId(stmt)
+    }
+
+    if (this._statementId === undefined || id > this._statementId) {
+      this._statementId = id
+    }
+
+    this.statements[id] = stmt
+    return id
+  }
+
   constructor (def) {
     if (!def) {
       this.def = []

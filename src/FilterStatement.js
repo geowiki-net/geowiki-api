@@ -1,6 +1,18 @@
 module.exports = class FilterStatement {
   constructor (def, filter) {
-    this.id = filter.createStatementId(this)
+    // check if the part is named (outputSet with _X, where X is a number)
+    const findOutputSet = (def.or || def.diff || def.and) ? def.or ?? def.diff ?? def.and : def
+    if (Array.isArray(findOutputSet)) {
+      const outputSet = findOutputSet.filter(d => d.outputSet)
+      if (outputSet.length && outputSet[0].outputSet.match(/^_\d+$/)) {
+        const id = parseInt(outputSet[0].outputSet.substr(1))
+        this.id = filter.registerStatementId(this, id)
+      }
+    }
+
+    if (this.id === undefined) {
+      this.id = filter.createStatementId(this)
+    }
   }
 
   derefSets () {

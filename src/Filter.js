@@ -368,9 +368,24 @@ class Filter {
     return this._uniqId
   }
 
-  createStatementId () {
+  createStatementId (stmt) {
     this._statementId = (this._statementId || 0) + 1
+    this.statements[this._statementId] = stmt
     return this._statementId
+  }
+
+  registerStatementId (stmt, id) {
+    if (id in this.statements) {
+      console.log('Statement ID ' + id + ' already in use')
+      return this.createStatementId(stmt)
+    }
+
+    if (this._statementId === undefined || id > this._statementId) {
+      this._statementId = id
+    }
+
+    this.statements[id] = stmt
+    return id
   }
 
   constructor (def) {
@@ -382,6 +397,7 @@ class Filter {
     this.baseFilter = null
     this.def = check(def)
     this.statements = {}
+    this.sets = {}
 
     if (typeof def === 'string') {
       this.script = this.convertToFilterScript(this.def)
@@ -399,6 +415,15 @@ class Filter {
 
       this.script = this.convertToFilterScript(def)
     }
+  }
+
+  /**
+   * add additional filters to the filter
+   * @param {string|object} query
+   */
+  add (def) {
+    def = check(def)
+    this.script = this.script.concat(this.convertToFilterScript(def))
   }
 
   /**
@@ -480,6 +505,8 @@ class Filter {
    * @param {object} [options] Additional options
    * @param {string} [options.inputSet=''] Specify input set (e.g.'.foo').
    * @param {string} [options.outputSet=''] Specify output set (e.g.'.foo').
+   * @param {number} [options.fromStatementId] Only include statements after this id.
+   * @param {Filter} [options.from] Only include statements not included in the the filter 'from'.
    * @return {string}
    */
   toQl (options = {}, def) {
@@ -487,6 +514,11 @@ class Filter {
 
     if (this.baseFilter) {
       result += this.baseFilter.toQl({ outputSet: '._base' })
+    }
+
+    if (options.from) {
+      // TODO: check that this is a descendant of options.from
+      options.fromStatementId = options.from._statementId
     }
 
     return result + this.script.map(s => s.toQl(options)).join('')
@@ -597,7 +629,6 @@ class Filter {
   }
 
   convertToFilterScript (def) {
-    this.sets = {}
     const r = def.map(d => filterPart.get(d, this))
 
     return r

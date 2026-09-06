@@ -368,8 +368,9 @@ class Filter {
     return this._uniqId
   }
 
-  createStatementId () {
+  createStatementId (stmt) {
     this._statementId = (this._statementId || 0) + 1
+    this.statements[this._statementId] = stmt
     return this._statementId
   }
 

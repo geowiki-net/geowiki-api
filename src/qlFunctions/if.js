@@ -12,7 +12,7 @@ module.exports = class If extends qlFunction {
   }
 
   test (ob) {
-    return this.value.exec(ob)
+    return !!this.value.exec(ob)
   }
 
   toString (options = {}) {
@@ -30,7 +30,7 @@ module.exports = class If extends qlFunction {
     return r
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     this.value.cacheDescriptors(descriptors)
   }
 
@@ -40,5 +40,9 @@ module.exports = class If extends qlFunction {
     }
 
     return false
+  }
+
+  properties () {
+    return this.value.properties()
   }
 }

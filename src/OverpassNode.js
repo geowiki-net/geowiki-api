@@ -2,7 +2,7 @@
 
 const OverpassObject = require('./OverpassObject')
 const BoundingBox = require('boundingbox')
-const OverpassFrontend = require('./defines')
+const GeowikiAPI = require('./defines')
 const turf = require('./turf')
 
 /**
@@ -24,14 +24,10 @@ const turf = require('./turf')
  * @property {Point} center Centroid of the bounding box.
  */
 class OverpassNode extends OverpassObject {
-  GeoJSON () {
-    const result = {
-      type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      properties: this.GeoJSONProperties()
-    }
+  GeoJSON (options = { meta: true, geom: true }) {
+    const result = super.GeoJSON(options)
 
-    if (this.geometry) {
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
       result.geometry = {
         type: 'Point',
         coordinates: [this.geometry.lon, this.geometry.lat]
@@ -91,10 +87,10 @@ class OverpassNode extends OverpassObject {
       this.bounds = new BoundingBox(data)
       this.center = this.bounds.getCenter()
 
-      this.properties = this.properties | OverpassFrontend.GEOM | OverpassFrontend.BBOX | OverpassFrontend.CENTER
+      this.properties = this.properties | GeowikiAPI.GEOM | GeowikiAPI.BBOX | GeowikiAPI.CENTER
     }
 
-    this.properties |= OverpassFrontend.MEMBERS // node does not have members, so it always known all of them
+    this.properties |= GeowikiAPI.MEMBERS // node does not have members, so it always known all of them
   }
 
   /**
@@ -137,6 +133,24 @@ class OverpassNode extends OverpassObject {
     }
 
     return bbox.intersects(this.bounds) ? 2 : 0
+  }
+
+  outJson (options) {
+    const result = super.outJson(options)
+
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
+      result.lat = this.geometry.lat
+      result.lon = this.geometry.lon
+    }
+
+    return result
+  }
+
+  _outXml (options, document, result) {
+    if ((!(options.ids || options.tags) || options.geom || options.skel || options.body || options.meta || options.bb || options.center) && this.geometry) {
+      result.setAttribute('lat', this.geometry.lat)
+      result.setAttribute('lon', this.geometry.lon)
+    }
   }
 }
 

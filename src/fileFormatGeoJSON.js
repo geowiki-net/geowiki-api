@@ -1,8 +1,4 @@
-const elementIds = {
-  node: 0,
-  way: 0,
-  relation: 0
-}
+const geojson2elements = require('./geojson2elements.js')
 
 module.exports = {
   id: 'GeoJSON',
@@ -15,9 +11,25 @@ module.exports = {
     const data = JSON.parse(content)
 
     const result = {
-      version: 0.6,
-      elements: []
+      version: 0.6
     }
+
+    ;['generator', 'timestamp_osm_base', 'copyright'].forEach(k => {
+      if (data[k]) {
+        result[k] = data[k]
+      }
+    })
+
+    if (data.bounds) {
+      result.bounds = {
+        minlon: data.bounds[0],
+        minlat: data.bounds[1],
+        maxlon: data.bounds[2],
+        maxlat: data.bounds[3]
+      }
+    }
+
+    result.elements = []
 
     try {
       geojson2elements(data, result.elements, options)
@@ -27,72 +39,4 @@ module.exports = {
 
     callback(null, result)
   }
-}
-
-function geojson2elements (data, elements, options) {
-  if (data.type === 'FeatureCollection') {
-    return data.features.forEach(feature => {
-      geojson2elements(feature, elements, options)
-    })
-  }
-
-  if (data.type !== 'Feature') {
-    throw new Error('Unknown type ' + data.type)
-  }
-
-  let element
-
-  switch (data.geometry.type) {
-    case 'Point':
-      element = {
-        type: 'node',
-        lon: data.geometry.coordinates[0],
-        lat: data.geometry.coordinates[1]
-      }
-      break
-    case 'LineString':
-      element = {
-        type: 'way',
-        geometry: data.geometry.coordinates.map(c => {
-          return { lon: c[0], lat: c[1] }
-        })
-      }
-      break
-    case 'Polygon':
-      if (data.geometry.coordinates.length === 1) {
-        element = {
-          type: 'way',
-          geometry: data.geometry.coordinates[0].map(c => {
-            return { lon: c[0], lat: c[1] }
-          })
-        }
-      } else {
-        element = {
-          type: 'relation',
-          members: data.geometry.coordinates.map((ring, i) => {
-            return {
-              type: 'way',
-              ref: --elementIds.way,
-              role: i ? 'inner' : 'outer',
-              geometry: ring.map(c => {
-                return { lon: c[0], lat: c[1] }
-              })
-            }
-          })
-        }
-        data.properties = { ...data.properties, type: 'multipolygon' }
-      }
-      break
-    default:
-      console.log('Unknown geometry type ' + data.geometry.type)
-      return
-  }
-
-  if (data.properties) {
-    element.tags = data.properties
-  }
-
-  element.id = --elementIds[element.type]
-
-  elements.push(element)
 }

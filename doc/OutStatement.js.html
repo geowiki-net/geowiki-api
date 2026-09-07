@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: OutStatement.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: OutStatement.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const filterPart = require('./filterPart')
+const OutOptions = require('./OutOptions')
+
+class OutStatement {
+  constructor (def, filter) {
+    this.def = def
+    this.inputSet = filter.sets[this.def.inputSet ?? '_']
+    this.opt = new OutOptions(this.def.out)
+  }
+
+  toQl (options = {}) {
+    let result = ''
+
+    if (options.setsUseStatementIds) {
+      result += '._' + (this.inputSet ? this.inputSet.id : 'missing') + ' '
+    } else if (this.def.inputSet) {
+      result += '.' + this.def.inputSet + ' '
+    }
+
+    const outOptions = this.outOptions()
+    if (outOptions.count) {
+      return result + 'out count;'
+    }
+
+    const count = this.count()
+    result += 'out ' + (count ? count + ' ' : '') + Object.keys(outOptions).join(' ') + ';'
+
+    return result
+  }
+
+  toQuery (options = {}) {
+    return 'nwr._' + this.inputSet.id + ';'
+  }
+
+  /**
+   * which feature properties are requested by this out statement?
+   * @return {Number}
+   */
+  properties () {
+    return this.opt.properties()
+  }
+
+  /**
+   * which options for the out()-function of OverpassObject
+   * @return {object}
+   */
+  outOptions () {
+    return this.opt.outOptions()
+  }
+
+  /**
+   * has there been a count given?
+   * @return {object}
+   */
+  count () {
+    let result = null
+
+    this.def.out.forEach(outParam => {
+      if (outParam.match(/^[0-9]+$/)) {
+        result = parseInt(outParam)
+      }
+    })
+
+    return result
+  }
+
+  dependents () {
+    return this.inputSet.dependents().concat([this.inputSet])
+  }
+
+  /**
+   * Compile all (recursing) parts of a query
+   */
+  fullQuery (options) {
+    return this.dependents().map(s => s.toQuery(options)).join('') + this.toQuery(options)
+  }
+}
+
+filterPart.register('out', OutStatement)
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Filter.html">Filter</a></li><li><a href="GeowikiAPI.html">GeowikiAPI</a></li><li><a href="OverpassNode.html">OverpassNode</a></li><li><a href="OverpassObject.html">OverpassObject</a></li><li><a href="OverpassRelation.html">OverpassRelation</a></li><li><a href="OverpassWay.html">OverpassWay</a></li><li><a href="Request.html">Request</a></li><li><a href="RequestBBox.html">RequestBBox</a></li><li><a href="RequestGet.html">RequestGet</a></li><li><a href="RequestMulti.html">RequestMulti</a></li><li><a href="module.exports.html">exports</a></li><li><a href="module.exports_module.exports.html">exports</a></li></ul><h3>Events</h3><ul><li><a href="GeowikiAPI.html#event:error">error</a></li><li><a href="GeowikiAPI.html#event:load">load</a></li><li><a href="GeowikiAPI.html#event:reject">reject</a></li><li><a href="GeowikiAPI.html#event:start">start</a></li><li><a href="GeowikiAPI.html#event:update">update</a></li><li><a href="Request.html#event:abort">abort</a></li><li><a href="Request.html#event:finish">finish</a></li><li><a href="Request.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="Request.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestBBox.html#event:abort">abort</a></li><li><a href="RequestBBox.html#event:finish">finish</a></li><li><a href="RequestBBox.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestBBox.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestGet.html#event:abort">abort</a></li><li><a href="RequestGet.html#event:finish">finish</a></li><li><a href="RequestGet.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestGet.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="RequestMulti.html#event:abort">abort</a></li><li><a href="RequestMulti.html#event:finish">finish</a></li><li><a href="RequestMulti.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="RequestMulti.html#event:subrequest-finished">subrequest-finished</a></li><li><a href="module.exports.html#event:abort">abort</a></li><li><a href="module.exports.html#event:finish">finish</a></li><li><a href="module.exports.html#event:subrequest-compiile">subrequest-compiile</a></li><li><a href="module.exports.html#event:subrequest-finished">subrequest-finished</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sat Aug 29 2026 08:49:54 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

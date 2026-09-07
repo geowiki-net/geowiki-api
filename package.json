@@ -1,13 +1,14 @@
 {
-  "name": "overpass-frontend",
+  "name": "@geowiki-net/geowiki-api",
   "description": "A JavaScript (NodeJS/Browser) library to easily access data from OpenStreetMap via Overpass API or from an OSM File. The objects can directly be used with LeafletJS or exported to GeoJSON. Data will be cached in the browser memory.",
-  "version": "3.3.3",
-  "main": "src/OverpassFrontend.js",
+  "version": "4.0.0-rc.1",
+  "main": "src/GeowikiAPI.js",
   "directories": {
     "test": "test"
   },
   "files": [
-    "dist/overpass-frontend.js",
+    "dist/geowiki-api.js",
+    "version.json",
     "src"
   ],
   "browserify": {
@@ -29,6 +30,7 @@
     "@turf/length": "^6.5.0",
     "@turf/union": "^6.5.0",
     "@xmldom/xmldom": "^0.8.10",
+    "argparse": "^2.0.1",
     "async": "^3.2.4",
     "boundingbox": "^1.4.0",
     "browserify-shim": "^3.8.15",
@@ -50,53 +52,61 @@
   "devDependencies": {
     "brfs": "^2.0.2",
     "browserify": "^17.0.0",
+    "deep-equal-check": "^1.1.0",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-standard": "^5.0.0",
-    "esmify": "^2.1.1",
+    "esmify": "^0.1.2",
     "http-server": "^14.1.1",
     "jsdoc": "^4.0.2",
-    "jsdom": "^17.0.0",
+    "jsdom": "^29.0.2",
     "leaflet": "^1.9.2",
     "minify": "^9.1.0",
     "mocha": "^11.0.1",
-    "require-self": "^0.2.3",
     "watchify": "^4.0.0"
   },
   "resolutions": {
     "martinez-polygon-clipping": "^0.5.0"
   },
+  "browser": {
+    "./test/src/dom.js": "./test/src/dom-browser.js"
+  },
+  "bin": {
+    "geowiki-api": "cli.js",
+    "geowiki-api-server": "server.js"
+  },
   "scripts": {
     "test": "mocha --bail",
-    "build": "browserify index.js -o dist/overpass-frontend.js",
+    "build": "browserify index.js -o dist/geowiki-api.js",
     "build-test": "browserify -t brfs --debug test/*.js -o dist/test.js",
     "build-test-minify": "browserify -t brfs test/*.js -o dist/test.src.js && minify dist/test.src.js > dist/test.js",
-    "watch": "watchify -t browserify-shim --debug index.js -o dist/overpass-frontend.js -v",
+    "watch": "node update-version.js ; watchify -t browserify-shim --debug index.js -o dist/geowiki-api.js -v",
     "watch-test": "watchify -t brfs --debug test/*.js -o dist/test.js -v",
     "prepublish": "npm run lint && npm run build && npm run doc",
     "preversion": "npm run lint && npm run test",
-    "version": "rm -r doc/ && npm run doc && npm run build && npm run build-test && git add -A doc/ dist/",
-    "prepare": "require-self",
-    "lint": "eslint --fix src/*.js src/qlFunctions/*.js src/evaluator/* index.js",
-    "start": "http-server ./ -p 8000",
+    "version": "node update-version.js && npm run doc && git add doc/ version.json ",
+    "lint": "eslint --fix src/*.js src/qlFunctions/*.js src/evaluator/* index.js server.js cli.js",
+    "demo": "http-server ./ -p 8000",
+    "start": "node server.js",
     "doc": "jsdoc -d doc/ src/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plepe/overpass-frontend.git"
+    "url": "git+https://github.com/geowiki-net/geowiki-api.git"
   },
   "keywords": [
     "OpenStreetMap",
     "OSM",
-    "Overpass"
+    "Overpass",
+    "Geowiki"
   ],
   "author": "Stephan Bösch-Plepelits <skunk@xover.mud.at>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/plepe/overpass-frontend/issues"
+    "url": "https://github.com/geowiki-net/geowiki-api/issues"
   },
-  "homepage": "https://github.com/plepe/overpass-frontend#readme"
+  "homepage": "https://github.com/geowiki-net/geowiki-api#readme"
 }

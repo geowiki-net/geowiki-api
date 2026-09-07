@@ -4,7 +4,7 @@ var conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var BoundingBox = require('boundingbox')
 var overpassFrontend
 
@@ -341,6 +341,16 @@ describe('Overpass BBoxQuery with members', function() {
           done()
         }
       )
+    })
+  })
+
+  describe('load with {isFile:true}', function() {
+    it ('load', function (done) {
+      this.timeout(20000)
+      overpassFrontend = new OverpassFrontend('test/small.osm.bz2', { isFile: true })
+      overpassFrontend.once('load', () => {
+        done()
+      })
     })
   })
 })

@@ -1,8 +1,16 @@
 module.exports = class qlFunction {
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     descriptors.forEach(d => {
       d.filters += this.toString()
-      d.properties |= this.requestProperties || 0
+      d.properties |= this.properties()
     })
+  }
+
+  properties () {
+    return 0
+  }
+
+  possibleBounds (ob) {
+    return null
   }
 }

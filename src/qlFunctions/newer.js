@@ -1,4 +1,4 @@
-const OverpassFrontend = require('../defines')
+const GeowikiAPI = require('../defines')
 const qlFunction = require('./qlFunction')
 const parseString = require('../parseString')
 
@@ -7,9 +7,7 @@ module.exports = class newer extends qlFunction {
     super()
     this.fun = 'newer'
 
-    this.requestProperties = OverpassFrontend.META
     const p = parseString(str)
-    console.log(p)
     if (!p && !p[1].match(/^\s*$/)) {
       throw new Error('newer expects a string with a timestamp')
     }
@@ -36,5 +34,9 @@ module.exports = class newer extends qlFunction {
     if (other instanceof newer) {
       return other.value >= this.value
     }
+  }
+
+  properties () {
+    return GeowikiAPI.META
   }
 }

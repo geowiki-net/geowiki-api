@@ -1,4 +1,4 @@
-const OverpassFrontend = require('../defines')
+const GeowikiAPI = require('../defines')
 const qlFunction = require('./qlFunction')
 
 module.exports = class id extends qlFunction {
@@ -29,7 +29,7 @@ module.exports = class id extends qlFunction {
     }
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     descriptors.forEach(o => {
       let v = this.value
       if (o.ids) {
@@ -37,7 +37,7 @@ module.exports = class id extends qlFunction {
       }
 
       o.ids = v.sort()
-      o.properties |= OverpassFrontend.ID_ONLY
+      o.properties |= GeowikiAPI.ID_ONLY
     })
   }
 
@@ -45,5 +45,9 @@ module.exports = class id extends qlFunction {
     if (other instanceof id) {
       return !other.value.filter(id => !this.value.includes(id)).length
     }
+  }
+
+  properties () {
+    return GeowikiAPI.ID_ONLY
   }
 }

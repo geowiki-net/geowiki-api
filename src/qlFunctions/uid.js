@@ -1,4 +1,4 @@
-const OverpassFrontend = require('../defines')
+const GeowikiAPI = require('../defines')
 const qlFunction = require('./qlFunction')
 
 module.exports = class uid extends qlFunction {
@@ -6,7 +6,6 @@ module.exports = class uid extends qlFunction {
     super()
     this.fun = 'uid'
 
-    this.requestProperties = OverpassFrontend.META
     this.value = str.split(/,/g).map(v => {
       if (!v.match(/^\s*\d+\s*/)) {
         throw new Error('Error parsing uid filter, expect a numeric value: "' + v + '"')
@@ -40,5 +39,9 @@ module.exports = class uid extends qlFunction {
     if (other instanceof uid) {
       return !other.value.filter(id => !this.value.includes(id)).length
     }
+  }
+
+  properties () {
+    return GeowikiAPI.META
   }
 }

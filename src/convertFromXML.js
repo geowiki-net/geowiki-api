@@ -3,21 +3,27 @@ const BoundingBox = require('boundingbox')
 module.exports = function convertFromXML (xml) {
   const result = {
     version: parseFloat(xml.getAttribute('version')),
-    generator: xml.getAttribute('generator'),
-    osm3s: {},
     elements: []
   }
 
+  ;['generator', 'copyright', 'attribution', 'license'].forEach(field => {
+    if (xml.hasAttribute(field)) {
+      result[field] = xml.getAttribute(field)
+    }
+  })
+
   const notes = xml.getElementsByTagName('note')
   if (notes.length) {
-    result.osm3s.copyright = notes[0].textContent
+    result.copyright = notes[0].textContent
   }
 
   const metas = xml.getElementsByTagName('meta')
   if (metas.length) {
-    result.osm3s.timestamp_osm_base = metas[0].getAttribute('osm_base')
+    if (metas[0].hasAttribute('osm_base')) {
+      result.timestamp_osm_base = metas[0].getAttribute('osm_base')
+    }
     if (metas[0].hasAttribute('areas')) {
-      result.osm3s.timestamp_areas_base = metas[0].getAttribute('areas')
+      result.timestamp_areas_base = metas[0].getAttribute('areas')
     }
   }
 

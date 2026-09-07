@@ -8,7 +8,7 @@ if (!conf.generator) {
 
 var assert = require('assert')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var overpassFrontend = new OverpassFrontend(conf.url)
 
 const bounds = {

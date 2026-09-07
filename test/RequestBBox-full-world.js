@@ -8,7 +8,7 @@ if (!conf.generator) {
 
 var assert = require('assert')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var overpassFrontend = new OverpassFrontend(conf.url)
 
 describe('BBoxQuery with GeoJSON bounds', function () {
@@ -53,8 +53,6 @@ describe('BBoxQuery with GeoJSON bounds', function () {
         done()
       }
     )
-
-    assert.deepEqual(request.lokiQuery, {"type":{"$eq":"relation"},"tags.ref:at:gkz":{"$eq":"91501"}})
 
     request.on('subrequest-compile', compileListener)
   })

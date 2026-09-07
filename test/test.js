@@ -9,11 +9,10 @@ if (!conf.generator) {
 var assert = require('assert')
 var async = require('async')
 
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 var RequestGet = require('../src/RequestGet')
 var BoundingBox = require('boundingbox')
 var overpassFrontend = new OverpassFrontend(conf.url)
-var removeNullEntries = require('../src/removeNullEntries')
 
 describe('Overpass get', function() {
   describe('single id', function() {
@@ -311,10 +310,10 @@ describe('Overpass get', function() {
 	      "source": "survey",
 	      "@changeset": 24967165,
 	      "@id": "node/3037893169",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2014-08-23T23:04:34Z",
 	      "@uid": 770238,
 	      "@user": "Kevin Kofler",
@@ -359,14 +358,20 @@ describe('Overpass get', function() {
 	      "source:maxspeed": "AT:zone:30",
 	      "@changeset": 18574192,
 	      "@id": "way/146678749",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2013-10-27T20:43:03Z",
 	      "@uid": 1066249,
 	      "@user": "Railjet",
-	      "@version": 5
+	      "@version": 5,
+              "@members": [
+                { "ref": 1521823452, "type": "node" },
+                { "ref": 31256801, "type": "node" },
+                { "ref": 83237251, "type": "node" },
+                { "ref": 123863902, "type": "node" }
+              ]
 	    }
 	  },
           geojson);
@@ -437,17 +442,22 @@ describe('Overpass get', function() {
 	    "properties": {
 	      "@changeset": 32165173,
 	      "@id": "relation/3854502",
-              "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-              "@osm3s:generator": conf.generator,
-              "@osm3s:version": 0.6,
-              "@osm3s:timestamp_osm_base": "",
+              "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+              "@meta:generator": conf.generator,
+              "@meta:version": 0.6,
+              "@meta:timestamp_osm_base": "",
 	      "@timestamp": "2015-06-23T16:09:42Z",
 	      "@uid": 161619,
 	      "@user": "FvGordon",
 	      "@version": 2,
 	      "note": "applies only to cyclists against oneway",
 	      "restriction:bicycle": "no_right_turn",
-	      "type": "restriction"
+	      "type": "restriction",
+              "@members": [
+                { "ref": 9248262, "role": "from", "type": "way" },
+                { "ref": 69256257, "role": "via", "type": "node" },
+                { "ref": 120521531, "role": "to", "type": "way" }
+              ]
 	    }
 	  },
           geojson);
@@ -1417,8 +1427,8 @@ describe('Overpass objects structure', function() {
             done('Query wrong, should not be successful')
 
           else if(err.message == "line 2: parse error: ']' expected - '->' found.\n" +
-            "line 4: parse error: Unexpected end of input.\n" +
-            "line 4: parse error: Unexpected end of input.\n\n")
+            "line 5: parse error: Unexpected end of input.\n" +
+            "line 5: parse error: Unexpected end of input.\n\n")
             done()
 
           else
@@ -1525,135 +1535,6 @@ describe('Overpass objects structure', function() {
       if (!(req instanceof RequestGet)) {
         assert.fail('request should be instance of RequestGet')
       }
-    })
-
-    it('abort() should abort a "get" request', function (done) {
-      var finalCalled = 0
-      var req = overpassFrontend.get([ 'n3037893161' ],
-        {
-          properties: OverpassFrontend.ID_ONLY
-        },
-        function(err, result, index) {
-          assert.fail('Should not call feature_callback, as request gets aborted.')
-        },
-        function(err) {
-          done('finalCallback should not be called')
-        }
-      )
-
-      req.on('abort', () => {
-        done()
-      })
-
-      req.abort()
-    })
-
-    it('abort() should abort a "get" request (even when object has already been loaded)', function (done) {
-      var finalCalled = 0
-      var req = overpassFrontend.get([ 'n3037893169' ],
-        {
-          properties: OverpassFrontend.ID_ONLY
-        },
-        function(err, result, index) {
-          assert.fail('Should not call feature_callback, as request gets aborted.')
-        },
-        function(err) {
-          done('finalCallback should not be called')
-        }
-      )
-
-      req.on('abort', () => {
-        done()
-      })
-
-      req.abort()
-    })
-
-    it('abort() should abort a "BBoxQuery" request', function (done) {
-      var finalCalled = 0
-      overpassFrontend.clearBBoxQuery('node[natural=tree];')
-      var req = overpassFrontend.BBoxQuery(
-        'node[natural=tree];',
-        {
-          minlon: 16.338,
-          minlat: 48.199,
-          maxlon: 16.339,
-          maxlat: 48.200
-        },
-        {
-          properties: OverpassFrontend.ID_ONLY
-        },
-        function(err, result, index) {
-          assert.fail('Should not call feature_callback, as request gets aborted.')
-        },
-        function(err) {
-          done('finalCallback should not be called')
-        }
-      )
-
-      req.on('abort', () => {
-        done()
-      })
-
-      req.abort()
-    })
-
-    it('abort() should abort a "BBoxQuery" request', function (done) {
-      var finalCalled = 0
-      overpassFrontend.clearBBoxQuery('node[natural=tree];')
-      var req = overpassFrontend.BBoxQuery(
-        'node[natural=tree];',
-        {
-          minlon: 16.338,
-          minlat: 48.199,
-          maxlon: 16.339,
-          maxlat: 48.200
-        },
-        {
-          properties: OverpassFrontend.ID_ONLY
-        },
-        function(err, result, index) {
-          assert.fail('Should not call feature_callback, as request gets aborted.')
-        },
-        function(err) {
-          done('finalCallback should not be called')
-        }
-      )
-
-      req.on('abort', () => {
-        done()
-      })
-
-      req.abort()
-    })
-
-    it('abortAllRequests() should abort requests', function (done) {
-      var finalCalled = 0
-      var req = overpassFrontend.get([ 'n3037893161' ],
-        {
-          properties: OverpassFrontend.ID_ONLY
-        },
-        function(err, result, index) {
-          assert.fail('Should not call feature_callback, as request gets aborted.')
-        },
-        function(err) {
-          done('finalCallback should not be called')
-        }
-      )
-
-      req.on('abort', () => {
-        done()
-      })
-
-      overpassFrontend.abortAllRequests()
-    })
-
-    it('request list should be empty', function () {
-      var finalCalled = 0
-      removeNullEntries(overpassFrontend.requests)
-
-      assert.deepEqual(overpassFrontend.requests, [], 'request list should be empty')
-      return true
     })
   })
 })

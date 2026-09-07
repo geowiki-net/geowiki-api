@@ -4,7 +4,7 @@ var fs = require('fs')
 var BoundingBox = require('boundingbox')
 
 var removeNullEntries = require('../src/removeNullEntries')
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 
 var conf = JSON.parse(fs.readFileSync('test/conf.json', 'utf8'));
 if (!conf.generator) {

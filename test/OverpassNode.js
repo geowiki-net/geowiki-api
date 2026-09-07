@@ -4,6 +4,7 @@ const BoundingBox = require('boundingbox')
 const OverpassFrontend = require('..')
 const OverpassNode = require('../src/OverpassNode')
 const testIntersects = require('../src/testIntersects')
+const testOverpassObject = require('./src/testOverpassObject')
 
 const example = {
   "type": "node",

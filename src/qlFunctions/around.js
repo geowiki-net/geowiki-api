@@ -1,6 +1,6 @@
 const turf = require('../turf')
 const arrayToCoords = require('../arrayToCoords')
-const OverpassFrontend = require('../defines')
+const GeowikiAPI = require('../defines')
 const qlFunction = require('./qlFunction')
 
 module.exports = class around extends qlFunction {
@@ -21,7 +21,8 @@ module.exports = class around extends qlFunction {
   }
 
   test (ob) {
-    return ob.intersects(this.bounds())
+    const r = ob.intersects(this.bounds())
+    return r === 2 ? true : r === 0 ? false : null
   }
 
   toString () {
@@ -32,7 +33,7 @@ module.exports = class around extends qlFunction {
     return { needMatch: true }
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     const bounds = this.bounds()
 
     descriptors.forEach(d => {
@@ -41,7 +42,7 @@ module.exports = class around extends qlFunction {
         d.invalid = true
       } else {
         d.bounds = newBounds.geometry
-        d.properties |= OverpassFrontend.GEOM
+        d.properties |= GeowikiAPI.GEOM
       }
     })
   }
@@ -63,5 +64,9 @@ module.exports = class around extends qlFunction {
     }
 
     return this._bounds
+  }
+
+  properties () {
+    return GeowikiAPI.GEOM
   }
 }

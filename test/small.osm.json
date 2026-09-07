@@ -1,9 +1,13 @@
 {
   "version": 0.6,
   "generator": "Overpass API 0.7.55.4 3079d8ea",
-  "osm3s": {
-    "timestamp_osm_base": "2018-09-29T15:06:02Z",
-    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  "timestamp_osm_base": "2018-09-29T15:06:02Z",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "bounds": {
+    "minlat": 48.2076584,
+    "minlon": 16.3382176,
+    "maxlat": 48.2089847,
+    "maxlon": 16.3395023
   },
   "elements": [
     {
@@ -292,6 +296,20 @@
         "amenity": "fast_food",
         "building": "yes",
         "name": "Hot Dogs"
+      }
+    },
+    {
+      "type": "way",
+      "id": 810158847,
+      "timestamp": "2021-06-16T18:18:48Z",
+      "version": 2,
+      "changeset": 106484339,
+      "user": "wonderb0lt",
+      "uid": 6752061,
+      "nodes": [
+      ],
+      "tags": {
+        "amenity": "empty geometry"
       }
     }
   ]

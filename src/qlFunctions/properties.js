@@ -9,7 +9,7 @@ module.exports = class properties extends qlFunction {
   }
 
   test (ob) {
-    return !!(ob.properties & this.value)
+    return (ob.properties & this.value) === this.value ? true : null
   }
 
   toString (options) {
@@ -24,7 +24,7 @@ module.exports = class properties extends qlFunction {
     return { needMatch: true }
   }
 
-  cacheDescriptors (descriptors) {
+  cacheDescriptors (descriptors, options) {
     descriptors.forEach(o => {
       o.properties |= this.value
     })
@@ -34,5 +34,9 @@ module.exports = class properties extends qlFunction {
     if (other instanceof properties) {
       return (other.value & this.value) === other.value
     }
+  }
+
+  properties () {
+    return this.value
   }
 }

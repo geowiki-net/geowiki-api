@@ -3,7 +3,7 @@
 const async = require('async')
 const BoundingBox = require('boundingbox')
 const OverpassObject = require('./OverpassObject')
-const OverpassFrontend = require('./defines')
+const GeowikiAPI = require('./defines')
 const turf = require('./turf')
 
 /**
@@ -35,14 +35,14 @@ class OverpassWay extends OverpassObject {
 
     if (data.geometry) {
       this.geometry = data.geometry
-      this.properties |= OverpassFrontend.GEOM
+      this.properties |= GeowikiAPI.GEOM
     }
 
     super.updateData(data, options)
 
     if (typeof this.data.nodes !== 'undefined') {
       this.members = []
-      this.properties |= OverpassFrontend.MEMBERS
+      this.properties |= GeowikiAPI.MEMBERS
 
       for (let i = 0; i < this.data.nodes.length; i++) {
         this.members.push({
@@ -51,14 +51,14 @@ class OverpassWay extends OverpassObject {
           type: 'node'
         })
 
-        let obProperties = OverpassFrontend.ID_ONLY
+        let obProperties = GeowikiAPI.ID_ONLY
         const ob = {
           id: this.data.nodes[i],
           type: 'node'
         }
 
         if (data.geometry && data.geometry[i]) {
-          obProperties = obProperties | OverpassFrontend.GEOM
+          obProperties = obProperties | GeowikiAPI.GEOM
           ob.lat = data.geometry[i].lat
           ob.lon = data.geometry[i].lon
         }
@@ -81,7 +81,7 @@ class OverpassWay extends OverpassObject {
   }
 
   checkGeometry () {
-    if (this.members && (this.properties & OverpassFrontend.GEOM) === 0) {
+    if (this.members && (this.properties & GeowikiAPI.GEOM) === 0) {
       this.geometry = this.members.map(
         member => {
           const node = this.overpass.cacheElements[member.id]
@@ -95,21 +95,21 @@ class OverpassWay extends OverpassObject {
       }
 
       if (this.geometry.length === this.members.length) {
-        this.properties = this.properties | OverpassFrontend.GEOM
+        this.properties = this.properties | GeowikiAPI.GEOM
       }
     }
 
-    if (this.geometry && (this.properties & OverpassFrontend.BBOX) === 0) {
+    if (this.geometry && (this.properties & GeowikiAPI.BBOX) === 0) {
       this.bounds = new BoundingBox(this.geometry[0])
       this.geometry.slice(1).forEach(geom => this.bounds.extend(geom))
     }
 
-    if (this.bounds && (this.properties & OverpassFrontend.CENTER) === 0) {
+    if (this.bounds && (this.properties & GeowikiAPI.CENTER) === 0) {
       this.center = this.bounds.getCenter()
     }
 
-    if ((this.properties & OverpassFrontend.GEOM) === OverpassFrontend.GEOM) {
-      this.properties = this.properties | OverpassFrontend.BBOX | OverpassFrontend.CENTER
+    if ((this.properties & GeowikiAPI.GEOM) === GeowikiAPI.GEOM) {
+      this.properties = this.properties | GeowikiAPI.BBOX | GeowikiAPI.CENTER
     }
   }
 
@@ -137,14 +137,24 @@ class OverpassWay extends OverpassObject {
     return this.memberIds()
   }
 
-  GeoJSON () {
-    const result = {
-      type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      properties: this.GeoJSONProperties()
+  GeoJSON (options = { meta: true, geom: true }) {
+    const result = super.GeoJSON(options)
+
+    if (options.bb && this.bounds) {
+      result.bbox = [this.bounds.minlon, this.bounds.minlat, this.bounds.maxlon, this.bounds.maxlat]
     }
 
-    if (this.geometry) {
+    if (options.center && this.bounds) {
+      result.geometry = {
+        type: 'Point',
+        coordinates: [
+          parseFloat(this.center.lon.toFixed(7)),
+          parseFloat(this.center.lat.toFixed(7))
+        ]
+      }
+    }
+
+    if (options.geom && this.geometry) {
       const coordinates = this.geometry
         .filter(point => point) // discard non-loaded points
         .map(point => [point.lon, point.lat])
@@ -161,6 +171,12 @@ class OverpassWay extends OverpassObject {
           coordinates: coordinates
         }
       }
+    }
+
+    if (this.members && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      result.properties['@members'] = this.nodes.map(m => {
+        return { type: 'node', ref: m }
+      })
     }
 
     return result
@@ -283,6 +299,74 @@ class OverpassWay extends OverpassObject {
     }
 
     return 1
+  }
+
+  outJson (options) {
+    const result = super.outJson(options)
+
+    if ((options.bb || options.geom) && this.bounds) {
+      result.bounds = { ...this.bounds }
+    }
+
+    if (options.center && this.bounds) {
+      result.center = {
+        lat: parseFloat(this.center.lat.toFixed(7)),
+        lon: parseFloat(this.center.lon.toFixed(7))
+      }
+    }
+
+    if (this.nodes && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      result.nodes = this.nodes
+    }
+
+    if (options.geom && this.geometry) {
+      result.geometry = this.geometry
+    }
+
+    return result
+  }
+
+  _outXml (options, document, result) {
+    if ((options.bb || options.geom) && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('bounds')
+      node.setAttribute('minlat', this.bounds.minlat.toFixed(7))
+      node.setAttribute('minlon', this.bounds.minlon.toFixed(7))
+      node.setAttribute('maxlat', this.bounds.maxlat.toFixed(7))
+      node.setAttribute('maxlon', this.bounds.maxlon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if (options.center && this.bounds) {
+      const blank = document.createTextNode('\n  ')
+      result.appendChild(blank)
+
+      const node = document.createElement('center')
+      node.setAttribute('lat', this.center.lat.toFixed(7))
+      node.setAttribute('lon', this.center.lon.toFixed(7))
+      result.appendChild(node)
+    }
+
+    if (this.nodes && ((!options.ids && !options.tags) || options.body || options.skel)) {
+      this.nodes.forEach((id, i) => {
+        const blank = document.createTextNode('\n  ')
+        result.appendChild(blank)
+
+        const nd = document.createElement('nd')
+        nd.setAttribute('ref', id)
+
+        if (options.geom && this.geometry) {
+          nd.setAttribute('lat', this.geometry[i].lat.toFixed(7))
+          nd.setAttribute('lon', this.geometry[i].lon.toFixed(7))
+        }
+
+        result.appendChild(nd)
+      })
+    }
+
+    return result
   }
 }
 

@@ -4,6 +4,7 @@ const BoundingBox = require('boundingbox')
 const OverpassRelation = require('../src/OverpassRelation')
 const OverpassFrontend = require('..')
 const testIntersects = require('../src/testIntersects')
+const testOverpassObject = require('./src/testOverpassObject')
 
 const id = 'r2334391'
 const example = {

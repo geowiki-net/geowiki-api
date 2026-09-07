@@ -1,5 +1,5 @@
 var assert = require('assert')
-var OverpassFrontend = require('../src/OverpassFrontend')
+var OverpassFrontend = require('..')
 
 let overpassFrontend
 
@@ -97,16 +97,23 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
             "source": "geoimage.at",
             "surface": "dirt",
             "tracktype": "grade4",
-            "@osm3s:version": 0.6,
-            "@osm3s:generator": "Overpass API 0.7.56.9 76e5016d",
-            "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-            "@osm3s:timestamp_osm_base": "2021-08-28T13:58:14Z",
-            "@osm3s:bounds": {
+            "@meta:version": 0.6,
+            "@meta:generator": "Overpass API 0.7.56.9 76e5016d",
+            "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+            "@meta:timestamp_osm_base": "2021-08-28T13:58:14Z",
+            "@meta:bounds": {
               "maxlat": 48.1296814,
               "maxlon": 16.3384938,
               "minlat": 48.1266093,
               "minlon": 16.3358277
-            }
+            },
+            "@members": [
+              { "ref": 871028478, "type": "node" },
+              { "ref": 5749476858, "type": "node" },
+              { "ref": 5749476859, "type": "node" },
+              { "ref": 871028491, "type": "node" }
+            ]
+
           },
           "geometry": {
             "type": "LineString",
@@ -239,16 +246,31 @@ describe('Load OSM data from XML file created with "out body geom" from Overpass
             "@id": "relation/11308701",
             "natural": "grassland",
             "type": "multipolygon",
-            "@osm3s:version": 0.6,
-            "@osm3s:generator": "Overpass API 0.7.56.9 76e5016d",
-            "@osm3s:timestamp_osm_base": "2021-08-28T13:58:14Z",
-            "@osm3s:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-            "@osm3s:bounds": {
+            "@meta:version": 0.6,
+            "@meta:generator": "Overpass API 0.7.56.9 76e5016d",
+            "@meta:timestamp_osm_base": "2021-08-28T13:58:14Z",
+            "@meta:copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+            "@meta:bounds": {
               "maxlat": 48.1296814,
               "maxlon": 16.3384938,
               "minlat": 48.1266093,
               "minlon": 16.3358277
-            }
+            },
+            "@members": [
+              { "type": "way", "ref": 771273977, "role": "outer" },
+              { "type": "way", "ref": 771273963, "role": "inner" },
+              { "type": "way", "ref": 771273957, "role": "inner" },
+              { "type": "way", "ref": 771273965, "role": "inner" },
+              { "type": "way", "ref": 771273967, "role": "inner" },
+              { "type": "way", "ref": 771273966, "role": "inner" },
+              { "type": "way", "ref": 771273968, "role": "inner" },
+              { "type": "way", "ref": 771273962, "role": "inner" },
+              { "type": "way", "ref": 771273961, "role": "inner" },
+              { "type": "way", "ref": 771273960, "role": "inner" },
+              { "type": "way", "ref": 771273959, "role": "inner" },
+              { "type": "way", "ref": 771273958, "role": "inner" },
+              { "type": "way", "ref": 826600085, "role": "inner" }
+            ]
           },
           "geometry": {
             "type": "Polygon",

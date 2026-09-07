@@ -1,44 +1,71 @@
-# OverpassFrontend
+# Geowiki API
 A JavaScript (NodeJS/Browser) library to easily access data from OpenStreetMap via Overpass API or from an OSM File. The objects can directly be used with LeafletJS or exported to GeoJSON. Data will be cached in the browser memory (persistent caching in LocalStorage or so may be added in the future).
+
+GeowikiAPI was called OverpassFrontend (overpass-frontend) until 2026. You will still find this name in the source code.
 
 # INSTALLATION
 ```sh
-npm install --save overpass-frontend
+npm install --save @geowiki-net/geowiki-api
 ```
 
 ## Demo
 ```sh
-git clone https://github.com/plepe/overpass-frontend
-cd overpass-frontend
+git clone https://github.com/geowiki-net/geowiki-api
+cd geowiki-api
 npm install
-npm start
+npm run demo
 ```
 
 Browse to http://localhost:8000/demo/
 
 # EXAMPLES
+## Geowiki Query
+This interface is similar to the Overpass API interface.
+You can execute this example as: `node example-query.js`
+
+```js
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
+
+// you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
+
+// request restaurants in the specified bounding box
+geowikiAPI.query(
+  '[out:json][bbox:48.19,16.33,48.20,16.34];nwr[amenity=restaurant];out;',
+  {
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+  },
+  function (err, result) {
+    if (err) { console.log(err) }
+    // console.log(result) // the final result (almost) as expected by Overpass API
+  }
+)
+```
+
+The advantage of using 'each' in comparison to 'result' of the final callback is, that 'each' is called immediately resp. progressively as soon as it is found (e.g. from cache or when requests are split in sub-requests).
+
 ## BBOX Query
 You can execute this example as: `node example-bbox.js`
 
 ```js
-const OverpassFrontend = require('overpass-frontend')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
-const overpassFrontend = new OverpassFrontend('//overpass-api.de/api/interpreter')
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
 
 // request restaurants in the specified bounding box
-overpassFrontend.BBoxQuery(
+geowikiAPI.BBoxQuery(
   'nwr[amenity=restaurant]',
   { minlat: 48.19, maxlat: 48.20, minlon: 16.33, maxlon: 16.34 },
   {
-    properties: OverpassFrontend.ALL
+    out: 'json',
+    outOptions: 'geom meta',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
+    }
   },
   function (err, result) {
-    console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    // console.log(result.GeoJSON()) // convert to GeoJSON
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```
@@ -47,39 +74,47 @@ overpassFrontend.BBoxQuery(
 You can execute this example as: `node example-by-id.js`
 
 ```js
-const OverpassFrontend = require('overpass-frontend')
+const GeowikiAPI = require('@geowiki-net/geowiki-api')
 
 // you may specify an OSM file as url, e.g. 'test/data.osm.bz2'
-const overpassFrontend = new OverpassFrontend('//overpass-api.de/api/interpreter')
+const geowikiAPI = new GeowikiAPI('//overpass-api.de/api/interpreter')
 
-// request restaurants in the specified bounding box
-overpassFrontend.get(
+// request some popular items by ID
+geowikiAPI.get(
   ['n27365030', 'w5013364'],
   {
-    // only return tags of the items. See below under "'Properties' option" for an explanation. If impatient, use ALL.
-    properties: OverpassFrontend.TAGS
+    out: 'json',
+    outOptions: 'tags',
+    each: item => console.log('* ' + item.tags.name + ' (' + item.type + '/' + item.id + ')')
   },
   function (err, result) {
-    if (result) {
-      console.log('* ' + result.tags.name + ' (' + result.id + ')')
-    } else {
-      console.log('* empty result')
-    }
-  },
-  function (err) {
     if (err) { console.log(err) }
+    // console.log(result) // the final result in OSM JSON format
   }
 )
 ```
 
+# SERVER
+How to run Geowiki API as server:
+
+```sh
+node server.js [--db file.osm]
+```
+
+This starts a server on port 8080 which answers requests similar to Overpass API, e.g.:
+
+```sh
+curl -XPOST -d"[out:json];node[place=continent];out;" http://localhost:8080
+```
+
 # DOCUMENTATION
-Find documentation in [doc](https://rawgit.com/plepe/overpass-frontend/master/doc/OverpassFrontend.html). You can re-generate the documentation with `npm run doc`.
+Find documentation in [doc](https://rawgit.com/geowiki-net/geowiki-api/master/doc/GeowikiAPI.html). You can re-generate the documentation with `npm run doc`.
 
 ## The following file types are supported:
 Usually, an Overpass API server is used as backend. Alternatively, a file can be used, e.g. exported from the [https://openstreetmap.org](OpenStreetMap homepage) or [https://overpass-turbo.eu/](Overpass Turbo).
 
 ```js
-const overpassFrontend = new OverpassFrontend(fileUrl, {
+const geowikiAPI = new GeowikiAPI(fileUrl, {
   filename: 'file.osm', // optional, override filename to enable auto-detection
   fileFormat: 'OSMXML', // optional, if detection from url fails
   fileFormatOptions: { ... } // optional, depending on the file type
@@ -203,6 +238,16 @@ The following properties are defined:
 | ALL      | All of the above. |
 | DEFAULT  | ID_ONLY, TAGS, MEMBERS and BBOX. |
 
+## Output Formats
+The following output formats are defined:
+
+* json: output will use the OSM JSON format (using the API, the output will not be stringified)
+* xml: output will use the OSM XML format (stringified)
+* geojson: format result directly as GeoJSON (see [example-geojson.js](./example-geojson.js) how to use this)
+* object: elements are instances of the [OverpassObject](./doc/OverpassObject.html) class resp. its derivatives.
+
+Using `GeowikiAPI.registerOutputFormat()` you can add additional output formats.
+
 # DEVELOPMENT
 
 To run unit tests, you need to have a local Overpass API server installed.
@@ -212,7 +257,7 @@ For that, you can either set it up manually or use a pre-made Docker image.
 
 First, you need to build Docker images for osm3s, the Overpass API server. Please refer to the [official repository](https://github.com/drolbr/docker-overpass) for building instructions.
 
-Once you have built the images, you can build and run the image containing test data for `overpass-frontend`:
+Once you have built the images, you can build and run the image containing test data for `geowiki-api`:
 
 ```sh
 cd test/
@@ -243,8 +288,8 @@ Before running unit tests, you should copy `test/conf.json-dist` to `test/conf.j
 To run the tests, execute the following commands:
 
 ```sh
-git clone https://github.com/plepe/overpass-frontend
-cd overpass-frontend
+git clone https://github.com/geowiki-net/geowiki-api
+cd geowiki-api
 npm install
 
 # Initialize database for unit tests (ignore messages because of missing nodes/ways)
@@ -261,8 +306,8 @@ npm run lint
 Currently, the following file formats are supported: OSMXML, OSMJSON and GeoJSON. To add support to an additional file format, do this:
 
 ```
-import OverpassFronted from 'overpass-frontend'
-OverpassFrontend.registerFileFormat({
+import GeowikiAPI from '@geowiki-net/geowiki-api'
+GeowikiAPI.registerFileFormat({
   // unique id
   id: 'myFileFormat',
 
@@ -278,7 +323,7 @@ OverpassFrontend.registerFileFormat({
   }
 })
 
-const database = new OverpassFrontend('path/to/file.myff', {
+const database = new GeowikiAPI('path/to/file.myff', {
   fileFormat: 'myFileFormat', // optionally override auto-detection
   fileFormatOptions: { // will be passed as 'options' to willLoad() and load()
     whatever: 'value'

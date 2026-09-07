@@ -1,6 +1,6 @@
 const ee = require('event-emitter')
 const BoundingBox = require('boundingbox')
-const OverpassFrontend = require('./defines')
+const GeowikiAPI = require('./defines')
 const isGeoJSON = require('./isGeoJSON')
 const turf = require('./turf')
 
@@ -39,6 +39,25 @@ class OverpassObject {
     return this.memberIds()
   }
 
+  /**
+   * Return list of ways/relations where this item is a member of.
+   * @return {null|string} [role] only return members with the specified role (null -> all members)
+   * @return {string[]}
+   */
+  memberOfIds (role = null) {
+    if (!this.memberOf) {
+      return null
+    }
+
+    let list = this.memberOf
+
+    if (role !== null) {
+      list = list.filter(m => m.role === role)
+    }
+
+    return list.map(m => m.id)
+  }
+
   notifyMemberOf (relation, role, sequence) {
     this.memberOf.push({ id: relation.id, role, sequence })
   }
@@ -50,7 +69,7 @@ class OverpassObject {
       this.osm_id = data.id
     }
 
-    this.osm3sMeta = options.osm3sMeta
+    this.dbMeta = options.dbMeta
 
     for (const k in data) {
       this.data[k] = data[k]
@@ -69,7 +88,7 @@ class OverpassObject {
       if (!this.bounds || options.bounds.intersects(this.bounds)) {
         this.properties = this.properties | options.properties
       } else {
-        this.properties = this.properties | OverpassFrontend.BBOX | OverpassFrontend.CENTER
+        this.properties = this.properties | GeowikiAPI.BBOX | GeowikiAPI.CENTER
       }
     } else {
       this.properties = this.properties | options.properties
@@ -85,12 +104,29 @@ class OverpassObject {
       this.boundsPossibleMatch = turf.difference(this.boundsPossibleMatch, options.bounds.toGeoJSON())
     }
 
-    // geometry is known -> no need for this.boundsPossibleMatch
-    if (this.geometry) {
-      delete this.boundsPossibleMatch
+    if (options.filter && !(this.properties & GeowikiAPI.GEOM)) {
+      const bounds = options.filter.possibleBounds(this)
+
+      if (bounds) {
+        if (typeof this.boundsMatches === 'undefined') {
+          this.boundsMatches = [bounds]
+        } else {
+          this.boundsMatches.push(bounds)
+        }
+      }
+
+      if (this.id === 'r910885') {
+        console.log(JSON.stringify(this.boundsMatches))
+      }
     }
 
-    if (options.properties & OverpassFrontend.TAGS) {
+    // geometry is known -> no need for .boundsMatches and .boundsPossibleMatch
+    if (options.properties & GeowikiAPI.GEOM) {
+      delete this.boundsPossibleMatch
+      delete this.boundsMatches
+    }
+
+    if (options.properties & GeowikiAPI.TAGS) {
       if (typeof data.tags === 'undefined') {
         this.tags = {}
       } else {
@@ -98,7 +134,7 @@ class OverpassObject {
       }
     } else if (data.tags) {
       this.tags = data.tags
-      this.properties |= OverpassFrontend.TAGS
+      this.properties |= GeowikiAPI.TAGS
     }
     this.errors = []
 
@@ -110,7 +146,7 @@ class OverpassObject {
         user: data.user,
         uid: data.uid
       }
-      this.properties |= OverpassFrontend.META
+      this.properties |= GeowikiAPI.META
     }
   }
 
@@ -133,35 +169,45 @@ class OverpassObject {
    * GeoJSON representation of this object
    * @return {object}
    */
-  GeoJSON () {
-    return {
+  GeoJSON (options = { meta: true, geom: true }) {
+    const result = {
       type: 'Feature',
-      id: this.type + '/' + this.osm_id,
-      geometry: null,
-      properties: this.GeoJSONProperties()
+      geometry: null
     }
+
+    if (!options.noids) {
+      result.id = this.type + '/' + this.osm_id
+    }
+
+    result.properties = this.GeoJSONProperties(options)
+
+    return result
   }
 
-  GeoJSONProperties () {
+  GeoJSONProperties (options) {
     const ret = {}
     let k
 
-    ret['@id'] = this.type + '/' + this.osm_id
+    if (!options.noids) {
+      ret['@id'] = this.type + '/' + this.osm_id
+    }
 
-    if (this.tags) {
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags) {
       for (k in this.tags) {
         ret[k] = this.tags[k]
       }
     }
 
-    if (this.meta) {
+    if (options.meta && this.meta) {
       for (k in this.meta) {
         ret['@' + k] = this.meta[k]
       }
     }
 
-    for (k in this.osm3sMeta) {
-      ret['@osm3s:' + k] = this.osm3sMeta[k]
+    if (options.meta) {
+      for (k in this.dbMeta) {
+        ret['@meta:' + k] = this.dbMeta[k]
+      }
     }
 
     return ret
@@ -176,7 +222,7 @@ class OverpassObject {
     this.overpass.get(
       this.id,
       {
-        properties: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META | OverpassFrontend.GEOM
+        properties: GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META | GeowikiAPI.GEOM
       },
       () => {},
       (err) => {
@@ -184,7 +230,7 @@ class OverpassObject {
           return callback(err)
         }
 
-        callback(null, this.GeoJSON(options))
+        callback(null, this.GeoJSON())
       }
     )
   }
@@ -204,11 +250,11 @@ class OverpassObject {
     }
     parentNode._alreadyIncluded[this.id] = true
 
-    if ((this.properties & (OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META)) !== (OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META)) {
+    if ((this.properties & (GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META)) !== (GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META)) {
       return this.overpass.get(
         this.id,
         {
-          properties: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META
+          properties: GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META
         },
         () => {},
         (err) => {
@@ -263,11 +309,11 @@ class OverpassObject {
     }
     elements[this.id] = {}
 
-    if ((this.properties & (OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META)) !== (OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META)) {
+    if ((this.properties & (GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META)) !== (GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META)) {
       return this.overpass.get(
         this.id,
         {
-          properties: OverpassFrontend.TAGS | OverpassFrontend.MEMBERS | OverpassFrontend.META
+          properties: GeowikiAPI.TAGS | GeowikiAPI.MEMBERS | GeowikiAPI.META
         },
         () => {},
         (err) => {
@@ -329,14 +375,38 @@ class OverpassObject {
     }
 
     if (this.boundsPossibleMatch) {
-      const remaining = turf.intersect(isGeoJSON(bbox) ? bbox : bbox.toGeoJSON(), this.boundsPossibleMatch)
+      const bboxGeoJSON = isGeoJSON(bbox) ? bbox : bbox.toGeoJSON()
+      const remaining = turf.intersect(bboxGeoJSON, this.boundsPossibleMatch)
 
       if (!remaining || remaining.geometry.type !== 'Polygon') {
         // geometry.type != Polygon: bbox matches border of this.boundsPossibleMatch
         return 0
       }
 
-      return 1
+      if (booleanWithin(this.boundsPossibleMatch, bboxGeoJSON)) {
+        return 2
+      }
+    }
+
+    if (this.boundsMatches) {
+      const bboxGeoJSON = isGeoJSON(bbox) ? bbox : bbox.toGeoJSON()
+
+      if (this.boundsMatches.some(bounds => {
+        const remaining = turf.intersect(bboxGeoJSON, bounds)
+
+        if (!remaining || remaining.geometry.type !== 'Polygon') {
+          // geometry.type != Polygon: bbox matches border of this.boundsMatches
+          return false
+        }
+
+        if (booleanWithin(bounds, bboxGeoJSON)) {
+          return true
+        }
+
+        return false
+      })) {
+        return 2
+      }
     }
 
     return 1
@@ -387,6 +457,80 @@ class OverpassObject {
     }
 
     this.overpass.db.update(this.dbData)
+  }
+
+  /**
+   * return object as 'out' would export it in JSON mode
+   *
+   * @param {object} options - options as object of keys, e.g. { 'skel': true, 'tags': true }
+   * @returns object
+   */
+  outJson (options) {
+    const result = {
+      type: this.type
+    }
+
+    if (!options.noids) {
+      result.id = this.osm_id
+    }
+
+    if (options.meta && this.meta) {
+      result.version = this.meta.version
+      result.timestamp = this.meta.timestamp
+      result.changeset = this.meta.changeset
+      result.uid = this.meta.uid
+      result.user = this.meta.user
+    }
+
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags && Object.keys(this.tags).length) {
+      result.tags = this.tags
+    }
+
+    return result
+  }
+
+  /**
+   * return object as 'out' would export it in XML mode
+   *
+   * @param {object} options - options as object of keys, e.g. { 'skel': true, 'tags': true }
+   * @param {DOMDocument} document
+   * @returns DOMNode
+   */
+  outXml (options, document) {
+    const result = document.createElement(this.type)
+
+    if (!options.noids) {
+      result.setAttribute('id', this.osm_id)
+    }
+
+    this._outXml(options, document, result)
+
+    if (((!options.ids && !options.skel) || options.body || options.tags) && this.tags && Object.keys(this.tags).length) {
+      Object.entries(this.tags).forEach(([k, v]) => {
+        const blank = document.createTextNode('\n  ')
+        result.appendChild(blank)
+
+        const tag = document.createElement('tag')
+        tag.setAttribute('k', k)
+        tag.setAttribute('v', v)
+        result.appendChild(tag)
+      })
+    }
+
+    if (options.meta && this.meta) {
+      result.setAttribute('version', this.meta.version)
+      result.setAttribute('timestamp', this.meta.timestamp)
+      result.setAttribute('changeset', this.meta.changeset)
+      result.setAttribute('uid', this.meta.uid)
+      result.setAttribute('user', this.meta.user)
+    }
+
+    if (result.firstChild) {
+      const blank = document.createTextNode('\n')
+      result.appendChild(blank)
+    }
+
+    return result
   }
 }
 

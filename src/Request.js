@@ -1,5 +1,7 @@
 const ee = require('event-emitter')
+const defines = require('./defines')
 const SortedCallbacks = require('./SortedCallbacks')
+const OutOptions = require('./OutOptions')
 
 /**
  * A compiled query
@@ -14,7 +16,7 @@ const SortedCallbacks = require('./SortedCallbacks')
 
 /**
  * An unspecified request
- * @param {OverpassFrontend} overpass
+ * @param {GeowikiAPI} overpass
  * @param {object} options
  */
 class Request {
@@ -38,6 +40,19 @@ class Request {
     this.count = 0
     this.callCount = 0
     this.timestampPreprocess = 0
+
+    if (typeof this.options.properties === 'undefined') {
+      this.options.properties = this.options.outOptions ? defines.ID_ONLY : defines.DEFAULT
+    }
+
+    this.output = this.overpass.getOutputFormatter(this.options.out)
+    if (this.options.outOptions) {
+      const outOptions = new OutOptions(this.options.outOptions)
+      this.outOptions = outOptions.outOptions()
+      this.options.properties |= outOptions.properties()
+    } else {
+      this.outOptions = { body: true }
+    }
   }
 
   /**
@@ -65,8 +80,10 @@ class Request {
    * @param {Error|null} err - null if no error occured
    */
   finish (err) {
+    this.result = this.output.finalize()
+
     if (!this.aborted) {
-      this.finalCallback(err)
+      this.finalCallback(err, this.result)
     }
 
     this.overpass._finishRequest(this)
@@ -76,7 +93,7 @@ class Request {
 
   /**
    * shall this Request be included in the current call?
-   * @param {OverpassFrontend#Context} context - Current context
+   * @param {GeowikiAPI#Context} context - Current context
    * @return {boolean} - yes|no
    */
   willInclude (context) {
@@ -105,7 +122,7 @@ class Request {
 
   /**
    * compile the query
-   * @param {OverpassFrontend#Context} context - Current context
+   * @param {GeowikiAPI#Context} context - Current context
    * @return {Request#SubRequest} - the compiled query
    */
   compileQuery (context) {
@@ -123,8 +140,13 @@ class Request {
    * @param {Request#SubRequest} subRequest - sub request which is being handled right now
    * @param {int} partIndex - Which part of the subRequest is being received
    */
-  receiveObject (ob) {
+  receiveObject (ob, subRequest, partIndex) {
     this.count++
+    this.output.pushFeature(ob, this.outOptions)
+
+    if (this.options.each) {
+      this.options.each(this.output.formatFeature(ob, this.outOptions))
+    }
   }
 
   /**

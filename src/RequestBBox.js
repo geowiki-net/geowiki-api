@@ -101,7 +101,6 @@ class RequestBBox extends Request {
    * check if there are any map features which can be returned right now
    */
   preprocess () {
-    console.log('PREP:', this.lokiQuery.toQl())
     let items = []
     this.undecidedItems = null
 
@@ -206,7 +205,6 @@ class RequestBBox extends Request {
 
     let resultSetId = null
     if (this.lokiQuery) {
-      console.log('ORIG:', this.lokiQuery.toQl())
       this.options.properties |= this.lokiQuery.properties()
       resultSetId = this.lokiQuery.getStatement().id
     }
@@ -254,7 +252,7 @@ class RequestBBox extends Request {
     }
 
     const script = this.lokiQuery.getScript()
-    const filter = this.lokiQuery.toQl({ setsUseStatementIds: true })
+    const filter = new Filter(this.lokiQuery.toQl({ setsUseStatementIds: true }))
     const reverseParts = {}
     let revquery = ''
     script.reverse().forEach(e => {
@@ -266,12 +264,14 @@ class RequestBBox extends Request {
         }
         reverseParts[r.id].push({
           id: e.id,
+          outputSet: e.outputSet,
           properties: r.properties
         })
       })
     })
 
-    let oldFilter = this.lokiQuery
+    console.log('filter:',filter.toQl({ setsUseStatementIds: true }))
+    let oldFilter = filter
     let revFilter
     Object.entries(reverseParts).forEach(([rid, from]) => {
       const options = { properties: defines.ID_ONLY }
@@ -283,18 +283,17 @@ class RequestBBox extends Request {
         from.map(e => 'nwr._' + rid + '._rev' + e.id + '_' + rid + ';')
           .join('') + ');\n' +
         'out ' + overpassOutOptions(options) + ';'
-      console.log('OLD1:', oldFilter.toQl())
+
+      console.log('revquery', revquery)
+
       revFilter = new Filter(oldFilter)
       revFilter.add(revquery)
-
-      console.log('OLD2:', oldFilter.toQl())
-      console.log('NEW :', revFilter.toQl())
-      console.log('FROM:', revFilter.toQl({ from: oldFilter }))
+    console.log('revFilter:',revFilter.toQl({ setsUseStatementIds: true }))
 
       subRequest.parts.push({
         query: revquery,
         statementId: rid,
-        filter: revFilter.toQl({ from: oldFilter }),
+        filter: revFilter,
         properties: options.properties,
         receiveObject: this.receiveRevObject.bind(this)
       })
@@ -341,6 +340,7 @@ class RequestBBox extends Request {
         (this.options.split > subRequest.parts[0].count)) {
       this.loadFinish = true
 
+      console.log(this.cacheDescriptors)
       this.cacheDescriptors && this.cacheDescriptors.forEach(cache => {
         cache.cache.add(cache.cacheDescriptor)
       })

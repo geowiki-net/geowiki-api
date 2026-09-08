@@ -377,6 +377,8 @@ class Filter {
   registerStatementId (stmt, id) {
     if (id in this.statements) {
       console.log('Statement ID ' + id + ' already in use')
+      console.log(this.def)
+      throw new Error('xxx')
       return this.createStatementId(stmt)
     }
 
@@ -519,6 +521,7 @@ class Filter {
     if (options.from) {
       // TODO: check that this is a descendant of options.from
       options.fromStatementId = options.from._statementId
+      delete options.from
     }
 
     return result + this.script.map(s => s.toQl(options)).join('')

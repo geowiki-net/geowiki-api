@@ -4106,6 +4106,7 @@ function test (options, callback) {
       }
       assert.deepEqual(found.sort(), expected.sort(), 'List of found objects wrong!')
       if (options.mode === 'via-server') {
+        console.log(options)
         assert.equal(foundSubRequestCount, options.expectedSubRequestCount, 'Wrong count of sub requests!')
       }
 

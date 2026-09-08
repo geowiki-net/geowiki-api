@@ -60,6 +60,8 @@ module.exports = class DBTypeOverpassAPI extends DBTypeBase {
         .map(c => c.parts.map(p => p.query).join('\nout count;\n'))
         .join('\nout count;\n')
 
+    console.log('=\n' + query + '\n=')
+
     httpLoad(
       this.url,
       null,

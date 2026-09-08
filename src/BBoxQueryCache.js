@@ -29,6 +29,7 @@ class BBoxQueryCacheItem {
   constructor (main, id) {
     this.main = main
     this.id = id
+    console.log(id)
     this.filter = new Filter(id)
     this.area = null
   }

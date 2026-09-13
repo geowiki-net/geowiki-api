@@ -388,7 +388,10 @@ class Filter {
     return id
   }
 
-  constructor (def) {
+  /**
+   * @param {object} [options] Additional options
+   */
+  constructor (def, options={}) {
     if (!def) {
       this.def = []
       return
@@ -400,7 +403,7 @@ class Filter {
     this.sets = {}
 
     if (typeof def === 'string') {
-      this.script = this.convertToFilterScript(this.def)
+      this.script = this.convertToFilterScript(this.def, options)
     } else {
       def = this.def
       if (!Array.isArray(def)) {
@@ -413,17 +416,18 @@ class Filter {
 
       def = this.expandOr(def)
 
-      this.script = this.convertToFilterScript(def)
+      this.script = this.convertToFilterScript(def, options)
     }
   }
 
   /**
    * add additional filters to the filter
    * @param {string|object} query
+   * @param {object} [options] Additional options
    */
-  add (def) {
+  add (def, options) {
     def = check(def)
-    this.script = this.script.concat(this.convertToFilterScript(def))
+    this.script = this.script.concat(this.convertToFilterScript(def, options))
   }
 
   /**
@@ -628,8 +632,8 @@ class Filter {
     return def
   }
 
-  convertToFilterScript (def) {
-    const r = def.map(d => filterPart.get(d, this))
+  convertToFilterScript (def, options={}) {
+    const r = def.map(d => filterPart.get(d, this, options))
 
     return r
   }

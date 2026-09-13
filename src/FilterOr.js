@@ -3,8 +3,8 @@ const filterPart = require('./filterPart')
 const turf = require('./turf')
 
 class FilterOr extends FilterStatement {
-  constructor (def, filter) {
-    super(def, filter)
+  constructor (def, filter, options) {
+    super(def, filter, options)
     this.outputSet = '_'
     this.parts = []
     this.filter = filter
@@ -19,7 +19,7 @@ class FilterOr extends FilterStatement {
         this.outputSet = part.outputSet
         hasOutputSet = true
       } else {
-        this.parts.push(filterPart.get(part, filter))
+        this.parts.push(filterPart.get(part, filter, options))
       }
     })
 

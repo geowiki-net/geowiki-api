@@ -1,5 +1,5 @@
 module.exports = class FilterStatement {
-  constructor (def, filter) {
+  constructor (def, filter, options) {
     // check if the part is named (outputSet with _X, where X is a number)
     const findOutputSet = (def.or || def.diff || def.and) ? def.or ?? def.diff ?? def.and : def
     if (Array.isArray(findOutputSet)) {

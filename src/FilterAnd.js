@@ -3,8 +3,8 @@ const cacheMerge = require('./cacheMerge')
 const FilterStatement = require('./FilterStatement')
 
 class FilterAnd extends FilterStatement {
-  constructor (def, filter) {
-    super(def, filter)
+  constructor (def, filter, options) {
+    super(def, filter, options)
     this.outputSet = '_'
     this.filter = filter
     this.parts = []
@@ -19,7 +19,7 @@ class FilterAnd extends FilterStatement {
         this.outputSet = part.outputSet
         hasOutputSet = true
       } else {
-        this.parts.push(filterPart.get(part, filter))
+        this.parts.push(filterPart.get(part, filter, options))
       }
     })
 

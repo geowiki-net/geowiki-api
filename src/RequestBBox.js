@@ -6,7 +6,6 @@ const RequestBBoxMembers = require('./RequestBBoxMembers')
 const Filter = require('./Filter')
 const boundsIsFullWorld = require('./boundsIsFullWorld')
 const compileRecurseReverse = require('./compileRecurseReverse')
-const compileRecurseFilter = require('./compileRecurseFilter')
 
 /**
  * A BBox request
@@ -74,7 +73,7 @@ class RequestBBox extends Request {
       this.lokiQuery = new Filter(this.lokiQuery) // TODO: get rid of this statement
       console.log('A', this.lokiQuery.toQl({ setsUseStatementIds: true }))
       this.lokiQuery.conflate()
-      //this.lokiQuery = new Filter(this.lokiQuery)
+      // this.lokiQuery = new Filter(this.lokiQuery)
       console.log('B', this.lokiQuery.toQl({ setsUseStatementIds: true }))
 
       this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
@@ -270,7 +269,7 @@ class RequestBBox extends Request {
       })
     })
 
-    console.log('filter:',filter.toQl({ setsUseStatementIds: true }))
+    console.log('filter:', filter.toQl({ setsUseStatementIds: true }))
     let oldFilter = filter
     let revFilter
     Object.entries(reverseParts).forEach(([rid, from]) => {
@@ -288,7 +287,7 @@ class RequestBBox extends Request {
 
       revFilter = new Filter(oldFilter, { clone: true })
       revFilter.add(revquery)
-    console.log('revFilter:',revFilter.toQl({ setsUseStatementIds: true }))
+      console.log('revFilter:', revFilter.toQl({ setsUseStatementIds: true }))
 
       subRequest.parts.push({
         query: revquery,

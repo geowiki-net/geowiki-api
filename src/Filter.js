@@ -391,7 +391,7 @@ class Filter {
    * @param {object} [options] Additional options
    * @param {boolean} [options.clone=false] When clone is true, use the same statement ids.
    */
-  constructor (def, options={}) {
+  constructor (def, options = {}) {
     if (!def) {
       this.def = []
       return
@@ -633,7 +633,7 @@ class Filter {
     return def
   }
 
-  convertToFilterScript (def, options={}) {
+  convertToFilterScript (def, options = {}) {
     const r = def.map(d => filterPart.get(d, this, options))
 
     return r

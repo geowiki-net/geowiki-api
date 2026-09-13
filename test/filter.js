@@ -157,7 +157,7 @@ describe('Filter', function () {
     })
 
     it('node->._5;', function () {
-      var f = new Filter('node->._5;')
+      var f = new Filter('node->._5;', {clone: true})
 
       assert.equal(f._statementId, 5)
       assert.deepEqual(f.def, [[{"type":"node"},{"outputSet":"_5"}]])
@@ -174,7 +174,7 @@ describe('Filter', function () {
     })
 
     it('(node;)->._5;', function () {
-      var f = new Filter('(node;)->._5;')
+      var f = new Filter('(node;)->._5;', {clone: true})
 
       assert.deepEqual(f.def, [{"or":[[{"type":"node"}],{"outputSet":"_5"}]}])
       assert.equal(f._statementId, 6)

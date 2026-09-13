@@ -45,8 +45,8 @@ const cachesMapTypes = {
 }
 
 class FilterRecurse extends FilterStatement {
-  constructor (def, filter) {
-    super(def, filter)
+  constructor (def, filter, options) {
+    super(def, filter, options)
     this.inputSet = def.inputSet ?? '_'
     this.inputSetRef = filter.sets[this.inputSet]
     this.outputSet = def.outputSet ?? '_'

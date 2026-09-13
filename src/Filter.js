@@ -376,10 +376,7 @@ class Filter {
 
   registerStatementId (stmt, id) {
     if (id in this.statements) {
-      console.log('Statement ID ' + id + ' already in use')
-      console.log(this.def)
-      throw new Error('xxx')
-      return this.createStatementId(stmt)
+      throw new Error('Statement ID ' + id + ' already in use')
     }
 
     if (this._statementId === undefined || id > this._statementId) {
@@ -390,7 +387,11 @@ class Filter {
     return id
   }
 
-  constructor (def) {
+  /**
+   * @param {object} [options] Additional options
+   * @param {boolean} [options.clone=false] When clone is true, use the same statement ids.
+   */
+  constructor (def, options={}) {
     if (!def) {
       this.def = []
       return
@@ -402,7 +403,7 @@ class Filter {
     this.sets = {}
 
     if (typeof def === 'string') {
-      this.script = this.convertToFilterScript(this.def)
+      this.script = this.convertToFilterScript(this.def, options)
     } else {
       def = this.def
       if (!Array.isArray(def)) {
@@ -415,17 +416,18 @@ class Filter {
 
       def = this.expandOr(def)
 
-      this.script = this.convertToFilterScript(def)
+      this.script = this.convertToFilterScript(def, options)
     }
   }
 
   /**
    * add additional filters to the filter
    * @param {string|object} query
+   * @param {object} [options] Additional options
    */
-  add (def) {
+  add (def, options) {
     def = check(def)
-    this.script = this.script.concat(this.convertToFilterScript(def))
+    this.script = this.script.concat(this.convertToFilterScript(def, options))
   }
 
   /**
@@ -631,8 +633,8 @@ class Filter {
     return def
   }
 
-  convertToFilterScript (def) {
-    const r = def.map(d => filterPart.get(d, this))
+  convertToFilterScript (def, options={}) {
+    const r = def.map(d => filterPart.get(d, this, options))
 
     return r
   }

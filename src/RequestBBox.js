@@ -252,7 +252,7 @@ class RequestBBox extends Request {
     }
 
     const script = this.lokiQuery.getScript()
-    const filter = new Filter(this.lokiQuery.toQl({ setsUseStatementIds: true }))
+    const filter = new Filter(this.lokiQuery.toQl({ setsUseStatementIds: true }), { clone: true })
     const reverseParts = {}
     let revquery = ''
     script.reverse().forEach(e => {
@@ -286,7 +286,7 @@ class RequestBBox extends Request {
 
       console.log('revquery', revquery)
 
-      revFilter = new Filter(oldFilter)
+      revFilter = new Filter(oldFilter, { clone: true })
       revFilter.add(revquery)
     console.log('revFilter:',revFilter.toQl({ setsUseStatementIds: true }))
 

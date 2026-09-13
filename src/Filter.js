@@ -376,8 +376,7 @@ class Filter {
 
   registerStatementId (stmt, id) {
     if (id in this.statements) {
-      console.log('Statement ID ' + id + ' already in use')
-      return this.createStatementId(stmt)
+      throw new Error('Statement ID ' + id + ' already in use')
     }
 
     if (this._statementId === undefined || id > this._statementId) {
@@ -390,6 +389,7 @@ class Filter {
 
   /**
    * @param {object} [options] Additional options
+   * @param {boolean} [options.clone=false] When clone is true, use the same statement ids.
    */
   constructor (def, options={}) {
     if (!def) {

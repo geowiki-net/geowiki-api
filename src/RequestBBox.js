@@ -74,7 +74,7 @@ class RequestBBox extends Request {
       this.lokiQuery = new Filter(this.lokiQuery) // TODO: get rid of this statement
       console.log('A', this.lokiQuery.toQl({ setsUseStatementIds: true }))
       this.lokiQuery.conflate()
-      this.lokiQuery = new Filter(this.lokiQuery)
+      //this.lokiQuery = new Filter(this.lokiQuery)
       console.log('B', this.lokiQuery.toQl({ setsUseStatementIds: true }))
 
       this.cacheDescriptors = this.lokiQuery.cacheDescriptors().map(cacheDescriptor => {
